@@ -10,6 +10,16 @@ Room-code platform for multiple hidden-role games. Admin creates a room, players
 - Reconnect-safe: page refresh keeps the player bound to their slot.
 - Persistent rooms via SQLite (configurable; ephemeral in-memory fallback for dev).
 
+## Visual experience
+
+Each game opens its own cinematic stage:
+
+- **🧛 Vampire Village** — gothic castle, candlelight, blood-red glow with gold accents
+- **🕴️ Classic Mafia** — noir bar, cigarette smoke, amber spotlight, art deco accents
+- **🕶️ Spy Game** — tactical CRT display, scan lines, decrypt-style role reveal
+
+The role reveal is a 1.6-second cinematic moment — card flip with glow burst for Vampire/Mafia, terminal typewriter decrypt for Spy. Optional UI sound effects (default muted). Respects `prefers-reduced-motion`.
+
 ## Run (dev)
 
 Needs Node.js 18 or newer.
@@ -62,7 +72,11 @@ Render/Railway free tiers use ephemeral disk → either mount a persistent volum
 
 ## How to add a new game
 
-Edit `src/server/games/catalog.ts`. The typed `Game` interface (in `src/shared/types.ts`) will guide every required field; missing or misspelled fields fail at typecheck. Restart `npm run dev` to pick it up.
+1. Add the game data to `src/server/games/catalog.ts` — TypeScript will guide every required field.
+2. Pick a `theme` string for the new game (e.g. `"alien-invasion"`).
+3. Create `src/client/themes/alien-invasion.css` with your theme tokens and atmosphere layers (copy structure from any existing theme).
+4. Register the theme in `src/client/themes/loader.ts` — add a new line to the `KNOWN_THEMES` array and `loaders` map.
+5. Restart `npm run dev`.
 
 Every game must include one role with `filler: true` — that role fills any remaining player slots after special-role counts are applied.
 
