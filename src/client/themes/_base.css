@@ -681,3 +681,205 @@ body {
 }
 
 .message.hidden { display: none; }
+
+/* ─── ADMIN ROOM ────────────────────────────────────────────────── */
+
+.admin-room { gap: var(--s-5); }
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+}
+
+.admin-header h2 {
+  margin: 0;
+  color: var(--theme-glow);
+  font-size: clamp(var(--type-xl), 4vw, var(--type-2xl));
+}
+
+.room-code-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-6) var(--s-5);
+  border-radius: 24px;
+  background: var(--theme-surface);
+  backdrop-filter: var(--surface-blur);
+  -webkit-backdrop-filter: var(--surface-blur);
+  border: 1px solid var(--border-faint);
+  text-align: center;
+}
+
+.code-display {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: clamp(48px, 12vw, 96px);
+  letter-spacing: 0.18em;
+  line-height: 1;
+  color: var(--theme-glow);
+  text-shadow: 0 0 32px var(--theme-glow);
+}
+
+.admin-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-4);
+}
+
+@media (max-width: 768px) {
+  .admin-grid { grid-template-columns: 1fr; }
+}
+
+.panel {
+  background: var(--theme-surface);
+  backdrop-filter: var(--surface-blur);
+  -webkit-backdrop-filter: var(--surface-blur);
+  border: 1px solid var(--border-faint);
+  border-radius: 20px;
+  padding: var(--s-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.panel-head h3 {
+  margin: 0;
+  font-family: var(--theme-display);
+  font-size: var(--type-lg);
+  color: var(--theme-accent);
+  letter-spacing: var(--theme-display-tracking);
+  text-transform: var(--theme-display-transform);
+}
+
+.list-count {
+  font-family: var(--font-mono);
+  font-size: var(--type-sm);
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-faint);
+  color: var(--text-muted);
+}
+
+.players-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  min-height: 120px;
+}
+
+.players-list.empty {
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+  font-style: italic;
+  min-height: 120px;
+}
+
+.player-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-faint);
+  animation: row-in 350ms var(--motion-scene-easing);
+}
+
+@keyframes row-in {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.player-row.off { opacity: 0.5; }
+
+.player-row::before {
+  content: "●";
+  color: var(--theme-glow);
+  font-size: 10px;
+}
+
+.player-row.off::before {
+  content: "◌";
+  color: var(--text-muted);
+}
+
+.player-row .player-name { font-weight: 600; }
+.player-row .player-role { color: var(--text-muted); font-size: var(--type-sm); }
+
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.settings label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  font-size: var(--type-sm);
+  color: var(--text-muted);
+}
+
+.settings input[type="number"] {
+  width: 80px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-faint);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  text-align: center;
+}
+
+.settings input[type="checkbox"] {
+  width: 20px; height: 20px;
+  accent-color: var(--theme-accent);
+}
+
+.button-row {
+  display: flex;
+  gap: var(--s-2);
+  justify-content: flex-end;
+}
+
+.admin-actions {
+  display: flex;
+  gap: var(--s-3);
+  justify-content: center;
+}
+
+.admin-actions .btn { min-width: 180px; }
+
+/* Assign-roles curtain animation */
+.btn-primary.curtain-fill {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary.curtain-fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--theme-glow);
+  transform: translateX(-100%);
+  animation: curtain 800ms var(--motion-scene-easing) forwards;
+  z-index: -1;
+}
+
+@keyframes curtain {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}

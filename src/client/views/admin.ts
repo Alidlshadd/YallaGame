@@ -3,6 +3,8 @@ import { getLang, t } from "../services/i18n.js"
 import { socket, emit } from "../services/socket.js"
 import * as session from "../services/session.js"
 import { showToast } from "../ui/toast.js"
+import { play } from "../services/sound.js"
+import { applyTheme } from "../themes/loader.js"
 import type { VisibleRoom } from "@shared/types.js"
 
 export const adminView = {
@@ -10,6 +12,8 @@ export const adminView = {
   mount(ctx: { initial?: VisibleRoom }) {
     let room: VisibleRoom | null = ctx.initial ?? null
     const lang = getLang()
+
+    if (room) void applyTheme(room.game.theme).catch(() => {})
 
     const codeEl     = $<HTMLElement>("#roomCodeText")
     const gameNameEl = $<HTMLElement>("#adminGameName")
@@ -19,6 +23,7 @@ export const adminView = {
     const rolesStat  = $<HTMLElement>("#rolesStatus")
     const settingsEl = $<HTMLDivElement>("#dynamicSettings")
     const listEl     = $<HTMLDivElement>("#adminPlayersList")
+    const assignBtn  = $<HTMLButtonElement>("#assignRolesBtn")
 
     function renderSettings() {
       if (!room) return
@@ -27,14 +32,21 @@ export const adminView = {
         const id = `setting-${def.key}`
         const labelText = def.label[lang]
         const value = room.settings[def.key]
+        const row = el("label", { for: id })
+        row.appendChild(el("span", {}, [labelText]))
         if (def.type === "number") {
-          const input = el("input", { id, type: "number", min: String(def.min), max: String(def.max), value: String(value ?? def.min) }) as HTMLInputElement
-          settingsEl.append(el("label", { for: id }, [labelText]), input)
+          const input = el("input", {
+            id, type: "number",
+            min: String(def.min), max: String(def.max),
+            value: String(value ?? def.min)
+          }) as HTMLInputElement
+          row.appendChild(input)
         } else {
           const input = el("input", { id, type: "checkbox" }) as HTMLInputElement
           input.checked = Boolean(value)
-          settingsEl.append(el("label", { for: id }, [labelText]), input)
+          row.appendChild(input)
         }
+        settingsEl.appendChild(row)
       }
     }
 
@@ -75,6 +87,7 @@ export const adminView = {
 
     const onSave = async () => {
       if (!room) return
+      void play("click")
       const s = session.load()
       if (s?.kind !== "admin") return
       const incoming: Record<string, number | boolean> = {}
@@ -89,7 +102,10 @@ export const adminView = {
 
     const onAssign = async () => {
       if (!room) return
+      void play("click")
       const s = session.load(); if (s?.kind !== "admin") return
+      assignBtn.classList.add("curtain-fill")
+      window.setTimeout(() => assignBtn.classList.remove("curtain-fill"), 1500)
       const r = await emit("admin:assign-roles", { code: room.code, adminSecret: s.adminSecret })
       if (!r.ok) {
         if (r.error === "NEED_MORE_PLAYERS")           showToast(t("errorNeedMorePlayers"))
@@ -100,6 +116,7 @@ export const adminView = {
 
     const onClear = async () => {
       if (!room) return
+      void play("click")
       const s = session.load(); if (s?.kind !== "admin") return
       const r = await emit("admin:clear-roles", { code: room.code, adminSecret: s.adminSecret })
       if (!r.ok) showToast(t("errorGeneric"))
@@ -107,12 +124,12 @@ export const adminView = {
 
     const onCopy = async () => {
       if (!room) return
+      void play("click", 0.4)
       try { await navigator.clipboard.writeText(room.code); showToast(t("copied")) }
       catch { /* clipboard may be blocked */ }
     }
 
     const saveBtn   = $<HTMLButtonElement>("#saveSettingsBtn")
-    const assignBtn = $<HTMLButtonElement>("#assignRolesBtn")
     const clearBtn  = $<HTMLButtonElement>("#clearRolesBtn")
     const copyBtn   = $<HTMLButtonElement>("#copyCodeBtn")
     saveBtn.addEventListener("click", onSave)
