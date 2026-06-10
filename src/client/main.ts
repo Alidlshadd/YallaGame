@@ -34,6 +34,25 @@ async function bootstrap() {
     })
   })
 
+  // Sound + mute toggle
+  const { init: initSound, isMuted, setMuted, play } = await import("./services/sound.js")
+  initSound()
+  const muteBtn = document.getElementById("muteToggle") as HTMLButtonElement | null
+  if (muteBtn) {
+    const renderMute = () => {
+      const m = isMuted()
+      muteBtn.setAttribute("aria-pressed", String(m))
+      const icon = muteBtn.firstElementChild
+      if (icon) icon.textContent = m ? "🔇" : "🔊"
+    }
+    renderMute()
+    muteBtn.addEventListener("click", async () => {
+      setMuted(!isMuted())
+      renderMute()
+      await play("mute-toggle")
+    })
+  }
+
   socket.on("room:status", (_room: VisibleRoom) => { /* reserved for future cached state */ })
 
   const existing = session.load()

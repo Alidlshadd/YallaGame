@@ -355,3 +355,130 @@ body {
     --text-muted: #b0b0b8;
   }
 }
+
+/* ─── HOME SCENE ────────────────────────────────────────────────── */
+
+.home .hero {
+  text-align: center;
+  padding: var(--s-7) 0 var(--s-6);
+}
+
+.eyebrow {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: var(--type-xs);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 6px 12px;
+  border: 1px solid var(--border-faint);
+  border-radius: 999px;
+  margin-bottom: var(--s-4);
+}
+
+.display {
+  font-family: var(--theme-display);
+  font-weight: 700;
+  font-size: clamp(var(--type-2xl), 6vw, var(--type-4xl));
+  letter-spacing: var(--theme-display-tracking);
+  text-transform: var(--theme-display-transform);
+  line-height: 1.05;
+  margin: 0 0 var(--s-3);
+}
+
+.lede {
+  font-size: var(--type-lg);
+  color: var(--text-muted);
+  max-width: 60ch;
+  margin: 0 auto;
+  line-height: 1.55;
+}
+
+.games-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--s-5);
+  margin-top: var(--s-6);
+}
+
+.game-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-7) var(--s-5) var(--s-5);
+  border-radius: 20px;
+  background: var(--surface-glass);
+  backdrop-filter: var(--surface-blur);
+  -webkit-backdrop-filter: var(--surface-blur);
+  border: 1px solid var(--border-faint);
+  cursor: pointer;
+  transition: transform 300ms var(--motion-scene-easing),
+              box-shadow 300ms var(--motion-scene-easing),
+              border-color 300ms var(--motion-scene-easing);
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.game-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 0%, var(--card-glow, transparent) 0%, transparent 65%);
+  opacity: 0.3;
+  transition: opacity 300ms ease-out;
+  z-index: -1;
+}
+
+.game-card:hover {
+  transform: translateY(-6px);
+  border-color: var(--card-glow, var(--border-faint));
+  box-shadow: 0 16px 48px -16px var(--card-glow, transparent);
+}
+
+.game-card:hover::before { opacity: 0.7; }
+
+.game-card[data-theme="vampire-village"] { --card-glow: #8b1538; }
+.game-card[data-theme="mafia-classic"]   { --card-glow: #c9a961; }
+.game-card[data-theme="spy-game"]        { --card-glow: #3fb8af; }
+
+.game-icon {
+  font-size: 64px;
+  line-height: 1;
+  filter: drop-shadow(0 4px 16px rgba(0,0,0,0.4));
+}
+
+.game-card strong {
+  font-family: var(--theme-display);
+  font-size: var(--type-xl);
+  font-weight: 700;
+}
+
+.game-card .muted {
+  color: var(--text-muted);
+  font-size: var(--type-sm);
+  text-align: center;
+  max-width: 24ch;
+}
+
+.join-shortcut {
+  margin-top: var(--s-6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding: var(--s-4) var(--s-5);
+  border-radius: 16px;
+  background: var(--surface-glass);
+  backdrop-filter: var(--surface-blur);
+  -webkit-backdrop-filter: var(--surface-blur);
+  border: 1px solid var(--border-faint);
+}
+
+.join-shortcut strong { display: block; font-weight: 600; }
+.join-shortcut span { display: block; color: var(--text-muted); font-size: var(--type-sm); }
+
+@media (max-width: 640px) {
+  .join-shortcut { flex-direction: column; align-items: stretch; text-align: center; }
+}
