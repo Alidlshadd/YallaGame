@@ -55,6 +55,20 @@ async function bootstrap() {
 
   socket.on("room:status", (_room: VisibleRoom) => { /* reserved for future cached state */ })
 
+  // Spy HUD clock (decorative, only visible when spy theme active)
+  const clockEl = document.getElementById("spyHudClock")
+  if (clockEl) {
+    const updateClock = () => {
+      const d = new Date()
+      const hh = String(d.getUTCHours()).padStart(2, "0")
+      const mm = String(d.getUTCMinutes()).padStart(2, "0")
+      const ss = String(d.getUTCSeconds()).padStart(2, "0")
+      clockEl.textContent = `${hh}:${mm}:${ss}Z`
+    }
+    updateClock()
+    window.setInterval(updateClock, 1000)
+  }
+
   const existing = session.load()
   if (existing?.kind === "admin") {
     const r = await emit("admin:reconnect", { code: existing.code, adminSecret: existing.adminSecret })
