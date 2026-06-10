@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Multigame Role Room Platform</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="bg-scene" aria-hidden="true">
+    <div class="moon"></div>
+    <div class="cloud cloud-1"></div>
+    <div class="cloud cloud-2"></div>
+    <div class="bat bat-1">🦇</div>
+    <div class="bat bat-2">🦇</div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+  </div>
+
+  <main class="app">
+    <nav class="topbar glass">
+      <div class="brand">
+        <div class="brand-mark">R</div>
+        <div>
+          <strong data-i18n="brand">Role Room</strong>
+          <span data-i18n="brandSub">Multi Game Platform</span>
+        </div>
+      </div>
+
+      <div class="lang-switch" aria-label="Language Switcher">
+        <button data-lang="ku" id="kuBtn">کوردی</button>
+        <button data-lang="ar" id="arBtn">العربية</button>
+        <button data-lang="en" id="enBtn">English</button>
+        <button data-lang="tr" id="trBtn">Türkçe</button>
+      </div>
+    </nav>
+
+    <header class="hero glass">
+      <div class="hero-content">
+        <div class="status-pill">
+          <span class="pulse-dot"></span>
+          <span data-i18n="liveRoom">Live Room System</span>
+        </div>
+        <h1 data-i18n="title">Multiple Games, One System</h1>
+        <p data-i18n="subtitle">
+          Choose a game, create a room, players join with a code, and each player only sees their own role.
+        </p>
+      </div>
+
+      <div class="hero-card">
+        <div class="tarot-card">
+          <div class="tarot-symbol">🎭</div>
+          <span data-i18n="secretRole">Secret Role</span>
+        </div>
+      </div>
+    </header>
+
+    <section id="homeView" class="panel glass view active-view">
+      <div class="panel-head center">
+        <p class="eyebrow" data-i18n="selectGameMini">Game Library</p>
+        <h2 data-i18n="selectGame">Choose a Game</h2>
+        <p class="muted" data-i18n="selectGameText">Each game has its own roles and information. You can add new games later easily.</p>
+      </div>
+
+      <div id="gamesGrid" class="games-grid"></div>
+
+      <div class="join-shortcut">
+        <div>
+          <strong data-i18n="alreadyHaveCode">Already have a room code?</strong>
+          <span data-i18n="joinDirectText">Players can join directly with a code.</span>
+        </div>
+        <button id="showJoinBtn" class="secondary-btn" data-i18n="joinRoom">Join Room</button>
+      </div>
+    </section>
+
+    <section id="gameInfoView" class="panel glass view">
+      <div class="section-head">
+        <button class="ghost-btn backHome" data-i18n="back">Back</button>
+        <button id="createSelectedRoomBtn" class="primary-btn" data-i18n="createRoom">Create Room</button>
+      </div>
+
+      <div id="gameInfoContent"></div>
+    </section>
+
+    <section id="joinView" class="panel glass view">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow" data-i18n="player">Player</p>
+          <h2 data-i18n="joinTitle">Join Room</h2>
+        </div>
+        <button class="ghost-btn backHome" data-i18n="back">Back</button>
+      </div>
+
+      <div class="form-grid">
+        <label>
+          <span data-i18n="roomCode">Room Code</span>
+          <input id="joinCodeInput" class="code-input" type="text" maxlength="5" placeholder="ABCDE" />
+        </label>
+
+        <label>
+          <span data-i18n="yourName">Your Name</span>
+          <input id="playerNameInput" type="text" maxlength="24" placeholder="..." />
+        </label>
+      </div>
+
+      <button id="joinBtn" class="primary-btn full">
+        <span data-i18n="enterRoom">Enter Room</span>
+      </button>
+
+      <div id="joinMessage" class="message hidden"></div>
+    </section>
+
+    <section id="playerRoomView" class="panel glass view player-panel">
+      <div class="player-top">
+        <div>
+          <p class="eyebrow" id="playerGameName">...</p>
+          <h2 id="playerWelcome">...</h2>
+          <p id="playerStatus" class="muted"></p>
+        </div>
+        <div class="mini-badge" data-i18n="privateScreen">Private</div>
+      </div>
+
+      <div id="playerRoleCard" class="role-reveal-card locked">
+        <div class="role-glow"></div>
+        <div class="role-lock">?</div>
+        <h3 data-i18n="roleNotAssigned">Role is not assigned yet</h3>
+        <p data-i18n="waitAdmin">Wait for the admin.</p>
+      </div>
+    </section>
+
+    <section id="adminView" class="panel glass view admin-panel">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow" id="adminGameName">...</p>
+          <h2 data-i18n="adminRoom">Admin Room</h2>
+        </div>
+        <button id="copyCodeBtn" class="ghost-btn" data-i18n="copyCode">Copy Code</button>
+      </div>
+
+      <div class="admin-grid">
+        <div class="room-card">
+          <span data-i18n="roomCode">Room Code</span>
+          <strong id="roomCodeText">-----</strong>
+          <small data-i18n="shareCodeHint">Send this code to players</small>
+        </div>
+
+        <div class="stats-card">
+          <div>
+            <span data-i18n="selectedGame">Selected Game</span>
+            <strong id="selectedGameText">...</strong>
+          </div>
+          <div>
+            <span data-i18n="players">Players</span>
+            <strong id="playersCount">0</strong>
+          </div>
+          <div>
+            <span data-i18n="rolesStatus">Role Status</span>
+            <strong id="rolesStatus">...</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-title">
+          <span>⚙️</span>
+          <strong data-i18n="settings">Settings</strong>
+        </div>
+
+        <div id="dynamicSettings" class="settings"></div>
+
+        <div class="button-row">
+          <button id="saveSettingsBtn" class="secondary-btn" data-i18n="saveSettings">Save Settings</button>
+          <button id="assignRolesBtn" class="primary-btn" data-i18n="assignRoles">Assign Roles</button>
+        </div>
+
+        <button id="clearRolesBtn" class="danger-btn full" data-i18n="clearRoles">Clear Roles</button>
+      </div>
+
+      <div class="players-box">
+        <div class="section-head compact">
+          <h2 data-i18n="players">Players</h2>
+          <span class="list-count" id="playersCountSmall">0</span>
+        </div>
+        <div id="adminPlayersList" class="players-list empty" data-i18n="noPlayers">No players yet.</div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script type="module" src="/src/client/main.ts"></script>
+</body>
+</html>

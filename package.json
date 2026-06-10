@@ -1,0 +1,47 @@
+{
+  "name": "multigame-role-room-platform",
+  "version": "4.0.0",
+  "type": "module",
+  "description": "Multigame role room platform with admin rooms, player codes, game info, and 4 languages.",
+  "main": "dist/server/index.js",
+  "scripts": {
+    "dev": "concurrently -n server,client -c blue,magenta \"tsx watch src/server/index.ts\" \"vite\"",
+    "build": "tsc -p tsconfig.server.json && vite build",
+    "start": "node dist/server/index.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint . --ext .ts,.cjs",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.10.0",
+    "express": "^4.18.3",
+    "helmet": "^7.2.0",
+    "pino": "^9.14.0",
+    "pino-pretty": "^11.3.0",
+    "socket.io": "^4.7.5",
+    "socket.io-client": "^4.8.3",
+    "zod": "^3.25.76"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/express": "^4.17.25",
+    "@types/node": "^20.19.42",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "@vitest/coverage-v8": "^1.6.1",
+    "concurrently": "^8.2.2",
+    "eslint": "^8.57.1",
+    "prettier": "^3.8.4",
+    "tsx": "^4.22.4",
+    "typescript": "^5.9.3",
+    "vite": "^5.4.21",
+    "vitest": "^1.6.1"
+  }
+}
