@@ -41,6 +41,8 @@ export const gameInfoView = {
       if (!r.ok) { showToast(t("errorGeneric")); return }
       const data = r.data as CreateRoomData
       session.save({ kind: "admin", code: data.code, adminSecret: data.adminSecret })
+      const { applyTheme } = await import("../themes/loader.js")
+      await applyTheme(game.theme)
       setView("adminView", { initial: data.room })
     }
     const createBtn = $<HTMLButtonElement>("#createSelectedRoomBtn")

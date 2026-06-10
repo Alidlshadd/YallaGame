@@ -40,6 +40,8 @@ export const joinView = {
       }
       const data = r.data as PlayerJoinData
       session.save({ kind: "player", code: c, playerId: data.player.id, name: data.player.name })
+      const { applyTheme } = await import("../themes/loader.js")
+      await applyTheme(data.room.game.theme)
       setView("playerRoomView", { initial: data })
     }
 

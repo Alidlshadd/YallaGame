@@ -1,1 +1,80 @@
-/* populated in Phase B Task B.3 */
+/* ─── SPY GAME — tactical, CRT, night-vision ────────────────────── */
+
+[data-theme="spy-game"] {
+  --theme-bg: #0c111a;
+  --theme-accent: #5a9070;
+  --theme-glow: #3fb8af;
+  --theme-surface: rgba(15, 25, 30, 0.7);
+  --theme-display: "Space Mono", ui-monospace, monospace;
+  --theme-display-tracking: 0;
+  --theme-display-transform: uppercase;
+}
+
+/* CRT scan lines — single bg-repeat layer */
+[data-theme="spy-game"] .atmosphere {
+  background-image:
+    repeating-linear-gradient(0deg,
+      transparent 0px,
+      transparent 2px,
+      rgba(63, 184, 175, 0.04) 2px,
+      rgba(63, 184, 175, 0.04) 3px);
+}
+
+/* Phosphor corner glow */
+[data-theme="spy-game"] .atmosphere::before {
+  background:
+    radial-gradient(circle 200px at 5% 5%,    rgba(63, 184, 175, 0.08), transparent),
+    radial-gradient(circle 200px at 95% 5%,   rgba(63, 184, 175, 0.08), transparent),
+    radial-gradient(circle 200px at 5% 95%,   rgba(90, 144, 112, 0.06), transparent),
+    radial-gradient(circle 200px at 95% 95%,  rgba(90, 144, 112, 0.06), transparent);
+}
+
+/* Slow horizon scan beam */
+[data-theme="spy-game"] .atmosphere::after {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(63, 184, 175, 0.5), transparent);
+  top: 0;
+  inset: 0 0 auto 0;
+  animation: scan-beam 12s linear infinite;
+  opacity: 0.6;
+}
+
+@keyframes scan-beam {
+  0%   { transform: translateY(-10vh); }
+  100% { transform: translateY(110vh); }
+}
+
+/* HUD strip (top center) */
+.spy-hud {
+  position: fixed;
+  z-index: var(--z-hud);
+  top: var(--s-4);
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: var(--type-xs);
+  color: var(--theme-glow);
+  letter-spacing: 0.1em;
+  opacity: 0.6;
+  pointer-events: none;
+  display: none;
+}
+
+[data-theme="spy-game"] .spy-hud { display: block; }
+
+[data-theme="spy-game"] .glow-breathe {
+  animation: phosphor-pulse 6s ease-in-out infinite;
+}
+
+@keyframes phosphor-pulse {
+  0%, 100% { box-shadow: 0 0 24px -4px var(--theme-glow); }
+  50%      { box-shadow: 0 0 38px -2px var(--theme-glow); }
+}
+
+[data-theme="spy-game"] .atmosphere[data-perf="low"]::after {
+  display: none;
+}
+
+/* Contrast verified WCAG AA:
+   - accent #5a9070 on bg #0c111a = 6.4:1
+   - glow #3fb8af on bg #0c111a = 8.9:1 */

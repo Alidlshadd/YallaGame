@@ -4,7 +4,7 @@ export const GAME_CATALOG: readonly Game[] = [
   {
     id: "vampire-village",
     icon: "🧛",
-    theme: "blood",
+    theme: "vampire-village",
     minPlayers: 3,
     defaultSettings: { vampireCount: 1, doctor: true, detective: true },
     title: {
@@ -118,7 +118,7 @@ export const GAME_CATALOG: readonly Game[] = [
   {
     id: "mafia-classic",
     icon: "🕴️",
-    theme: "purple",
+    theme: "mafia-classic",
     minPlayers: 4,
     defaultSettings: { mafiaCount: 1, doctor: true, detective: true },
     title: { ku: "مافیا کلاسیک", ar: "مافيا كلاسيكية", en: "Classic Mafia", tr: "Klasik Mafya" },
@@ -227,7 +227,7 @@ export const GAME_CATALOG: readonly Game[] = [
   {
     id: "spy-game",
     icon: "🕶️",
-    theme: "green",
+    theme: "spy-game",
     minPlayers: 3,
     defaultSettings: { spyCount: 1 },
     title: { ku: "سیخوڕ", ar: "الجاسوس", en: "Spy Game", tr: "Casus Oyunu" },

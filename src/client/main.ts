@@ -7,10 +7,15 @@ import { gameInfoView } from "./views/gameInfo.js"
 import { joinView } from "./views/join.js"
 import { playerRoomView } from "./views/playerRoom.js"
 import { adminView } from "./views/admin.js"
+import { applyTheme, clearTheme } from "./themes/loader.js"
+import { ensureAtmosphere, applyPerformanceProfile } from "./ui/atmosphere.js"
+import "./themes/_base.css"
 import type { LangCode, VisibleRoom } from "@shared/types.js"
 import type { AdminRoomData, PlayerJoinData } from "@shared/events.js"
 
 async function bootstrap() {
+  ensureAtmosphere()
+  applyPerformanceProfile()
   await loadCatalog()
   applyAll()
 
@@ -36,6 +41,7 @@ async function bootstrap() {
     const r = await emit("admin:reconnect", { code: existing.code, adminSecret: existing.adminSecret })
     if (r.ok) {
       const data = r.data as AdminRoomData
+      await applyTheme(data.room.game.theme)
       setView("adminView", { initial: data.room })
       return
     }
@@ -45,12 +51,14 @@ async function bootstrap() {
     const r = await emit("player:join", { code: existing.code, name: existing.name, playerId: existing.playerId })
     if (r.ok) {
       const data = r.data as PlayerJoinData
+      await applyTheme(data.room.game.theme)
       setView("playerRoomView", { initial: data })
       return
     }
     session.clear()
   }
 
+  clearTheme()
   setView("homeView")
 }
 
