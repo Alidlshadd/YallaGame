@@ -10,11 +10,8 @@ export function emit<E extends keyof ClientToServerEvents>(
   payload: Parameters<ClientToServerEvents[E]>[0]
 ): Promise<AckResult<unknown>> {
   return new Promise(resolve => {
-    const emitAny = socket.emit as unknown as (
-      e: string,
-      p: unknown,
-      cb: (r: AckResult<unknown>) => void
-    ) => void
+    type EmitFn = (e: string, p: unknown, cb: (r: AckResult<unknown>) => void) => void
+    const emitAny = (socket.emit as unknown as EmitFn).bind(socket)
     emitAny(event as string, payload, r => resolve(r))
   })
 }
