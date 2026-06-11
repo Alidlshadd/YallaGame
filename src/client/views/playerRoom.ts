@@ -2,8 +2,11 @@ import { $, clear, el } from "../ui/dom.js"
 import { buildCharacterFrame } from "../ui/character.js"
 import { getLang, t } from "../services/i18n.js"
 import { socket } from "../services/socket.js"
-import { applyTheme } from "../themes/loader.js"
+import * as session from "../services/session.js"
+import { applyTheme, clearTheme } from "../themes/loader.js"
 import { showReveal } from "../ui/roleReveal.js"
+import { setView } from "../router.js"
+import { play } from "../services/sound.js"
 import type { PlayerJoinData, RoleAssignedPayload } from "@shared/events.js"
 
 export const playerRoomView = {
@@ -71,12 +74,23 @@ export const playerRoomView = {
     socket.on("player:role-assigned", onAssigned)
     socket.on("player:role-cleared",  onCleared)
 
+    const onLeave = () => {
+      if (!confirm("Leave this room?")) return
+      void play("click")
+      session.clear()
+      clearTheme()
+      setView("homeView")
+    }
+    const leaveBtn = $<HTMLButtonElement>("#playerLeaveBtn")
+    leaveBtn.addEventListener("click", onLeave)
+
     renderHeader()
     renderSettled()
 
     return () => {
       socket.off("player:role-assigned", onAssigned)
       socket.off("player:role-cleared",  onCleared)
+      leaveBtn.removeEventListener("click", onLeave)
     }
   }
 }

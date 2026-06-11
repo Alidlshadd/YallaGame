@@ -4,7 +4,8 @@ import { socket, emit } from "../services/socket.js"
 import * as session from "../services/session.js"
 import { showToast } from "../ui/toast.js"
 import { play } from "../services/sound.js"
-import { applyTheme } from "../themes/loader.js"
+import { applyTheme, clearTheme } from "../themes/loader.js"
+import { setView } from "../router.js"
 import type { VisibleRoom } from "@shared/types.js"
 
 export const adminView = {
@@ -129,13 +130,23 @@ export const adminView = {
       catch { /* clipboard may be blocked */ }
     }
 
+    const onLeave = () => {
+      if (!confirm("Leave this room? The room will be abandoned.")) return
+      void play("click")
+      session.clear()
+      clearTheme()
+      setView("homeView")
+    }
+
     const saveBtn   = $<HTMLButtonElement>("#saveSettingsBtn")
     const clearBtn  = $<HTMLButtonElement>("#clearRolesBtn")
     const copyBtn   = $<HTMLButtonElement>("#copyCodeBtn")
+    const leaveBtn  = $<HTMLButtonElement>("#adminLeaveBtn")
     saveBtn.addEventListener("click", onSave)
     assignBtn.addEventListener("click", onAssign)
     clearBtn.addEventListener("click", onClear)
     copyBtn.addEventListener("click", onCopy)
+    leaveBtn.addEventListener("click", onLeave)
 
     return () => {
       socket.off("admin:room-updated", onUpdated)
@@ -143,6 +154,7 @@ export const adminView = {
       assignBtn.removeEventListener("click", onAssign)
       clearBtn.removeEventListener("click", onClear)
       copyBtn.removeEventListener("click", onCopy)
+      leaveBtn.removeEventListener("click", onLeave)
     }
   }
 }

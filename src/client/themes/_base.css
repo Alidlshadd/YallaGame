@@ -1300,3 +1300,12 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+
+/* ─── Leave / Back button (admin + player room) ─────────────────── */
+
+.leave-btn {
+  align-self: flex-start;
+  margin-bottom: var(--s-3);
+  color: var(--text-muted);
+}
+.leave-btn:hover { color: var(--text-primary); }

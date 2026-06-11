@@ -259,6 +259,125 @@
   accent-color: var(--theme-accent, #d4af37);
 }
 
+.lp-spy-words {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding-bottom: var(--s-3);
+  border-bottom: 1px solid var(--border-faint);
+}
+
+.lp-section-title {
+  margin: 0;
+  font-size: var(--type-base);
+  color: var(--text-primary);
+}
+
+.lp-category-grid,
+.lp-suspect-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-2);
+}
+
+@media (max-width: 520px) {
+  .lp-category-grid,
+  .lp-suspect-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.lp-category-card {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 10px 12px;
+  border: 1px solid var(--border-faint);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.26);
+  color: var(--text-primary);
+  font-size: var(--type-sm);
+  cursor: pointer;
+}
+
+.lp-category-card input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--theme-accent, #3fb8af);
+}
+
+.lp-custom-label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  color: var(--text-muted);
+  font-size: var(--type-sm);
+}
+
+.lp-custom-words {
+  width: 100%;
+  min-height: 92px;
+  resize: vertical;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-faint);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.lp-custom-words:focus {
+  outline: none;
+  border-color: var(--theme-accent, #3fb8af);
+}
+
+.lp-timer {
+  font-family: var(--font-mono);
+  font-size: clamp(52px, 14vw, 104px);
+  line-height: 1;
+  color: var(--theme-glow, #3fb8af);
+  text-align: center;
+  text-shadow: 0 0 30px var(--theme-glow, #3fb8af);
+}
+
+.lp-suspect {
+  padding: 14px 16px;
+  border: 1px solid var(--border-faint);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.32);
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 180ms, background 180ms, transform 180ms;
+}
+
+.lp-suspect:hover,
+.lp-suspect.selected {
+  transform: translateY(-1px);
+  border-color: var(--theme-accent, #3fb8af);
+  background: rgba(63, 184, 175, 0.16);
+}
+
+.lp-result-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--s-2) var(--s-4);
+  padding: var(--s-4);
+  border: 1px solid var(--border-faint);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.lp-result-card strong {
+  color: var(--theme-glow, #3fb8af);
+}
+
+.lp-result-label {
+  color: var(--text-muted);
+  font-size: var(--type-sm);
+}
+
 /* ─── REVEAL STEP ────────────────────────────────────────── */
 
 .lp-reveal-stage {
