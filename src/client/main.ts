@@ -7,10 +7,12 @@ import { gameInfoView } from "./views/gameInfo.js"
 import { joinView } from "./views/join.js"
 import { playerRoomView } from "./views/playerRoom.js"
 import { adminView } from "./views/admin.js"
+import { localPlayView } from "./views/localPlay.js"
 import { applyTheme, clearTheme } from "./themes/loader.js"
 import { ensureAtmosphere, applyPerformanceProfile } from "./ui/atmosphere.js"
 import "./themes/_base.css"
 import "./themes/home.css"
+import "./themes/local-play.css"
 import type { LangCode, VisibleRoom } from "@shared/types.js"
 import type { AdminRoomData, PlayerJoinData } from "@shared/events.js"
 
@@ -25,6 +27,7 @@ async function bootstrap() {
   register(joinView)
   register(playerRoomView)
   register(adminView)
+  register(localPlayView)
 
   document.querySelectorAll<HTMLButtonElement>(".lang-switch button").forEach(btn => {
     btn.addEventListener("click", () => {

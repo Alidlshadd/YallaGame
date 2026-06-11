@@ -90,7 +90,24 @@ function buildBrandHub(mafiaGame: Game | undefined, lang: ReturnType<typeof getL
 
   const ctaRow = el("div", { class: "cta-row" }, [createBtn, joinBtn])
 
-  const hub = el("div", { class: "brand-hub" }, [badge, title, subtitle, ctaRow])
+  // Local Play tertiary CTA — "pass-and-play" mode on a single device
+  const localBtn = el("button", {
+    class: "cta-local",
+    type: "button",
+    "aria-label": "Local Play — one device, pass and play"
+  }, [
+    el("span", { class: "cta-local-icon" }, ["🎲"]),
+    el("span", { class: "cta-local-text" }, [
+      el("strong", {}, ["Local Play"]),
+      el("span", {}, ["One device · Pass and play"])
+    ])
+  ])
+  localBtn.addEventListener("click", () => {
+    void play("click")
+    setView("localPlayView")
+  })
+
+  const hub = el("div", { class: "brand-hub" }, [badge, title, subtitle, ctaRow, localBtn])
 
   if (mafiaGame) {
     const mafiaTrigger = el("button", {

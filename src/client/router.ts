@@ -1,4 +1,4 @@
-export type ViewId = "homeView" | "gameInfoView" | "joinView" | "playerRoomView" | "adminView"
+export type ViewId = "homeView" | "gameInfoView" | "joinView" | "playerRoomView" | "adminView" | "localPlayView"
 
 export type ViewContext = Record<string, unknown>
 

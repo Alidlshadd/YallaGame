@@ -1,0 +1,386 @@
+/* ═══════════════════════════════════════════════════════════════════
+   LOCAL PLAY (pass-and-play, single device)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.view.local-play {
+  padding: var(--s-7) var(--s-4) var(--s-6);
+  max-width: 720px;
+  width: 100%;
+  margin: 0 auto;
+  align-items: stretch;
+}
+
+.local-play #localPlayBack {
+  align-self: flex-start;
+  margin-bottom: var(--s-3);
+}
+
+.local-play-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  background: var(--surface-glass);
+  backdrop-filter: var(--surface-blur);
+  -webkit-backdrop-filter: var(--surface-blur);
+  border: 1px solid var(--border-faint);
+  border-radius: 16px;
+  padding: var(--s-6) var(--s-5);
+}
+
+/* Progress bar */
+.lp-progress {
+  display: flex;
+  gap: 6px;
+  margin-bottom: var(--s-2);
+}
+.lp-progress-step {
+  flex: 1;
+  height: 3px;
+  background: var(--border-faint);
+  border-radius: 2px;
+}
+.lp-progress-step.done {
+  background: linear-gradient(90deg, #d4af37, #8b1538);
+}
+
+/* Title and sub */
+.lp-title {
+  font-family: var(--theme-display, "Cinzel"), serif;
+  font-size: clamp(var(--type-xl), 5vw, var(--type-2xl));
+  letter-spacing: var(--theme-display-tracking);
+  text-transform: var(--theme-display-transform);
+  color: var(--theme-glow, #d4af37);
+  margin: 0;
+}
+.lp-sub {
+  color: var(--text-muted);
+  font-size: var(--type-sm);
+  margin: 0;
+  line-height: 1.55;
+}
+
+/* Generic actions row */
+.lp-actions {
+  display: flex;
+  gap: var(--s-3);
+  justify-content: flex-end;
+  align-items: center;
+}
+.lp-actions:has(.lp-back):has(.lp-primary) { justify-content: space-between; }
+.lp-actions:has(.lp-secondary):not(:has(.lp-back, .lp-primary)) { justify-content: flex-start; }
+
+.lp-primary,
+.lp-secondary,
+.lp-back {
+  padding: 12px 24px;
+  font-family: var(--font-body);
+  font-size: var(--type-sm);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 200ms, box-shadow 250ms, border-color 200ms, background 200ms;
+}
+.lp-primary {
+  background: linear-gradient(135deg, #d4af37, #8b1538);
+  color: #f0eee6;
+  box-shadow: 0 0 24px rgba(212, 175, 55, 0.3);
+}
+.lp-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 32px rgba(212, 175, 55, 0.5);
+}
+.lp-secondary {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+  border-color: var(--border-faint);
+}
+.lp-secondary:hover {
+  border-color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.08);
+}
+.lp-back {
+  background: transparent;
+  color: var(--text-muted);
+}
+.lp-back:hover { color: var(--text-primary); }
+
+.lp-error {
+  color: #ff8080;
+  font-size: var(--type-sm);
+  min-height: 1.2em;
+}
+.lp-error:empty { display: none; }
+
+/* ─── GAME PICKER ────────────────────────────────────────── */
+
+.lp-game-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s-3);
+}
+@media (max-width: 600px) { .lp-game-grid { grid-template-columns: 1fr; } }
+
+.lp-game-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-4);
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border-faint);
+  border-radius: 12px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 250ms cubic-bezier(0.22, 1, 0.36, 1),
+              border-color 250ms,
+              box-shadow 300ms;
+}
+.lp-game-card[data-theme="vampire-village"] { --card-glow: #c41e3a; }
+.lp-game-card[data-theme="mafia-classic"]   { --card-glow: #d4af37; }
+.lp-game-card[data-theme="spy-game"]        { --card-glow: #3fb8af; }
+
+.lp-game-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--card-glow);
+  box-shadow: 0 16px 32px -8px rgba(0,0,0,0.6), 0 0 32px -8px var(--card-glow);
+}
+
+.lp-game-card img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  object-position: center 15%;
+  border-radius: 8px;
+  filter: contrast(1.05) brightness(0.8);
+  transition: filter 300ms;
+}
+.lp-game-card:hover img { filter: contrast(1.15) brightness(1.0) saturate(1.1); }
+
+.lp-game-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: center;
+}
+.lp-game-info strong {
+  font-family: var(--font-body);
+  font-size: var(--type-base);
+  color: var(--card-glow);
+  letter-spacing: 0.02em;
+}
+.lp-game-info .muted {
+  font-size: var(--type-xs);
+  color: var(--text-muted);
+}
+
+/* ─── NAME ENTRY ─────────────────────────────────────────── */
+
+.lp-name-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+.lp-name-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--s-2);
+}
+.lp-name-num {
+  font-family: var(--font-mono);
+  font-size: var(--type-sm);
+  color: var(--text-muted);
+  width: 28px;
+  text-align: right;
+}
+.lp-name-row input {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-faint);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: var(--type-base);
+  transition: border-color 200ms;
+}
+.lp-name-row input:focus {
+  outline: none;
+  border-color: var(--text-primary);
+}
+.lp-name-remove {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(180, 50, 60, 0.15);
+  border: 1px solid rgba(180, 50, 60, 0.3);
+  color: #ff8080;
+  font-size: 18px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background 200ms, transform 200ms;
+}
+.lp-name-remove:hover {
+  background: rgba(180, 50, 60, 0.3);
+  transform: scale(1.05);
+}
+
+/* ─── SETTINGS ───────────────────────────────────────────── */
+
+.lp-settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+.lp-setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  font-size: var(--type-sm);
+  color: var(--text-muted);
+}
+.lp-setting-row input[type="number"] {
+  width: 80px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-faint);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  text-align: center;
+}
+.lp-setting-row input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--theme-accent, #d4af37);
+}
+
+/* ─── REVEAL STEP ────────────────────────────────────────── */
+
+.lp-reveal-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--s-4);
+  padding: var(--s-6) var(--s-4);
+  min-height: 360px;
+  justify-content: center;
+}
+
+.lp-reveal-progress {
+  font-family: var(--font-mono);
+  font-size: var(--type-xs);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.lp-reveal-name {
+  font-family: var(--theme-display, "Cinzel"), serif;
+  font-size: clamp(40px, 8vw, 72px);
+  letter-spacing: var(--theme-display-tracking, 0.04em);
+  color: var(--theme-glow, #d4af37);
+  text-shadow: 0 0 32px var(--theme-glow, #d4af37);
+  margin: 0;
+  text-align: center;
+}
+
+.lp-reveal-instruction {
+  font-size: var(--type-sm);
+  color: var(--text-muted);
+  max-width: 36ch;
+  margin: 0;
+  line-height: 1.55;
+}
+
+.lp-reveal-cta {
+  padding: 16px 36px;
+  font-size: var(--type-base);
+  margin-top: var(--s-4);
+}
+
+/* ─── DONE STEP ──────────────────────────────────────────── */
+
+.lp-done-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-4) 0;
+}
+.lp-done-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--s-3);
+  align-items: center;
+  padding: var(--s-3) var(--s-4);
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border-faint);
+  border-radius: 8px;
+}
+.lp-done-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+.lp-done-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.lp-done-role {
+  color: var(--theme-glow, #d4af37);
+  font-family: var(--theme-display, "Cinzel"), serif;
+  letter-spacing: 0.04em;
+}
+
+/* ─── HOME BRAND-HUB Local Play CTA ──────────────────────── */
+
+.home-stage .cta-local {
+  margin-top: var(--s-3);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: 10px 18px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  border-radius: 999px;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: transform 250ms, border-color 250ms, box-shadow 300ms;
+}
+.home-stage .cta-local:hover {
+  transform: translateY(-1px);
+  border-color: rgba(212, 175, 55, 0.5);
+  box-shadow: 0 0 24px rgba(212, 175, 55, 0.3);
+}
+
+.home-stage .cta-local-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+.home-stage .cta-local-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.home-stage .cta-local-text strong {
+  font-family: "Cinzel", serif;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: #d4af37;
+}
+.home-stage .cta-local-text span {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}

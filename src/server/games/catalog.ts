@@ -229,7 +229,7 @@ export const GAME_CATALOG: readonly Game[] = [
     icon: "🕶️",
     theme: "spy-game",
     minPlayers: 3,
-    defaultSettings: { spyCount: 1 },
+    defaultSettings: { spyCount: 1, roundMinutes: 5, guessAttempts: 1 },
     title: { ku: "سیخوڕ", ar: "الجاسوس", en: "Spy Game", tr: "Casus Oyunu" },
     subtitle: {
       ku: "یارییەکی ساده؛ هەمووان یەک ڕۆڵیان هەیە بەڵام سیخوڕ جیاوازە.",
@@ -290,6 +290,20 @@ export const GAME_CATALOG: readonly Game[] = [
       }
     ],
     settings: [
+      {
+        type: "number",
+        key: "roundMinutes",
+        min: 1,
+        max: 20,
+        label: { ku: "Discussion Time", ar: "Discussion Time", en: "Discussion Time", tr: "Soru Suresi" }
+      },
+      {
+        type: "number",
+        key: "guessAttempts",
+        min: 1,
+        max: 5,
+        label: { ku: "Guess Attempts", ar: "Guess Attempts", en: "Guess Attempts", tr: "Tahmin Hakki" }
+      },
       {
         type: "number",
         key: "spyCount",
