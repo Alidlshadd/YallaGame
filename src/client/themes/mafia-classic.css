@@ -88,3 +88,95 @@
 /* Contrast verified WCAG AA:
    - accent #c9a961 on bg #1c1812 = 7.3:1
    - glow #e07b39 on bg #1c1812 = 5.8:1 */
+
+/* ─── MAFIA CHARACTER FX ───────────────────────────────────────── */
+
+[data-theme="mafia-classic"] .character-frame .theme-fx .smoke-wisp {
+  position: absolute;
+  bottom: 40%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(220, 200, 180, 0.4);
+  filter: blur(6px);
+  animation: mafia-smoke-rise 4s ease-out infinite;
+  mix-blend-mode: screen;
+}
+
+[data-theme="mafia-classic"] .character-frame .theme-fx .smoke-wisp:nth-of-type(1) { left: 60%; animation-delay: 0s; }
+[data-theme="mafia-classic"] .character-frame .theme-fx .smoke-wisp:nth-of-type(2) { left: 58%; animation-delay: -1.3s; }
+[data-theme="mafia-classic"] .character-frame .theme-fx .smoke-wisp:nth-of-type(3) { left: 62%; animation-delay: -2.6s; }
+[data-theme="mafia-classic"] .character-frame .theme-fx .smoke-wisp:nth-of-type(4) { left: 59%; animation-delay: -3.5s; }
+
+@keyframes mafia-smoke-rise {
+  0%   { transform: translateY(0) translateX(0) scale(0.5); opacity: 0; }
+  20%  { opacity: 0.6; }
+  100% { transform: translateY(-200px) translateX(-30px) scale(4); opacity: 0; }
+}
+
+[data-theme="mafia-classic"] .character-frame .theme-fx .rain-streak {
+  position: absolute;
+  top: -10%;
+  width: 1px;
+  height: 30px;
+  background: linear-gradient(180deg, transparent, rgba(220,210,190,0.4), transparent);
+  animation: mafia-rain-fall 1.2s linear infinite;
+  transform: rotate(15deg);
+}
+
+[data-theme="mafia-classic"] .character-frame .theme-fx .rain-streak:nth-of-type(1) { left: 10%; animation-delay: 0s; }
+[data-theme="mafia-classic"] .character-frame .theme-fx .rain-streak:nth-of-type(2) { left: 25%; animation-delay: -0.3s; }
+[data-theme="mafia-classic"] .character-frame .theme-fx .rain-streak:nth-of-type(3) { left: 40%; animation-delay: -0.6s; }
+[data-theme="mafia-classic"] .character-frame .theme-fx .rain-streak:nth-of-type(4) { left: 55%; animation-delay: -0.9s; }
+[data-theme="mafia-classic"] .character-frame .theme-fx .rain-streak:nth-of-type(5) { left: 70%; animation-delay: -0.2s; }
+[data-theme="mafia-classic"] .character-frame .theme-fx .rain-streak:nth-of-type(6) { left: 85%; animation-delay: -0.5s; }
+[data-theme="mafia-classic"] .character-frame .theme-fx .rain-streak:nth-of-type(7) { left: 95%; animation-delay: -0.8s; }
+
+@keyframes mafia-rain-fall {
+  0%   { transform: translateY(0) rotate(15deg); opacity: 0; }
+  10%  { opacity: 1; }
+  100% { transform: translateY(450px) rotate(15deg); opacity: 0; }
+}
+
+[data-theme="mafia-classic"] .character-frame .theme-fx .neon-flicker {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 15% 30%, rgba(255, 120, 80, 0.25), transparent 25%);
+  mix-blend-mode: screen;
+  animation: mafia-neon-flicker 4s infinite;
+}
+
+@keyframes mafia-neon-flicker {
+  0%, 100%   { opacity: 0.6; }
+  3%, 5%     { opacity: 0.2; }
+  4%         { opacity: 0.9; }
+  20%, 50%   { opacity: 0.7; }
+  80%        { opacity: 0.4; }
+  82%        { opacity: 0.8; }
+}
+
+[data-theme="mafia-classic"] .character-frame .theme-fx .match-glow {
+  position: absolute;
+  top: 25%;
+  right: 25%;
+  width: 30px;
+  height: 30px;
+  background: radial-gradient(circle, rgba(255, 180, 100, 0.6), transparent 70%);
+  border-radius: 50%;
+  filter: blur(4px);
+  animation: mafia-match-pulse 2.5s ease-in-out infinite;
+  mix-blend-mode: screen;
+}
+
+@keyframes mafia-match-pulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%      { opacity: 0.9; transform: scale(1.2); }
+}
+
+[data-theme="mafia-classic"] .game-card:hover .character-frame .theme-fx .smoke-wisp { animation-duration: 2.5s; }
+[data-theme="mafia-classic"] .game-card:hover .character-frame .theme-fx .rain-streak { animation-duration: 0.7s; }
+
+/* Low-end perf: disable rain */
+[data-theme="mafia-classic"] .atmosphere[data-perf="low"] ~ * .character-frame .theme-fx .rain-streak {
+  display: none;
+}

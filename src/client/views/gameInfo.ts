@@ -1,4 +1,5 @@
 import { $, el, clear } from "../ui/dom.js"
+import { buildCharacterFrame } from "../ui/character.js"
 import { getLang, t } from "../services/i18n.js"
 import { setView } from "../router.js"
 import { emit } from "../services/socket.js"
@@ -21,8 +22,11 @@ export const gameInfoView = {
 
     void applyTheme(game.theme).catch(() => {})
 
+    const hero = el("div", { class: "character-hero" })
+    hero.appendChild(buildCharacterFrame(game.theme, game.title[lang]))
+
     const headline = el("div", { class: "game-headline" }, [
-      el("div", { class: "game-icon-big" }, [game.icon]),
+      hero,
       el("h2", { class: "display" }, [game.title[lang]]),
       el("p", { class: "subtitle" }, [game.subtitle[lang]])
     ])

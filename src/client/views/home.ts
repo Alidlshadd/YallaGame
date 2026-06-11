@@ -1,5 +1,6 @@
 import type { Game } from "@shared/types.js"
 import { $, el, clear } from "../ui/dom.js"
+import { buildCharacterFrame } from "../ui/character.js"
 import { getLang } from "../services/i18n.js"
 import { setView } from "../router.js"
 import { clearTheme } from "../themes/loader.js"
@@ -31,7 +32,7 @@ export const homeView = {
           "data-theme": game.theme
         },
         [
-          el("div", { class: "game-icon" }, [game.icon]),
+          buildCharacterFrame(game.theme, game.title[lang]),
           el("strong", {}, [game.title[lang]]),
           el("span", { class: "muted" }, [game.subtitle[lang]])
         ]

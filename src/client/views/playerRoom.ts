@@ -1,4 +1,5 @@
 import { $, clear, el } from "../ui/dom.js"
+import { buildCharacterFrame } from "../ui/character.js"
 import { getLang, t } from "../services/i18n.js"
 import { socket } from "../services/socket.js"
 import { applyTheme } from "../themes/loader.js"
@@ -27,31 +28,31 @@ export const playerRoomView = {
 
     function renderSettled() {
       clear(cardEl)
-      cardEl.classList.toggle("revealed", Boolean(myRole))
-      cardEl.classList.toggle("locked", !myRole)
-      if (myRole) cardEl.classList.add("assigned-once")
+      const isAssigned = Boolean(myRole)
+      cardEl.classList.toggle("revealed", isAssigned)
+      cardEl.classList.toggle("locked", !isAssigned)
+      if (isAssigned) cardEl.classList.add("assigned-once")
 
-      const back = el("div", { class: "role-card-back", "aria-hidden": "true" })
+      const game = ctx.initial?.room.game
+      if (game) cardEl.appendChild(buildCharacterFrame(game.theme, game.title[lang]))
 
-      const face = el("div", { class: "role-card-face" })
+      const info = el("div", { class: "role-card-info" })
       if (!myRole || !myRoleData) {
-        face.append(
-          el("div", { class: "role-glow" }),
+        info.append(
           el("div", { class: "role-lock" }, ["?"]),
           el("h3", {}, [t("roleNotAssigned")]),
           el("p", {}, [t("waitAdmin")])
         )
         statusEl.textContent = t("waitAdmin")
       } else {
-        face.append(
-          el("div", { class: "role-glow" }),
-          el("div", { class: "role-icon big" }, [myRoleData.icon]),
+        info.append(
+          el("div", { class: "role-icon-small" }, [myRoleData.icon]),
           el("h3", {}, [myRoleData.name[lang]]),
           el("p", {}, [myRoleData.desc[lang]])
         )
         statusEl.textContent = ""
       }
-      cardEl.append(back, face)
+      cardEl.appendChild(info)
     }
 
     const onAssigned = async (payload: RoleAssignedPayload) => {
