@@ -66,7 +66,7 @@
 
 /* ─── VAMPIRE CHARACTER FX ─────────────────────────────────────── */
 
-[data-theme="vampire-village"] .character-frame .theme-fx .mist {
+[data-theme="vampire-village"] .theme-fx .mist {
   position: absolute;
   bottom: -20%;
   left: -20%;
@@ -86,7 +86,7 @@
   66%      { transform: translate(3%, -1%) scaleX(0.95); }
 }
 
-[data-theme="vampire-village"] .character-frame .theme-fx .bat-svg {
+[data-theme="vampire-village"] .theme-fx .bat-svg {
   position: absolute;
   width: 30px;
   height: 18px;
@@ -94,9 +94,9 @@
   animation: vamp-bat-fly 6s ease-in-out infinite;
 }
 
-[data-theme="vampire-village"] .character-frame .theme-fx .bat-svg:nth-of-type(1) { top: 10%; left: 15%; }
-[data-theme="vampire-village"] .character-frame .theme-fx .bat-svg:nth-of-type(2) { top: 25%; right: 12%; animation-delay: -2s; }
-[data-theme="vampire-village"] .character-frame .theme-fx .bat-svg:nth-of-type(3) { top: 18%; left: 60%; animation-delay: -4s; }
+[data-theme="vampire-village"] .theme-fx .bat-svg:nth-of-type(1) { top: 10%; left: 15%; }
+[data-theme="vampire-village"] .theme-fx .bat-svg:nth-of-type(2) { top: 25%; right: 12%; animation-delay: -2s; }
+[data-theme="vampire-village"] .theme-fx .bat-svg:nth-of-type(3) { top: 18%; left: 60%; animation-delay: -4s; }
 
 @keyframes vamp-bat-fly {
   0%   { transform: translate(0,0) rotate(-5deg) scale(0.7); opacity: 0; }
@@ -106,7 +106,7 @@
   100% { transform: translate(-60px,-10px) rotate(-3deg) scale(0.7); opacity: 0; }
 }
 
-[data-theme="vampire-village"] .character-frame .theme-fx .blood-drop {
+[data-theme="vampire-village"] .theme-fx .blood-drop {
   position: absolute;
   top: -10px;
   width: 4px;
@@ -118,9 +118,9 @@
   opacity: 0;
 }
 
-[data-theme="vampire-village"] .character-frame .theme-fx .blood-drop:nth-of-type(1) { left: 22%; animation-delay: 0s; }
-[data-theme="vampire-village"] .character-frame .theme-fx .blood-drop:nth-of-type(2) { left: 65%; animation-delay: -1.5s; }
-[data-theme="vampire-village"] .character-frame .theme-fx .blood-drop:nth-of-type(3) { left: 88%; animation-delay: -3s; }
+[data-theme="vampire-village"] .theme-fx .blood-drop:nth-of-type(1) { left: 22%; animation-delay: 0s; }
+[data-theme="vampire-village"] .theme-fx .blood-drop:nth-of-type(2) { left: 65%; animation-delay: -1.5s; }
+[data-theme="vampire-village"] .theme-fx .blood-drop:nth-of-type(3) { left: 88%; animation-delay: -3s; }
 
 @keyframes vamp-blood-fall {
   0%   { transform: translateY(-20px); opacity: 0; }
@@ -129,7 +129,7 @@
   100% { transform: translateY(420px); opacity: 0; }
 }
 
-[data-theme="vampire-village"] .character-frame .theme-fx .lightning {
+[data-theme="vampire-village"] .theme-fx .lightning {
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg, rgba(255,180,200,0.3), transparent 40%);
@@ -145,11 +145,11 @@
   95%, 96%      { opacity: 0.7; }
 }
 
-[data-theme="vampire-village"] .game-card:hover .character-frame .theme-fx .bat-svg { animation-duration: 3s; }
-[data-theme="vampire-village"] .game-card:hover .character-frame .theme-fx .blood-drop { animation-duration: 2s; }
+[data-theme="vampire-village"] .game-card:hover .theme-fx .bat-svg { animation-duration: 3s; }
+[data-theme="vampire-village"] .game-card:hover .theme-fx .blood-drop { animation-duration: 2s; }
 
 /* Low-end perf: disable blood drops & lightning */
-[data-theme="vampire-village"] .atmosphere[data-perf="low"] ~ * .character-frame .theme-fx .blood-drop,
-[data-theme="vampire-village"] .atmosphere[data-perf="low"] ~ * .character-frame .theme-fx .lightning {
+[data-theme="vampire-village"] .atmosphere[data-perf="low"] ~ * .theme-fx .blood-drop,
+[data-theme="vampire-village"] .atmosphere[data-perf="low"] ~ * .theme-fx .lightning {
   display: none;
 }

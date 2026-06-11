@@ -81,11 +81,11 @@
 
 /* ─── SPY CHARACTER FX ─────────────────────────────────────────── */
 
-[data-theme="spy-game"] .character-frame .theme-fx {
+[data-theme="spy-game"] .theme-fx {
   font-family: var(--font-mono);
 }
 
-[data-theme="spy-game"] .character-frame .theme-fx .bracket {
+[data-theme="spy-game"] .theme-fx .bracket {
   position: absolute;
   width: 20px;
   height: 20px;
@@ -96,17 +96,17 @@
   animation: spy-bracket-pulse 2s ease-in-out infinite;
 }
 
-[data-theme="spy-game"] .character-frame .theme-fx .bracket.tl { top: 8%;    left: 8%;  border-top-width: 2px;    border-left-width: 2px; }
-[data-theme="spy-game"] .character-frame .theme-fx .bracket.tr { top: 8%;    right: 8%; border-top-width: 2px;    border-right-width: 2px; }
-[data-theme="spy-game"] .character-frame .theme-fx .bracket.bl { bottom: 8%; left: 8%;  border-bottom-width: 2px; border-left-width: 2px; }
-[data-theme="spy-game"] .character-frame .theme-fx .bracket.br { bottom: 8%; right: 8%; border-bottom-width: 2px; border-right-width: 2px; }
+[data-theme="spy-game"] .theme-fx .bracket.tl { top: 8%;    left: 8%;  border-top-width: 2px;    border-left-width: 2px; }
+[data-theme="spy-game"] .theme-fx .bracket.tr { top: 8%;    right: 8%; border-top-width: 2px;    border-right-width: 2px; }
+[data-theme="spy-game"] .theme-fx .bracket.bl { bottom: 8%; left: 8%;  border-bottom-width: 2px; border-left-width: 2px; }
+[data-theme="spy-game"] .theme-fx .bracket.br { bottom: 8%; right: 8%; border-bottom-width: 2px; border-right-width: 2px; }
 
 @keyframes spy-bracket-pulse {
   0%, 100% { opacity: 0.5; transform: scale(1); }
   50%      { opacity: 1;   transform: scale(1.15); }
 }
 
-[data-theme="spy-game"] .character-frame .theme-fx .hud-text {
+[data-theme="spy-game"] .theme-fx .hud-text {
   position: absolute;
   top: 50%;
   right: 12px;
@@ -127,7 +127,7 @@
   50%      { opacity: 0.85; }
 }
 
-[data-theme="spy-game"] .character-frame .theme-fx .code-col {
+[data-theme="spy-game"] .theme-fx .code-col {
   position: absolute;
   top: -30%;
   font-size: 9px;
@@ -141,10 +141,10 @@
   writing-mode: vertical-rl;
 }
 
-[data-theme="spy-game"] .character-frame .theme-fx .code-col:nth-of-type(1) { left: 8%;  animation-delay: 0s;   }
-[data-theme="spy-game"] .character-frame .theme-fx .code-col:nth-of-type(2) { left: 30%; animation-delay: -2s;  }
-[data-theme="spy-game"] .character-frame .theme-fx .code-col:nth-of-type(3) { left: 50%; animation-delay: -4s;  }
-[data-theme="spy-game"] .character-frame .theme-fx .code-col:nth-of-type(4) { left: 75%; animation-delay: -1.5s; }
+[data-theme="spy-game"] .theme-fx .code-col:nth-of-type(1) { left: 8%;  animation-delay: 0s;   }
+[data-theme="spy-game"] .theme-fx .code-col:nth-of-type(2) { left: 30%; animation-delay: -2s;  }
+[data-theme="spy-game"] .theme-fx .code-col:nth-of-type(3) { left: 50%; animation-delay: -4s;  }
+[data-theme="spy-game"] .theme-fx .code-col:nth-of-type(4) { left: 75%; animation-delay: -1.5s; }
 
 @keyframes spy-code-fall {
   0%   { transform: translateY(0); opacity: 0; }
@@ -153,7 +153,7 @@
   100% { transform: translateY(130%); opacity: 0; }
 }
 
-[data-theme="spy-game"] .character-frame .theme-fx .scan-beam {
+[data-theme="spy-game"] .theme-fx .scan-beam {
   position: absolute;
   left: 0;
   right: 0;
@@ -169,18 +169,18 @@
   100% { top: 105%; opacity: 0.7; }
 }
 
-[data-theme="spy-game"] .character-frame .theme-fx .crt-lines {
+[data-theme="spy-game"] .theme-fx .crt-lines {
   position: absolute;
   inset: 0;
   background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(63,184,175,0.05) 2px, rgba(63,184,175,0.05) 3px);
   mix-blend-mode: screen;
 }
 
-[data-theme="spy-game"] .game-card:hover .character-frame .theme-fx .bracket { animation-duration: 1s; }
-[data-theme="spy-game"] .game-card:hover .character-frame .theme-fx .scan-beam { animation-duration: 1.5s; }
-[data-theme="spy-game"] .game-card:hover .character-frame .theme-fx .code-col { animation-duration: 3s; }
+[data-theme="spy-game"] .game-card:hover .theme-fx .bracket { animation-duration: 1s; }
+[data-theme="spy-game"] .game-card:hover .theme-fx .scan-beam { animation-duration: 1.5s; }
+[data-theme="spy-game"] .game-card:hover .theme-fx .code-col { animation-duration: 3s; }
 
 /* Low-end perf: hide code rain */
-[data-theme="spy-game"] .atmosphere[data-perf="low"] ~ * .character-frame .theme-fx .code-col {
+[data-theme="spy-game"] .atmosphere[data-perf="low"] ~ * .theme-fx .code-col {
   display: none;
 }

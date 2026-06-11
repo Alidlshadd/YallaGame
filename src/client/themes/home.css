@@ -1,0 +1,608 @@
+/* ═══════════════════════════════════════════════════════════════════
+   HOME — THREE WORLDS + BRAND HUB (Riot/Steam/Diablo-inspired)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Override .view defaults: home goes full-bleed */
+.view.home-stage {
+  max-width: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  position: relative;
+  height: 100vh;
+}
+
+.view.home-stage.active-view {
+  height: 100vh;
+  gap: 0;
+  display: block;
+  animation: none;
+}
+
+/* Stage = the 3 columns container */
+.home-stage .stage {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 33% 34% 33%;
+  transition: grid-template-columns 700ms cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 0;
+}
+
+/* Hover ratios via :has() */
+.home-stage .stage:has(.world-zone[data-game="vampire-village"]:hover) {
+  grid-template-columns: 60% 20% 20%;
+}
+.home-stage .stage:has(.world-zone[data-game="spy-game"]:hover) {
+  grid-template-columns: 20% 20% 60%;
+}
+.home-stage .stage:has(.mafia-trigger:hover),
+.home-stage .stage:has(.mafia-zone:hover) {
+  grid-template-columns: 20% 60% 20%;
+}
+
+/* ─── WORLD ZONES (Vampire + Spy on sides) ──────────────────── */
+
+.home-stage .world-zone {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  background: #000;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  transform: none;
+  isolation: isolate;
+  display: block;
+  transition: opacity 500ms ease-out;
+}
+
+.home-stage .world-zone[data-theme="vampire-village"] {
+  --zone-accent: #c41e3a;
+  --zone-glow: #ffd700;
+  --zone-overlay: rgba(26, 4, 16, 0.82);
+}
+.home-stage .world-zone[data-theme="spy-game"] {
+  --zone-accent: #3fb8af;
+  --zone-glow: #5dc7ff;
+  --zone-overlay: rgba(6, 16, 24, 0.82);
+}
+
+.home-stage .world-zone::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--zone-overlay);
+  mix-blend-mode: multiply;
+  opacity: 0.85;
+  transition: opacity 700ms ease-out;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.home-stage .world-zone:hover::before { opacity: 0.2; }
+
+.home-stage .world-zone::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 40%, transparent 30%, rgba(0,0,0,0.7) 100%);
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.7;
+  transition: opacity 700ms ease-out;
+}
+.home-stage .world-zone:hover::after { opacity: 0.4; }
+
+/* Theme effects layer inside home zones (mist/bats/rain/HUD etc) */
+.home-stage .theme-fx {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  overflow: hidden;
+}
+
+.home-stage .world-zone img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 15%;
+  filter: contrast(1.05) brightness(0.6) saturate(0.85);
+  transition: transform 800ms cubic-bezier(0.22,1,0.36,1), filter 600ms ease-out;
+  display: block;
+}
+
+.home-stage .world-zone:hover img {
+  transform: scale(1.06);
+  filter: contrast(1.15) brightness(0.95) saturate(1.1);
+}
+
+.home-stage .stage:hover .world-zone:not(:hover) { opacity: 0.55; }
+
+/* Zone content (bottom of side worlds) */
+.home-stage .zone-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  padding: var(--s-6) var(--s-5) var(--s-8);
+  background: linear-gradient(0deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 60%, transparent 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-2);
+  transform: translateY(30px);
+  transition: transform 700ms cubic-bezier(0.22,1,0.36,1);
+  text-align: left;
+}
+
+.home-stage .world-zone:hover .zone-content,
+.home-stage .mafia-zone:hover .zone-content { transform: translateY(0); }
+
+.home-stage .zone-kicker {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.home-stage .zone-title {
+  font-family: "Cinzel", serif;
+  font-weight: 800;
+  font-size: clamp(28px, 3.5vw, 56px);
+  letter-spacing: 0.05em;
+  color: var(--zone-accent);
+  text-shadow: 0 0 24px var(--zone-accent), 2px 2px 0 rgba(0,0,0,0.6);
+  line-height: 1;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.home-stage .zone-desc {
+  font-size: 13px;
+  color: var(--text-primary);
+  max-width: 32ch;
+  line-height: 1.55;
+  margin: 0;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 400ms 200ms, transform 400ms 200ms cubic-bezier(0.22,1,0.36,1);
+}
+
+.home-stage .world-zone:hover .zone-desc,
+.home-stage .mafia-zone:hover .zone-desc { opacity: 1; transform: translateY(0); }
+
+.home-stage .zone-enter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 10px 18px;
+  background: var(--zone-accent);
+  color: #000;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  border-radius: 2px;
+  margin-top: var(--s-3);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 400ms 350ms, transform 400ms 350ms cubic-bezier(0.22,1,0.36,1);
+  box-shadow: 0 0 24px var(--zone-accent);
+}
+
+.home-stage .world-zone:hover .zone-enter,
+.home-stage .mafia-zone:hover .zone-enter { opacity: 1; transform: translateY(0); }
+
+@keyframes attention-pulse {
+  0%, 100% { transform: scale(1); filter: contrast(1.05) brightness(0.6); }
+  50%      { transform: scale(1.02); filter: contrast(1.2) brightness(1.0) saturate(1.2); }
+}
+.home-stage .world-zone.attention-pulse img,
+.home-stage .mafia-zone.attention-pulse img {
+  animation: attention-pulse 1s ease-in-out;
+}
+
+/* ─── CENTER ZONE: BRAND HUB ──────────────────────────────── */
+
+.home-stage .center-zone {
+  position: relative;
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(212, 175, 55, 0.08) 0%, transparent 60%),
+    radial-gradient(ellipse at 50% 100%, rgba(139, 21, 56, 0.05) 0%, transparent 70%),
+    linear-gradient(180deg, #0c0a14 0%, #050308 100%);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Volumetric fog */
+.home-stage .center-fog {
+  position: absolute;
+  bottom: -20%;
+  left: -10%;
+  right: -10%;
+  height: 60%;
+  background:
+    radial-gradient(ellipse at 40% 100%, rgba(212, 175, 55, 0.1), transparent 60%),
+    radial-gradient(ellipse at 60% 100%, rgba(139, 21, 56, 0.08), transparent 60%);
+  filter: blur(40px);
+  pointer-events: none;
+  animation: center-fog-flow 15s ease-in-out infinite;
+  z-index: 1;
+}
+
+@keyframes center-fog-flow {
+  0%, 100% { transform: translate(0,0) scaleX(1); opacity: 0.7; }
+  50%      { transform: translate(2%,-3%) scaleX(1.05); opacity: 1; }
+}
+
+/* Floating particles */
+.home-stage .center-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 2;
+}
+
+.home-stage .center-particle {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: rgba(212, 175, 55, 0.5);
+  border-radius: 50%;
+  box-shadow: 0 0 4px rgba(212, 175, 55, 0.8);
+  animation: particle-float 12s linear infinite;
+}
+
+.home-stage .center-particle:nth-child(1)  { left: 8%;  animation-delay: 0s;    }
+.home-stage .center-particle:nth-child(2)  { left: 18%; animation-delay: -1.5s; }
+.home-stage .center-particle:nth-child(3)  { left: 28%; animation-delay: -3s;   }
+.home-stage .center-particle:nth-child(4)  { left: 38%; animation-delay: -4.5s; }
+.home-stage .center-particle:nth-child(5)  { left: 48%; animation-delay: -6s;   }
+.home-stage .center-particle:nth-child(6)  { left: 58%; animation-delay: -7.5s; }
+.home-stage .center-particle:nth-child(7)  { left: 68%; animation-delay: -9s;   }
+.home-stage .center-particle:nth-child(8)  { left: 78%; animation-delay: -10.5s; }
+.home-stage .center-particle:nth-child(9)  { left: 88%; animation-delay: -1s;   }
+.home-stage .center-particle:nth-child(10) { left: 12%; animation-delay: -2.5s; }
+.home-stage .center-particle:nth-child(11) { left: 62%; animation-delay: -8s;   }
+.home-stage .center-particle:nth-child(12) { left: 92%; animation-delay: -5.5s; }
+
+@keyframes particle-float {
+  0%   { transform: translateY(100vh) translateX(0); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateY(-10vh) translateX(15px); opacity: 0; }
+}
+
+.home-stage .brand-hub {
+  position: relative;
+  z-index: 4;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--s-7) var(--s-4);
+  gap: var(--s-4);
+  transition: opacity 600ms ease-out, transform 600ms cubic-bezier(0.22,1,0.36,1);
+  animation: brand-fade-in 1.2s ease-out;
+}
+
+@keyframes brand-fade-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.home-stage .hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 999px;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.home-stage .hero-badge .live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 8px #ef4444;
+  animation: home-live-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes home-live-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+
+.home-stage .mega-title {
+  font-family: "Cinzel", serif;
+  font-weight: 800;
+  font-size: clamp(48px, 6vw, 96px);
+  letter-spacing: 0.06em;
+  line-height: 0.95;
+  background: linear-gradient(180deg, #ffffff 0%, #d4af37 50%, #8b1538 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 80px rgba(212, 175, 55, 0.3);
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.home-stage .mega-subtitle {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0;
+  max-width: 28ch;
+  line-height: 1.7;
+}
+
+.home-stage .cta-row {
+  display: flex;
+  gap: var(--s-3);
+  margin-top: var(--s-4);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.home-stage .cta-create,
+.home-stage .cta-join {
+  padding: 14px 28px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: transform 250ms, box-shadow 300ms, background 250ms, border-color 250ms;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.home-stage .cta-create {
+  background: linear-gradient(135deg, #d4af37, #8b1538);
+  color: #f0eee6;
+  box-shadow: 0 0 24px rgba(212, 175, 55, 0.4), inset 0 0 0 1px rgba(255,255,255,0.1);
+}
+
+.home-stage .cta-create:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 36px rgba(212, 175, 55, 0.7), inset 0 0 0 1px rgba(255,255,255,0.2);
+}
+
+.home-stage .cta-join {
+  background: rgba(0,0,0,0.5);
+  color: var(--text-primary);
+  border-color: rgba(255,255,255,0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.home-stage .cta-join:hover {
+  transform: translateY(-2px);
+  border-color: var(--text-primary);
+  box-shadow: 0 0 24px rgba(255,255,255,0.15);
+}
+
+/* Mafia trigger card */
+.home-stage .mafia-trigger {
+  margin-top: var(--s-5);
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: 12px 20px;
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 999px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: transform 250ms, border-color 250ms, box-shadow 300ms;
+}
+
+.home-stage .mafia-trigger:hover {
+  transform: translateY(-2px);
+  border-color: rgba(212, 175, 55, 0.6);
+  box-shadow: 0 0 32px rgba(212, 175, 55, 0.4);
+}
+
+.home-stage .mafia-trigger-img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: top center;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.home-stage .mafia-trigger-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.home-stage .trigger-kicker {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.home-stage .mafia-trigger strong {
+  font-family: "Cinzel", serif;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  color: #d4af37;
+}
+
+.home-stage .trigger-arrow {
+  color: #d4af37;
+  font-size: 16px;
+  transition: transform 250ms;
+}
+
+.home-stage .mafia-trigger:hover .trigger-arrow {
+  transform: translateX(4px);
+}
+
+/* ─── MAFIA ZONE — appears on hover of trigger or itself ─── */
+
+.home-stage .mafia-zone {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  cursor: pointer;
+  overflow: hidden;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  border-radius: 0;
+  isolation: isolate;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 600ms cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 5;
+  --zone-accent: #d4af37;
+  --zone-glow: #e07b39;
+}
+
+.home-stage .stage:has(.mafia-trigger:hover) .mafia-zone,
+.home-stage .stage:has(.mafia-zone:hover) .mafia-zone {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.home-stage .stage:has(.mafia-trigger:hover) .brand-hub,
+.home-stage .stage:has(.mafia-zone:hover) .brand-hub {
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+}
+
+.home-stage .mafia-zone img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 15%;
+  filter: contrast(1.05) brightness(0.7) saturate(0.9);
+  transition: transform 800ms cubic-bezier(0.22,1,0.36,1), filter 600ms;
+  display: block;
+}
+
+.home-stage .mafia-zone:hover img {
+  transform: scale(1.05);
+  filter: contrast(1.15) brightness(0.95) saturate(1.1);
+}
+
+.home-stage .mafia-zone::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 10, 6, 0.55);
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.home-stage .mafia-zone::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 30%, transparent 30%, rgba(0,0,0,0.7) 100%);
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.5;
+}
+
+.home-stage .mafia-zone .zone-content {
+  z-index: 5;
+}
+
+/* ─── MOBILE ──────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .home-stage .stage {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: 1fr auto 1fr 1fr;
+    overflow-y: auto;
+  }
+
+  .home-stage .stage:has(.world-zone:hover),
+  .home-stage .stage:has(.mafia-trigger:hover),
+  .home-stage .stage:has(.mafia-zone:hover) {
+    grid-template-columns: 1fr !important;
+  }
+
+  .home-stage .center-zone {
+    min-height: 60vh;
+    padding: var(--s-6) 0;
+  }
+
+  .home-stage .mafia-zone {
+    position: static;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    height: 50vh;
+    min-height: 320px;
+  }
+
+  .home-stage .world-zone {
+    min-height: 50vh;
+  }
+
+  .home-stage .zone-content,
+  .home-stage .mafia-zone .zone-content {
+    transform: translateY(0);
+  }
+  .home-stage .zone-desc, .home-stage .zone-enter {
+    opacity: 1;
+    transform: none;
+  }
+
+  .home-stage .mega-title { font-size: clamp(40px, 14vw, 72px); }
+  .home-stage .mafia-trigger { display: none; }
+}
+
+/* ─── REDUCED MOTION ──────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .home-stage .stage,
+  .home-stage .world-zone img,
+  .home-stage .mafia-zone img,
+  .home-stage .center-particle,
+  .home-stage .center-fog,
+  .home-stage .brand-hub,
+  .home-stage .zone-content {
+    animation: none !important;
+    transition-duration: 150ms !important;
+  }
+}

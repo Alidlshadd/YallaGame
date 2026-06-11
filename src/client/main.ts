@@ -10,6 +10,7 @@ import { adminView } from "./views/admin.js"
 import { applyTheme, clearTheme } from "./themes/loader.js"
 import { ensureAtmosphere, applyPerformanceProfile } from "./ui/atmosphere.js"
 import "./themes/_base.css"
+import "./themes/home.css"
 import type { LangCode, VisibleRoom } from "@shared/types.js"
 import type { AdminRoomData, PlayerJoinData } from "@shared/events.js"
 

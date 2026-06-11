@@ -38,25 +38,9 @@
   </div>
 
   <main class="shell">
-    <!-- ─── HOME ──────────────────────────────────────────── -->
-    <section id="homeView" class="view active-view home">
-      <div class="hero">
-        <p class="eyebrow" data-i18n="liveRoom">Live Room System</p>
-        <h1 class="display" data-i18n="title">Multiple Games, One System</h1>
-        <p class="lede" data-i18n="subtitle">
-          Choose a game, create a room, players join with a code, and each player only sees their own role.
-        </p>
-      </div>
-
-      <div id="gamesGrid" class="games-grid"></div>
-
-      <div class="join-shortcut">
-        <div>
-          <strong data-i18n="alreadyHaveCode">Already have a room code?</strong>
-          <span data-i18n="joinDirectText">Players can join directly with a code.</span>
-        </div>
-        <button id="showJoinBtn" class="btn btn-secondary" data-i18n="joinRoom">Join Room</button>
-      </div>
+    <!-- ─── HOME (Three Worlds + Brand Hub) ───────────────── -->
+    <section id="homeView" class="view active-view home-stage">
+      <div class="stage" id="gamesStage"></div>
     </section>
 
     <!-- ─── GAME INFO ─────────────────────────────────────── -->

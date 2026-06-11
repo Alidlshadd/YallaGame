@@ -63,6 +63,15 @@ const FX_BUILDERS: Record<string, () => HTMLDivElement> = {
 }
 
 /**
+ * Build just the per-theme effect layer (mist/bats/rain/HUD etc).
+ * Returns null for unknown themes.
+ */
+export function buildThemeFx(theme: string): HTMLDivElement | null {
+  const builder = FX_BUILDERS[theme]
+  return builder ? builder() : null
+}
+
+/**
  * Build a character frame with image + atmospheric layers + theme-specific FX.
  * Frame uses /characters/<theme>.png from publicDir.
  */
