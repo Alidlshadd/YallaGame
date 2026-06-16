@@ -1,4 +1,4 @@
-# Multigame Role Room Platform
+# Yalla Game
 
 Room-code platform for multiple hidden-role games. Admin creates a room, players join with a code, each player sees only their own role.
 

@@ -25,7 +25,6 @@ export const joinView = {
     const name = $<HTMLInputElement>("#playerNameInput")
     const msg  = $<HTMLDivElement>("#joinMessage")
 
-    code.value = ""; name.value = ""
     code.classList.remove("locked")
     msg.classList.add("hidden"); msg.textContent = ""
 
@@ -57,12 +56,12 @@ export const joinView = {
       session.save({ kind: "player", code: c, playerId: data.player.id, name: data.player.name })
       await applyTheme(data.room.game.theme)
       void play("transition")
-      setView("playerRoomView", { initial: data })
+      await setView("playerRoomView", { initial: data })
     }
 
     const onBack = () => {
       clearTheme()
-      setView("homeView")
+      void setView("homeView")
     }
 
     const btn = $<HTMLButtonElement>("#joinBtn")

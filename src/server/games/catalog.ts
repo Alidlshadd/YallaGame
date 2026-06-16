@@ -50,7 +50,7 @@ export const GAME_CATALOG: readonly Game[] = [
         id: "vampire",
         icon: "🧛",
         countSetting: "vampireCount",
-        name: { ku: "ڤامپایەر", ar: "مصاص دماء", en: "Vampire", tr: "Vampir" },
+        name: { ku: "ڤامپایەری شەو", ar: "مصاص دماء ليلي", en: "Night Vampire", tr: "Gece Vampiri" },
         desc: {
           ku: "تۆ ڤامپایەری. ڕۆڵەکەت بە نهێنی بهێڵەوە.",
           ar: "أنت مصاص دماء. أخفِ دورك عن الآخرين.",
@@ -159,12 +159,12 @@ export const GAME_CATALOG: readonly Game[] = [
         id: "mafia",
         icon: "🕴️",
         countSetting: "mafiaCount",
-        name: { ku: "مافیا", ar: "مافيا", en: "Mafia", tr: "Mafya" },
+        name: { ku: "گەورەی مافیا", ar: "زعيم المافيا", en: "Mafia Boss", tr: "Mafya Babası" },
         desc: {
-          ku: "تۆ مافیایت. ڕۆڵەکەت بشارەوە.",
-          ar: "أنت من المافيا. أخفِ دورك.",
-          en: "You are Mafia. Hide your role.",
-          tr: "Sen Mafyasın. Rolünü gizle."
+          ku: "تۆ گەورەی مافیایت. ناسنامەت بشارەوە و شەو کۆنترۆڵ بکە.",
+          ar: "أنت زعيم المافيا. أخفِ هويتك واحكم الليل.",
+          en: "You are the Mafia Boss. Hide your identity and control the night.",
+          tr: "Sen Mafya Babasısın. Kimliğini gizle ve geceyi yönet."
         }
       },
       {
@@ -173,10 +173,10 @@ export const GAME_CATALOG: readonly Game[] = [
         enabledSetting: "doctor",
         name: { ku: "پزیشک", ar: "الطبيب", en: "Doctor", tr: "Doktor" },
         desc: {
-          ku: "تۆ پزیشکی و لای شارستانییەکانیت.",
-          ar: "أنت الطبيب وأنت مع المدنيين.",
-          en: "You are the Doctor and you are on the citizen side.",
-          tr: "Sen Doktorsun ve vatandaş tarafındasın."
+          ku: "تۆ پزیشکی. یاریزانان بپارێزە و پشتگیری شار بکە.",
+          ar: "أنت الطبيب. احمِ اللاعبين وادعم المدينة.",
+          en: "You are the Doctor. Protect players and support the city.",
+          tr: "Sen Doktorsun. Oyuncuları koru ve şehre destek ol."
         }
       },
       {
@@ -185,10 +185,10 @@ export const GAME_CATALOG: readonly Game[] = [
         enabledSetting: "detective",
         name: { ku: "پشکنەر", ar: "المحقق", en: "Detective", tr: "Dedektif" },
         desc: {
-          ku: "تۆ پشکنەری. مافیا بدۆزەوە.",
-          ar: "أنت المحقق. حاول اكتشاف المافيا.",
-          en: "You are the Detective. Try to find the mafia.",
-          tr: "Sen Dedektifsin. Mafyayı bulmaya çalış."
+          ku: "تۆ پشکنەری. لێکۆڵینەوە بکە و مافیا بدۆزەوە.",
+          ar: "أنت المحقق. حقّق وابحث عن المافيا.",
+          en: "You are the Detective. Investigate and find the mafia.",
+          tr: "Sen Dedektifsin. Araştır ve mafyayı bul."
         }
       },
       {
@@ -197,10 +197,10 @@ export const GAME_CATALOG: readonly Game[] = [
         filler: true,
         name: { ku: "شارستانی", ar: "مدني", en: "Citizen", tr: "Vatandaş" },
         desc: {
-          ku: "تۆ شارستانییت. مافیا بدۆزەوە.",
-          ar: "أنت مدني. حاول معرفة المافيا.",
-          en: "You are a Citizen. Try to find the mafia.",
-          tr: "Sen Vatandaşsın. Mafyayı bulmaya çalış."
+          ku: "تۆ شارستانییت. تەماشا بکە، گفتوگۆ بکە و ڕاستی بدۆزەرەوە.",
+          ar: "أنت مدني. راقب وناقش واكتشف الحقيقة.",
+          en: "You are a Citizen. Watch, discuss, and discover the truth.",
+          tr: "Sen Vatandaşsın. Gözle, tartış ve gerçeği keşfet."
         }
       }
     ],
@@ -310,6 +310,105 @@ export const GAME_CATALOG: readonly Game[] = [
         min: 1,
         max: 4,
         label: { ku: "ژمارەی سیخوڕ", ar: "عدد الجواسيس", en: "Spy Count", tr: "Casus Sayısı" }
+      }
+    ]
+  },
+  {
+    id: "who-am-i",
+    icon: "❓",
+    theme: "who-am-i",
+    minPlayers: 2,
+    defaultSettings: { roundSeconds: 60 },
+    title: { ku: "من چیم؟", ar: "من أنا؟", en: "Who Am I?", tr: "Ben Neyim?" },
+    subtitle: {
+      ku: "یارییەکی پارتی: هەر یاریزانێک ناسنامەیەکی شاراوەی هەیە و دەبێت بە پرسیار بدۆزێتەوە.",
+      ar: "لعبة حفلات: لكل لاعب هوية خفية يجب اكتشافها بالأسئلة.",
+      en: "A party guessing game: each player has a hidden identity to uncover by asking questions.",
+      tr: "Parti tahmin oyunu: her oyuncuya gizli bir kimlik verilir, sorularla bulunmalıdır."
+    },
+    rules: {
+      ku: [
+        "هۆست ژوور دروست دەکات و کاتیگۆرییەک هەڵدەبژێرێت.",
+        "یاریزانان بە کۆد دێنە ژوورەوە؛ هەر کەس ناسنامەیەکی شاراوە وەردەگرێت.",
+        "تۆ ناسنامەی خۆت نابینیت — دیکە دەیبینن.",
+        "بە پرسیاری بەڵێ/نا هەوڵبدە بدۆزیتەوە کێی یان چی."
+      ],
+      ar: [
+        "ينشئ المضيف غرفة ويختار فئة.",
+        "يدخل اللاعبون بالكود ويتلقى كل واحد هوية خفية.",
+        "أنت لا ترى هويتك — الآخرون يرونها.",
+        "اطرح أسئلة بنعم/لا حتى تكتشف من أو ما أنت."
+      ],
+      en: [
+        "The host creates a room and chooses a category.",
+        "Players join with a code; each gets a hidden identity.",
+        "You cannot see your own identity — others can.",
+        "Ask yes/no questions until you discover who or what you are."
+      ],
+      tr: [
+        "Yönetici oda kurar ve bir kategori seçer.",
+        "Oyuncular kod ile girer; her birine gizli bir kimlik verilir.",
+        "Kendi kimliğini göremezsin — diğerleri görür.",
+        "Evet/hayır soruları sorarak kim ya da ne olduğunu keşfet."
+      ]
+    },
+    roles: [
+      {
+        id: "animal",
+        icon: "🐾",
+        filler: true,
+        name: { ku: "ئاژەڵەکان", ar: "حيوانات",  en: "Animals", tr: "Hayvanlar" },
+        desc: {
+          ku: "گیانلەبەرانی کێوی، ئاژەڵە ماڵییەکان، یان زیندەوەری ئەفسانەیی.",
+          ar: "حياة برية أو حيوانات أليفة أو مخلوقات أسطورية.",
+          en: "Wildlife, pets, or mythical creatures.",
+          tr: "Vahşi hayvanlar, evcil dostlar veya efsanevi yaratıklar."
+        }
+      },
+      {
+        id: "job",
+        icon: "👨‍⚕️",
+        filler: true,
+        name: { ku: "پیشەکان", ar: "مهن", en: "Jobs", tr: "Meslekler" },
+        desc: {
+          ku: "پیشە و کارەکانی نێو کۆمەڵگا.",
+          ar: "مهن وأدوار اجتماعية.",
+          en: "Professions and roles in society.",
+          tr: "Mesleki rol ve görevler."
+        }
+      },
+      {
+        id: "object",
+        icon: "🎁",
+        filler: true,
+        name: { ku: "شتومەک", ar: "أشياء", en: "Objects", tr: "Nesneler" },
+        desc: {
+          ku: "شتە ڕۆژانە و ئامرازەکان.",
+          ar: "أشياء وأدوات يومية.",
+          en: "Everyday items and tools.",
+          tr: "Günlük eşyalar ve aletler."
+        }
+      },
+      {
+        id: "famous",
+        icon: "⭐",
+        filler: true,
+        name: { ku: "کەسایەتییە ناودارەکان", ar: "شخصيات مشهورة", en: "Famous People", tr: "Ünlü Kişiler" },
+        desc: {
+          ku: "ستێرە، کەسایەتی مێژوویی، یان کاراکتەرە بەناوبانگەکان.",
+          ar: "مشاهير وشخصيات تاريخية وأبطال.",
+          en: "Celebrities, historical figures, and beloved characters.",
+          tr: "Ünlüler, tarihi kişilikler ve sevilen karakterler."
+        }
+      }
+    ],
+    settings: [
+      {
+        type: "number",
+        key: "roundSeconds",
+        min: 15,
+        max: 180,
+        label: { ku: "کاتی خولی (چرکە)", ar: "وقت الجولة (ثواني)", en: "Round Time (seconds)", tr: "Tur Süresi (saniye)" }
       }
     ]
   }

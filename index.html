@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Role Room — Cinematic hidden-role games</title>
+  <title>Yalla Game - Cinematic hidden-role games</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Cinzel:wght@500;700&family=Playfair+Display:wght@700&family=Space+Mono:wght@700&family=Noto+Sans+Arabic:wght@400;600;700&display=swap" />
@@ -12,13 +12,21 @@
 <body>
   <!-- atmosphere injected by atmosphere.ts -->
 
-  <header class="brand" aria-label="Role Room">
-    <div class="brand-mark">R</div>
+  <header class="brand" aria-label="Yalla Game">
+    <img class="brand-mark" src="/assets/logo/yalla-game-mark.webp" alt="" width="40" height="40" decoding="async" fetchpriority="high" />
     <div class="brand-text">
-      <strong data-i18n="brand">Role Room</strong>
+      <strong dir="ltr" data-i18n="brand">Yalla Game</strong>
       <span data-i18n="brandSub">Multi Game Platform</span>
     </div>
   </header>
+
+  <nav class="main-nav" aria-label="Primary">
+    <button data-nav="home"    data-i18n="navHome">Home</button>
+    <button data-nav="worlds"  data-i18n="navWorlds">Worlds</button>
+    <button data-nav="how"     data-i18n="navHowToPlay">How to Play</button>
+    <button data-nav="features" data-i18n="navFeatures">Features</button>
+    <button data-nav="about"   data-i18n="navAbout">About</button>
+  </nav>
 
   <div class="hud">
     <nav class="lang-switch" aria-label="Language Switcher">
@@ -45,11 +53,7 @@
 
     <!-- ─── GAME INFO ─────────────────────────────────────── -->
     <section id="gameInfoView" class="view game-info">
-      <button class="btn btn-ghost backHome" data-i18n="back">← Back</button>
-      <div id="gameInfoContent" class="playbill"></div>
-      <div class="cta-row">
-        <button id="createSelectedRoomBtn" class="btn btn-primary glow-breathe" data-i18n="createRoom">Create Room</button>
-      </div>
+      <div id="gameInfoContent" class="gi-page"></div>
     </section>
 
     <!-- ─── JOIN ──────────────────────────────────────────── -->

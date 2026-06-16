@@ -1,9 +1,8 @@
 import { el } from "./dom.js"
-// Eagerly import all theme CSS so character-frame effects work
-// regardless of whether a global data-theme is set on <html>.
-import "../themes/vampire-village.css"
-import "../themes/mafia-classic.css"
-import "../themes/spy-game.css"
+// Per-theme CSS is loaded lazily by applyTheme() (themes/loader.ts). All
+// .theme-fx rules are gated by [data-theme="..."], so the FX previews on
+// home are inert until the user opens that world (at which point the loader
+// pulls in the right stylesheet).
 
 const BAT_SVG_PATH = "M0 9 L4 4 L8 7 L12 2 L15 6 L18 2 L22 7 L26 4 L30 9 L26 11 L22 9 L18 12 L15 9 L12 12 L8 9 L4 11 Z"
 
@@ -73,11 +72,16 @@ export function buildThemeFx(theme: string): HTMLDivElement | null {
 
 /**
  * Build a character frame with image + atmospheric layers + theme-specific FX.
- * Frame uses /characters/<theme>.png from publicDir.
+ * Frame uses /assets/worlds/<theme>-cover.webp from publicDir.
  */
 export function buildCharacterFrame(theme: string, alt: string): HTMLDivElement {
   const frame = el("div", { class: "character-frame" }) as HTMLDivElement
-  const img = el("img", { src: `/characters/${theme}.png`, alt }) as HTMLImageElement
+  const img = el("img", {
+    src: `/assets/worlds/${theme}-cover.webp`,
+    alt,
+    loading: "lazy",
+    decoding: "async"
+  }) as HTMLImageElement
   frame.appendChild(img)
   frame.appendChild(el("div", { class: "spotlight" }))
   frame.appendChild(el("div", { class: "face-glow" }))

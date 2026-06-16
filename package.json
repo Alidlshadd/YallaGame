@@ -1,8 +1,8 @@
 {
-  "name": "multigame-role-room-platform",
+  "name": "yalla-game",
   "version": "4.0.0",
   "type": "module",
-  "description": "Multigame role room platform with admin rooms, player codes, game info, and 4 languages.",
+  "description": "Yalla Game multigame platform with admin rooms, player codes, game info, and 4 languages.",
   "main": "dist/server/index.js",
   "scripts": {
     "dev": "concurrently -n server,client -c blue,magenta \"tsx watch src/server/index.ts\" \"vite\"",
@@ -19,6 +19,7 @@
     "better-sqlite3": "^11.10.0",
     "express": "^4.18.3",
     "helmet": "^7.2.0",
+    "lucide": "^1.20.0",
     "pino": "^9.14.0",
     "pino-pretty": "^11.3.0",
     "socket.io": "^4.7.5",

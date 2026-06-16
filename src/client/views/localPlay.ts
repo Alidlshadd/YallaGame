@@ -1,7 +1,7 @@
 import type { Game, LangCode, Role } from "@shared/types.js"
 import type { RoleAssignedPayload } from "@shared/events.js"
 import { $, el, clear } from "../ui/dom.js"
-import { getLang } from "../services/i18n.js"
+import { getLang, t } from "../services/i18n.js"
 import { setView } from "../router.js"
 import { play } from "../services/sound.js"
 import { applyTheme, clearTheme } from "../themes/loader.js"
@@ -9,12 +9,34 @@ import { showReveal } from "../ui/roleReveal.js"
 import { getGames } from "./home.js"
 import { buildRolePool, assignRolesLocally, type LocalAssignment } from "../domain/local-roles.js"
 import { SPY_WORD_CATEGORIES, pickSpyWord } from "../domain/spy-data.js"
+import {
+  WHO_AM_I_CATEGORIES,
+  RANDOM_MIX_KEY,
+  pickWhoAmIWord,
+  resolveCategoryLabel
+} from "../domain/who-am-i-data.js"
+import "../themes/local-play.css"
 
 const STORAGE_KEY = "role-room:local-play"
 const SPY_GAME_ID = "spy-game"
+const WHO_AM_I_GAME_ID = "who-am-i"
 const DEFAULT_SPY_CATEGORIES = ["places", "food", "jobs", "objects"]
+const WHO_AM_I_RECENT_LIMIT = 8
 
-type Step = "game" | "names" | "settings" | "reveal" | "discussion" | "vote" | "result" | "done"
+type Step =
+  | "game"
+  | "names"
+  | "settings"
+  | "reveal"
+  | "adminReview"
+  | "discussion"
+  | "vote"
+  | "result"
+  | "done"
+  | "whoSetup"
+  | "whoCountdown"
+  | "whoRound"
+  | "whoTimeUp"
 type SpyResult = "citizens" | "spies"
 
 interface LocalState {
@@ -32,9 +54,14 @@ interface LocalState {
   selectedSuspect: string | null
   lastVoteMessage: string | null
   result: SpyResult | null
+  whoCategoryKey: string
+  whoCurrentWord: string | null
+  whoCurrentWordCategory: string | null
+  whoRecentWords: string[]
 }
 
 let state: LocalState = freshState()
+let presetGameId: string | null = null
 
 function freshState(): LocalState {
   return {
@@ -51,7 +78,11 @@ function freshState(): LocalState {
     voteAttemptsLeft: 1,
     selectedSuspect: null,
     lastVoteMessage: null,
-    result: null
+    result: null,
+    whoCategoryKey: RANDOM_MIX_KEY,
+    whoCurrentWord: null,
+    whoCurrentWordCategory: null,
+    whoRecentWords: []
   }
 }
 
@@ -78,6 +109,10 @@ function findGame(id: string | null): Game | undefined {
 
 function isSpyGame(game: Game): boolean {
   return game.id === SPY_GAME_ID
+}
+
+function isWhoAmIGame(game: Game): boolean {
+  return game.id === WHO_AM_I_GAME_ID
 }
 
 function buildErrorMessage(container: HTMLElement, text: string): void {
@@ -116,6 +151,55 @@ function spyText(lang: LangCode, key: "wordForPlayer" | "wordForSpy" | "citizens
   return (lang === "tr" ? text.tr : text.en)[key]
 }
 
+function localReviewText(
+  lang: LangCode,
+  key: "finishedTitle" | "finishedHint" | "adminButton" | "handoffHint" | "doneTitle" | "doneHint" | "doneBack" | "newGame"
+): string {
+  const text = {
+    tr: {
+      finishedTitle: "Bitti",
+      finishedHint: "Tüm oyuncular kendi rolünü gördü. Şimdi cihazı admine geri ver.",
+      adminButton: "Admin Rolleri Görsün",
+      handoffHint: "Roller bu ekranda gizli tutulur. Admin butona basınca tüm liste açılır.",
+      doneTitle: "Tüm Oyuncular Rollerini Aldı",
+      doneHint: "Oyun başlayabilir. Gün, gece, konuşma ve oylama kurallarını grup içinde yönetin.",
+      doneBack: "Bitti - Ana Sayfaya Dön",
+      newGame: "Yeni Oyun"
+    },
+    en: {
+      finishedTitle: "Done",
+      finishedHint: "All players have seen their own role. Now hand the device back to the admin.",
+      adminButton: "Admin: Show All Roles",
+      handoffHint: "Roles stay hidden on this screen. The full list opens only after the admin continues.",
+      doneTitle: "All Players Have Their Roles",
+      doneHint: "The game can begin. Day phase, voting, and other rules happen in your group.",
+      doneBack: "Done - Back to Home",
+      newGame: "New Game"
+    },
+    ar: {
+      finishedTitle: "انتهى",
+      finishedHint: "كل اللاعبين شاهدوا أدوارهم. أعط الجهاز الآن للمدير.",
+      adminButton: "المدير يرى كل الأدوار",
+      handoffHint: "تبقى الأدوار مخفية هنا. تظهر القائمة الكاملة بعد متابعة المدير فقط.",
+      doneTitle: "كل اللاعبين حصلوا على أدوارهم",
+      doneHint: "يمكن أن تبدأ اللعبة. اليوم والليل والنقاش والتصويت تتم داخل المجموعة.",
+      doneBack: "انتهى - العودة للرئيسية",
+      newGame: "لعبة جديدة"
+    },
+    ku: {
+      finishedTitle: "تەواو بوو",
+      finishedHint: "هەموو یاریزانەکان ڕۆڵی خۆیان بینی. ئێستا ئامێرەکە بدەوە بە ئەدمین.",
+      adminButton: "ئەدمین هەموو ڕۆڵەکان ببینێت",
+      handoffHint: "ڕۆڵەکان لەم شاشەیەدا شاراوە دەمێننەوە. لیستی تەواو تەنها دوای بەردەوامبوونی ئەدمین دەکرێتەوە.",
+      doneTitle: "هەموو یاریزانەکان ڕۆڵیان وەرگرت",
+      doneHint: "یارییەکە دەتوانێت دەست پێ بکات. قۆناغەکان و دەنگدان لە ناو گرووپەکەتان بەڕێوە ببەن.",
+      doneBack: "تەواو - گەڕانەوە بۆ سەرەکی",
+      newGame: "یاری نوێ"
+    }
+  }
+  return text[lang]?.[key] ?? text.en[key]
+}
+
 function prepareRound(game: Game, lang: LangCode): void {
   if (isSpyGame(game) && settingNumber("spyCount", 1) >= state.playerNames.length) {
     throw new Error("TOO_MANY_SPECIAL_ROLES")
@@ -139,12 +223,33 @@ function prepareRound(game: Game, lang: LangCode): void {
   state.step = "reveal"
 }
 
+function initialStepForGame(game: Game): Step {
+  return isWhoAmIGame(game) ? "whoSetup" : "names"
+}
+
+function seedStateForGame(gameId: string): boolean {
+  const game = findGame(gameId)
+  if (!game) return false
+  state = {
+    ...freshState(),
+    gameId,
+    settings: { ...game.defaultSettings },
+    step: initialStepForGame(game)
+  }
+  return true
+}
+
 export const localPlayView = {
   id: "localPlayView" as const,
-  mount() {
+  mount(ctx: { gameId?: string } = {}) {
     const container = $<HTMLDivElement>("#localPlayContent")
     let activeTimer: number | undefined
+    presetGameId = null
     loadState()
+
+    if (typeof ctx.gameId === "string") {
+      if (seedStateForGame(ctx.gameId)) presetGameId = ctx.gameId
+    }
 
     function clearTimer(): void {
       if (activeTimer !== undefined) {
@@ -165,10 +270,15 @@ export const localPlayView = {
       else if (state.step === "names" && game) renderNameEntry(container, lang, render, game)
       else if (state.step === "settings" && game) renderSettings(container, lang, render, game)
       else if (state.step === "reveal" && game) renderReveal(container, lang, render, game)
+      else if (state.step === "adminReview" && game) renderAdminReview(container, lang, render)
       else if (state.step === "discussion" && game) renderDiscussion(container, render, id => { activeTimer = id })
       else if (state.step === "vote" && game) renderVote(container, render)
       else if (state.step === "result" && game) renderSpyResult(container, lang, render, game)
       else if (state.step === "done" && game) renderDone(container, lang, render, game)
+      else if (state.step === "whoSetup" && game) renderWhoAmISetup(container, lang, render)
+      else if (state.step === "whoCountdown" && game) renderWhoAmICountdown(container, lang, render, id => { activeTimer = id })
+      else if (state.step === "whoRound" && game) renderWhoAmIRound(container, lang, render, id => { activeTimer = id })
+      else if (state.step === "whoTimeUp" && game) renderWhoAmITimeUp(container, lang, render)
       else {
         state.step = "game"
         renderGamePicker(container, lang, render)
@@ -180,9 +290,15 @@ export const localPlayView = {
 
     const onBack = () => {
       clearTimer()
+      const returnToGameId = presetGameId
       clearLocalState()
-      clearTheme()
-      setView("homeView")
+      if (returnToGameId) {
+        sessionStorage.setItem("role-room:selectedGame", returnToGameId)
+        void setView("gameInfoView")
+      } else {
+        clearTheme()
+        void setView("homeView")
+      }
     }
     const back = $<HTMLButtonElement>("#localPlayBack")
     back.addEventListener("click", onBack)
@@ -215,7 +331,14 @@ function renderGamePicker(container: HTMLDivElement, lang: LangCode, render: () 
         type: "button"
       },
       [
-        el("img", { src: `/characters/${game.theme}.png`, alt: game.title[lang] }),
+        el("img", {
+          src: `/assets/worlds/${game.theme}-cover.webp`,
+          alt: game.title[lang],
+          loading: "lazy",
+          decoding: "async",
+          width: "200",
+          height: "200"
+        }),
         el("div", { class: "lp-game-info" }, [
           el("strong", {}, [game.title[lang]]),
           el("span", { class: "muted" }, [`Minimum ${game.minPlayers} players`])
@@ -224,7 +347,8 @@ function renderGamePicker(container: HTMLDivElement, lang: LangCode, render: () 
     )
     card.addEventListener("click", () => {
       void play("click")
-      state = { ...freshState(), gameId: game.id, settings: { ...game.defaultSettings }, step: "names" }
+      const nextStep: Step = isWhoAmIGame(game) ? "whoSetup" : "names"
+      state = { ...freshState(), gameId: game.id, settings: { ...game.defaultSettings }, step: nextStep }
       render()
     })
     grid.appendChild(card)
@@ -232,8 +356,7 @@ function renderGamePicker(container: HTMLDivElement, lang: LangCode, render: () 
 
   container.append(
     renderProgressBar(0, 4),
-    el("h2", { class: "lp-title" }, ["Choose Your Game"]),
-    el("p", { class: "lp-sub" }, ["Step 1 of 4 - Pick a game everyone wants to play"]),
+    buildSetupHeader("Local Play · Step 1 of 4", "Choose Your Game", "Pick a game everyone wants to play"),
     grid
   )
 }
@@ -258,7 +381,7 @@ function renderNameEntry(container: HTMLDivElement, lang: LangCode, render: () =
       input.addEventListener("input", () => { list[idx] = input.value })
 
       const row = el("div", { class: "lp-name-row" }, [
-        el("span", { class: "lp-name-num" }, [`${idx + 1}.`]),
+        el("span", { class: "lp-name-num" }, [String(idx + 1)]),
         input
       ])
 
@@ -308,20 +431,52 @@ function renderNameEntry(container: HTMLDivElement, lang: LangCode, render: () =
 
   const backBtn = el("button", { class: "lp-back", type: "button" }, ["<- Back"])
   backBtn.addEventListener("click", () => {
+    if (presetGameId) {
+      clearLocalState()
+      sessionStorage.setItem("role-room:selectedGame", presetGameId)
+      void setView("gameInfoView")
+      return
+    }
     state.step = "game"
     render()
   })
 
+  const totalSteps = isSpyGame(game) ? 6 : 4
+  const stepNum = presetGameId ? 1 : 2
   container.append(
-    renderProgressBar(1, isSpyGame(game) ? 6 : 4),
-    el("h2", { class: "lp-title" }, ["Player Names"]),
-    el("p", { class: "lp-sub" }, [`Step 2 - Enter names for ${game.title[lang]} (min ${game.minPlayers})`]),
+    renderProgressBar(presetGameId ? 0 : 1, totalSteps),
+    presetGameId ? buildSelectedGameSummary(game, lang) : el("div", { class: "lp-selected-empty" }),
+    buildSetupHeader(
+      `Setup · Step ${stepNum} of ${totalSteps}`,
+      "Player Names",
+      `Enter the players joining this ${game.title[lang]} session (min ${game.minPlayers}).`
+    ),
     el("div", { class: "lp-name-list" }),
     el("div", { class: "lp-actions" }, [addBtn]),
     el("div", { class: "lp-error" }, []),
     el("div", { class: "lp-actions" }, [backBtn, continueBtn])
   )
   renderList()
+}
+
+function buildSelectedGameSummary(game: Game, lang: LangCode): HTMLElement {
+  return el("div", { class: "lp-selected-game" }, [
+    el("span", { class: "lp-selected-game-badge", "aria-hidden": "true" }, [game.icon ?? "❖"]),
+    el("div", { class: "lp-selected-game-text" }, [
+      el("span", { class: "lp-selected-game-label" }, [t("whoAmISelectedGame")]),
+      el("strong", {}, [game.title[lang]])
+    ]),
+    el("span", { class: "lp-selected-game-mode" }, [t("whoAmIPlayModeLocal")])
+  ])
+}
+
+function buildSetupHeader(eyebrow: string, title: string, subtitle?: string): HTMLElement {
+  const children: Array<HTMLElement | Node> = [
+    el("p", { class: "lp-eyebrow" }, [eyebrow]),
+    el("h2", { class: "lp-title" }, [title])
+  ]
+  if (subtitle) children.push(el("p", { class: "lp-sub" }, [subtitle]))
+  return el("div", { class: "lp-header" }, children)
 }
 
 function renderSettings(container: HTMLDivElement, lang: LangCode, render: () => void, game: Game): void {
@@ -376,10 +531,16 @@ function renderSettings(container: HTMLDivElement, lang: LangCode, render: () =>
     render()
   })
 
+  const totalSteps = isSpyGame(game) ? 6 : 4
+  const stepNum = presetGameId ? 2 : 3
   container.append(
-    renderProgressBar(2, isSpyGame(game) ? 6 : 4),
-    el("h2", { class: "lp-title" }, [isSpyGame(game) ? "Spy Setup" : "Configure"]),
-    el("p", { class: "lp-sub" }, [`${state.playerNames.length} players - customize ${game.title[lang]}`]),
+    renderProgressBar(presetGameId ? 1 : 2, totalSteps),
+    presetGameId ? buildSelectedGameSummary(game, lang) : el("div", { class: "lp-selected-empty" }),
+    buildSetupHeader(
+      `Setup · Step ${stepNum} of ${totalSteps}`,
+      isSpyGame(game) ? "Spy Setup" : "Configure",
+      `${state.playerNames.length} players · customise ${game.title[lang]}`
+    ),
     settingsEl,
     el("div", { class: "lp-error" }, []),
     el("div", { class: "lp-actions" }, [backBtn, assignBtn])
@@ -462,7 +623,7 @@ function renderReveal(container: HTMLDivElement, lang: LangCode, render: () => v
           state.roundEndsAt = Date.now() + settingNumber("roundMinutes", 5) * 60_000
           state.step = "discussion"
         } else {
-          state.step = "done"
+          state.step = "adminReview"
         }
       }
       render()
@@ -474,6 +635,28 @@ function renderReveal(container: HTMLDivElement, lang: LangCode, render: () => v
   container.append(
     renderProgressBar(3, isSpyGame(game) ? 6 : 4),
     card
+  )
+}
+
+function renderAdminReview(container: HTMLDivElement, lang: LangCode, render: () => void): void {
+  const continueBtn = el("button", { class: "lp-primary lp-reveal-cta", type: "button" }, [
+    localReviewText(lang, "adminButton")
+  ])
+  continueBtn.addEventListener("click", () => {
+    void play("click")
+    state.step = "done"
+    render()
+  })
+
+  container.append(
+    renderProgressBar(4, 4),
+    el("div", { class: "lp-reveal-stage lp-admin-review" }, [
+      el("p", { class: "lp-reveal-progress" }, [localReviewText(lang, "finishedTitle")]),
+      el("h1", { class: "lp-reveal-name" }, [localReviewText(lang, "finishedTitle")]),
+      el("p", { class: "lp-reveal-instruction" }, [localReviewText(lang, "finishedHint")]),
+      el("p", { class: "lp-reveal-instruction" }, [localReviewText(lang, "handoffHint")]),
+      continueBtn
+    ])
   )
 }
 
@@ -630,14 +813,14 @@ function renderDone(container: HTMLDivElement, lang: LangCode, render: () => voi
     ]))
   }
 
-  const restartBtn = el("button", { class: "lp-primary", type: "button" }, ["New Game"])
+  const restartBtn = el("button", { class: "lp-primary", type: "button" }, [localReviewText(lang, "newGame")])
   restartBtn.addEventListener("click", () => {
     void play("click")
     clearLocalState()
     render()
   })
 
-  const homeBtn = el("button", { class: "lp-back", type: "button" }, ["Done - Back to Home"])
+  const homeBtn = el("button", { class: "lp-back", type: "button" }, [localReviewText(lang, "doneBack")])
   homeBtn.addEventListener("click", () => {
     void play("click")
     clearLocalState()
@@ -647,9 +830,349 @@ function renderDone(container: HTMLDivElement, lang: LangCode, render: () => voi
 
   container.append(
     renderProgressBar(4, 4),
-    el("h2", { class: "lp-title" }, ["All Players Have Their Roles"]),
-    el("p", { class: "lp-sub" }, ["The game can begin. Day phase, voting, and other rules happen in your group."]),
+    el("h2", { class: "lp-title" }, [localReviewText(lang, "doneTitle")]),
+    el("p", { class: "lp-sub" }, [localReviewText(lang, "doneHint")]),
     list,
     el("div", { class: "lp-actions" }, [homeBtn, restartBtn])
+  )
+}
+
+/* ────────────────────────────────────────────────────────────────
+   WHO AM I — single-device flow (no names, countdown, seconds timer)
+   ──────────────────────────────────────────────────────────────── */
+
+function clampRoundSeconds(value: number): number {
+  if (!Number.isFinite(value)) return 60
+  return Math.max(15, Math.min(180, Math.round(value)))
+}
+
+function getRoundSeconds(): number {
+  return clampRoundSeconds(settingNumber("roundSeconds", 60))
+}
+
+function renderWhoAmISetup(container: HTMLDivElement, lang: LangCode, render: () => void): void {
+  if (!state.whoCategoryKey) state.whoCategoryKey = RANDOM_MIX_KEY
+
+  const grid = el("div", { class: "lp-who-cat-grid" })
+
+  const allOptions: Array<{ key: string; icon: string; label: string }> = [
+    { key: RANDOM_MIX_KEY, icon: "🎲", label: t("whoAmIRandomMix") },
+    ...WHO_AM_I_CATEGORIES.map(c => ({ key: c.key, icon: c.icon, label: c.label[lang] ?? c.label.en! }))
+  ]
+
+  const summary = el("p", { class: "lp-who-summary" }, [])
+
+  function updateSummary(): void {
+    clear(summary)
+    summary.append(
+      el("span", { class: "lp-who-summary-label" }, [`${t("whoAmISelectedCategory")}:`]),
+      el("strong", {}, [resolveCategoryLabel(state.whoCategoryKey, lang)])
+    )
+  }
+
+  for (const opt of allOptions) {
+    const isSelected = opt.key === state.whoCategoryKey
+    const card = el(
+      "button",
+      {
+        class: isSelected ? "lp-who-cat selected" : "lp-who-cat",
+        type: "button",
+        "aria-pressed": isSelected ? "true" : "false",
+        "data-key": opt.key
+      },
+      [
+        el("span", { class: "lp-who-cat-icon" }, [opt.icon]),
+        el("span", { class: "lp-who-cat-label" }, [opt.label])
+      ]
+    )
+    card.addEventListener("click", () => {
+      void play("click", 0.3)
+      state.whoCategoryKey = opt.key
+      for (const c of grid.querySelectorAll<HTMLElement>(".lp-who-cat")) {
+        const active = c.dataset.key === opt.key
+        c.classList.toggle("selected", active)
+        c.setAttribute("aria-pressed", active ? "true" : "false")
+      }
+      updateSummary()
+      saveState()
+    })
+    grid.appendChild(card)
+  }
+
+  updateSummary()
+
+  // Round time slider/input
+  const seconds = getRoundSeconds()
+  const secondsInput = el("input", {
+    type: "number",
+    min: "15",
+    max: "180",
+    step: "5",
+    value: String(seconds),
+    class: "lp-who-seconds-input"
+  }) as HTMLInputElement
+  const secondsValue = el("span", { class: "lp-who-seconds-value" }, [`${seconds} ${t("whoAmISeconds")}`])
+  secondsInput.addEventListener("input", () => {
+    const v = clampRoundSeconds(Number(secondsInput.value))
+    state.settings.roundSeconds = v
+    secondsValue.textContent = `${v} ${t("whoAmISeconds")}`
+    saveState()
+  })
+
+  const presetRow = el("div", { class: "lp-who-presets" })
+  for (const preset of [30, 45, 60, 90, 120]) {
+    const btn = el("button", {
+      type: "button",
+      class: preset === seconds ? "lp-who-preset selected" : "lp-who-preset"
+    }, [`${preset}s`])
+    btn.addEventListener("click", () => {
+      void play("click", 0.3)
+      state.settings.roundSeconds = preset
+      secondsInput.value = String(preset)
+      secondsValue.textContent = `${preset} ${t("whoAmISeconds")}`
+      for (const b of presetRow.querySelectorAll<HTMLElement>(".lp-who-preset")) {
+        b.classList.remove("selected")
+      }
+      btn.classList.add("selected")
+      saveState()
+    })
+    presetRow.appendChild(btn)
+  }
+
+  const startBtn = el("button", { class: "lp-primary lp-who-start", type: "button" }, [t("whoAmIStartRound")])
+  startBtn.addEventListener("click", () => {
+    void play("transition")
+    state.whoCurrentWord = null
+    state.whoCurrentWordCategory = null
+    state.whoRecentWords = []
+    state.step = "whoCountdown"
+    render()
+  })
+
+  const backBtn = el("button", { class: "lp-back", type: "button" }, ["<- Back"])
+  backBtn.addEventListener("click", () => {
+    if (presetGameId) {
+      const game = findGame(presetGameId)
+      const id = presetGameId
+      clearLocalState()
+      sessionStorage.setItem("role-room:selectedGame", id)
+      if (game) void setView("gameInfoView")
+      else void setView("homeView")
+      return
+    }
+    state.step = "game"
+    render()
+  })
+
+  const game = findGame(state.gameId)
+  const summaryHeader = presetGameId && game ? buildSelectedGameSummary(game, lang) : null
+
+  const children: Array<HTMLElement | Node> = [
+    renderProgressBar(0, 3),
+    buildSetupHeader(
+      "Setup · Step 1 of 3",
+      t("whoAmIChooseCategory"),
+      `Pick a category. ${t("whoAmIRandomMix")} blends them all.`
+    ),
+    grid,
+    summary,
+    el("div", { class: "lp-who-time-block" }, [
+      el("h3", { class: "lp-section-title" }, [`${t("whoAmIRoundTime")} (${t("whoAmISeconds")})`]),
+      presetRow,
+      el("label", { class: "lp-who-seconds-row" }, [
+        secondsInput,
+        secondsValue
+      ])
+    ]),
+    el("div", { class: "lp-actions" }, [backBtn, startBtn])
+  ]
+  if (summaryHeader) children.unshift(summaryHeader)
+  container.append(...children)
+}
+
+function pickNextWhoAmIWord(lang: LangCode): void {
+  const picked = pickWhoAmIWord(state.whoCategoryKey, lang, state.whoRecentWords)
+  state.whoCurrentWord = picked.word
+  state.whoCurrentWordCategory = picked.categoryKey
+  const recent = [picked.word, ...state.whoRecentWords]
+  state.whoRecentWords = recent.slice(0, WHO_AM_I_RECENT_LIMIT)
+}
+
+function renderWhoAmICountdown(
+  container: HTMLDivElement,
+  lang: LangCode,
+  render: () => void,
+  setTimer: (id: number) => void
+): void {
+  if (!state.whoCurrentWord) {
+    try { pickNextWhoAmIWord(lang) }
+    catch {
+      buildErrorMessage(container, "No words available.")
+      state.step = "whoSetup"
+      render()
+      return
+    }
+  }
+
+  const categoryLabel = resolveCategoryLabel(state.whoCategoryKey, lang)
+  const numberEl = el("div", { class: "lp-who-countdown-num" }, ["5"])
+  const stage = el("div", { class: "lp-who-countdown-stage" }, [
+    el("p", { class: "lp-who-countdown-cat" }, [`${t("whoAmICategory")}: ${categoryLabel}`]),
+    el("p", { class: "lp-who-countdown-ready" }, [t("whoAmIGetReady")]),
+    numberEl
+  ])
+
+  const sequence = ["5", "4", "3", "2", "1", t("whoAmIGo")]
+  let idx = 0
+
+  const advance = () => {
+    if (idx >= sequence.length) {
+      state.roundEndsAt = Date.now() + getRoundSeconds() * 1000
+      state.step = "whoRound"
+      render()
+      return
+    }
+    numberEl.textContent = sequence[idx]!
+    numberEl.classList.remove("anim")
+    void numberEl.offsetWidth
+    numberEl.classList.add("anim")
+    if (idx < sequence.length - 1) void play("click", 0.25)
+    else void play("transition")
+    idx += 1
+  }
+
+  advance()
+  setTimer(window.setInterval(advance, 1000))
+
+  container.append(
+    renderProgressBar(1, 3),
+    stage
+  )
+}
+
+function renderWhoAmIRound(
+  container: HTMLDivElement,
+  lang: LangCode,
+  render: () => void,
+  setTimer: (id: number) => void
+): void {
+  if (!state.whoCurrentWord) {
+    state.step = "whoCountdown"
+    render()
+    return
+  }
+
+  if (!state.roundEndsAt) {
+    state.roundEndsAt = Date.now() + getRoundSeconds() * 1000
+  }
+
+  const wordCategoryKey = state.whoCurrentWordCategory ?? state.whoCategoryKey
+  const wordCategoryLabel = resolveCategoryLabel(wordCategoryKey, lang)
+  const selectedCategoryLabel = resolveCategoryLabel(state.whoCategoryKey, lang)
+
+  const timer = el("div", { class: "lp-timer lp-who-timer" }, ["00"])
+  const updateTimer = () => {
+    const remainingMs = (state.roundEndsAt ?? Date.now()) - Date.now()
+    const remaining = Math.max(0, Math.ceil(remainingMs / 1000))
+    timer.textContent = String(remaining)
+    timer.classList.toggle("danger", remaining <= 5 && remaining > 0)
+    if (remainingMs <= 0) {
+      state.step = "whoTimeUp"
+      render()
+    }
+  }
+  updateTimer()
+  setTimer(window.setInterval(updateTimer, 250))
+
+  const card = el("div", { class: "lp-who-word-card" }, [
+    el("p", { class: "lp-who-meta" }, [
+      `${t("whoAmICategory")}: ${wordCategoryLabel}`
+    ]),
+    el("p", { class: "lp-who-identity-label" }, [t("whoAmIYourIdentity")]),
+    el("h1", { class: "lp-who-word" }, [state.whoCurrentWord!])
+  ])
+
+  const nextBtn = el("button", { class: "lp-secondary", type: "button" }, [t("whoAmINewWord")])
+  nextBtn.addEventListener("click", () => {
+    void play("click")
+    try {
+      pickNextWhoAmIWord(lang)
+      render()
+    } catch {
+      buildErrorMessage(container, "No words available.")
+    }
+  })
+
+  const endBtn = el("button", { class: "lp-primary", type: "button" }, [t("whoAmIEndRound")])
+  endBtn.addEventListener("click", () => {
+    void play("click")
+    state.step = "whoTimeUp"
+    render()
+  })
+
+  const changeBtn = el("button", { class: "lp-back", type: "button" }, [t("whoAmIChangeCategory")])
+  changeBtn.addEventListener("click", () => {
+    void play("click", 0.3)
+    state.roundEndsAt = null
+    state.whoCurrentWord = null
+    state.whoCurrentWordCategory = null
+    state.step = "whoSetup"
+    render()
+  })
+
+  const meta = el("p", { class: "lp-sub lp-who-active-cat" }, [
+    `${t("whoAmISelectedCategory")}: ${selectedCategoryLabel}`
+  ])
+
+  container.append(
+    renderProgressBar(2, 3),
+    meta,
+    timer,
+    card,
+    el("div", { class: "lp-actions lp-who-actions" }, [changeBtn, nextBtn, endBtn])
+  )
+}
+
+function renderWhoAmITimeUp(container: HTMLDivElement, lang: LangCode, render: () => void): void {
+  state.roundEndsAt = null
+  const lastWord = state.whoCurrentWord ?? "-"
+  const lastCategory = resolveCategoryLabel(state.whoCurrentWordCategory ?? state.whoCategoryKey, lang)
+
+  const playAgainBtn = el("button", { class: "lp-primary", type: "button" }, [t("whoAmIRestart")])
+  playAgainBtn.addEventListener("click", () => {
+    void play("transition")
+    state.whoCurrentWord = null
+    state.whoCurrentWordCategory = null
+    state.step = "whoCountdown"
+    render()
+  })
+
+  const setupBtn = el("button", { class: "lp-secondary", type: "button" }, [t("whoAmIBackToSetup")])
+  setupBtn.addEventListener("click", () => {
+    void play("click")
+    state.whoCurrentWord = null
+    state.whoCurrentWordCategory = null
+    state.step = "whoSetup"
+    render()
+  })
+
+  const homeBtn = el("button", { class: "lp-back", type: "button" }, [localReviewText(lang, "doneBack")])
+  homeBtn.addEventListener("click", () => {
+    void play("click")
+    clearLocalState()
+    clearTheme()
+    setView("homeView")
+  })
+
+  container.append(
+    renderProgressBar(2, 3),
+    el("div", { class: "lp-reveal-stage lp-who-timeup" }, [
+      el("p", { class: "lp-reveal-progress" }, [t("whoAmITimesUp")]),
+      el("h1", { class: "lp-reveal-name" }, [t("whoAmITimesUp")]),
+      el("p", { class: "lp-who-meta" }, [`${t("whoAmICategory")}: ${lastCategory}`]),
+      el("p", { class: "lp-who-identity-label" }, [t("whoAmIYourIdentity")]),
+      el("h2", { class: "lp-who-word lp-who-word-small" }, [lastWord]),
+      el("div", { class: "lp-actions lp-who-actions" }, [homeBtn, setupBtn, playAgainBtn])
+    ])
   )
 }

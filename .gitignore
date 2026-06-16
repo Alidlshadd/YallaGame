@@ -6,3 +6,10 @@ coverage/
 .env.local
 playwright-report/
 test-results/
+
+# Ad-hoc screenshots from local browser/Playwright testing — never commit
+.playwright-mcp/
+/*.png
+/*.jpg
+/*.jpeg
+/*.gif

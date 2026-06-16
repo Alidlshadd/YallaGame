@@ -38,11 +38,20 @@ export function isLowEnd(): boolean {
 }
 
 /**
- * Apply the low-end attribute on the atmosphere container so theme CSS
- * can dial decorative layer opacity / count via [data-perf="low"].
+ * Apply the low-end attribute on the atmosphere container AND <body> so any
+ * CSS rule (not just .atmosphere descendants) can dial back heavy effects
+ * via [data-perf="low"]. Also flips on for prefers-reduced-motion users.
  */
 export function applyPerformanceProfile(): void {
   const el = ensureAtmosphere()
-  if (isLowEnd()) el.setAttribute("data-perf", "low")
-  else el.removeAttribute("data-perf")
+  const reducedMotion = typeof window !== "undefined"
+    && window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true
+  const low = isLowEnd() || reducedMotion
+  if (low) {
+    el.setAttribute("data-perf", "low")
+    document.body.setAttribute("data-perf", "low")
+  } else {
+    el.removeAttribute("data-perf")
+    document.body.removeAttribute("data-perf")
+  }
 }
