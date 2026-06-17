@@ -140,7 +140,8 @@ const en = {
   whoAmIBackToSetup: "Back to Setup",
   whoAmITapToReveal: "Tap to start",
   whoAmISelectedGame: "Selected Game",
-  whoAmIPlayModeLocal: "Local Play"
+  whoAmIPlayModeLocal: "Local Play",
+  copyrightRights: "All rights reserved."
 }
 
 export type Translations = Record<keyof typeof en, string>

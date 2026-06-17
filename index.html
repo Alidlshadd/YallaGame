@@ -35,9 +35,8 @@
       <button data-lang="en">English</button>
       <button data-lang="tr">Türkçe</button>
     </nav>
-    <button id="muteToggle" class="mute-toggle" aria-label="Toggle sound" aria-pressed="true">
-      <span aria-hidden="true">🔇</span>
-    </button>
+    <!-- Sound/mute toggle removed until the platform ships background
+         music. SFX through services/sound.ts still fire on clicks. -->
   </div>
 
   <div class="spy-hud" aria-hidden="true">
@@ -148,6 +147,15 @@
       </div>
     </section>
   </main>
+
+  <footer class="app-footer" aria-label="Copyright">
+    <p class="app-footer-text">
+      <span class="app-footer-mark" aria-hidden="true">©</span>
+      <span id="appFooterYear">2026</span>
+      <bdi dir="ltr" class="app-footer-brand">Yalla Game</bdi>.
+      <span data-i18n="copyrightRights">All rights reserved.</span>
+    </p>
+  </footer>
 
   <div id="toast" class="toast hidden" role="status"></div>
 

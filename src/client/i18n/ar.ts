@@ -142,7 +142,8 @@ const ar: Translations = {
   whoAmIBackToSetup: "العودة إلى الإعداد",
   whoAmITapToReveal: "اضغط للبدء",
   whoAmISelectedGame: "اللعبة المختارة",
-  whoAmIPlayModeLocal: "لعب محلي"
+  whoAmIPlayModeLocal: "لعب محلي",
+  copyrightRights: "جميع الحقوق محفوظة."
 }
 
 export default ar

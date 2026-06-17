@@ -142,7 +142,8 @@ const tr: Translations = {
   whoAmIBackToSetup: "Kuruluma Dön",
   whoAmITapToReveal: "Başlamak için dokun",
   whoAmISelectedGame: "Seçilen Oyun",
-  whoAmIPlayModeLocal: "Yerel Oyun"
+  whoAmIPlayModeLocal: "Yerel Oyun",
+  copyrightRights: "Tüm hakları saklıdır."
 }
 
 export default tr

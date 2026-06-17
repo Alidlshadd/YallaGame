@@ -142,7 +142,8 @@ const ku: Translations = {
   whoAmIBackToSetup: "گەڕانەوە بۆ ڕێکخستن",
   whoAmITapToReveal: "بۆ دەستپێکردن کلیک بکە",
   whoAmISelectedGame: "یاری هەڵبژێردراو",
-  whoAmIPlayModeLocal: "یاری ناوخۆیی"
+  whoAmIPlayModeLocal: "یاری ناوخۆیی",
+  copyrightRights: "هەموو مافەکان پارێزراون."
 }
 
 export default ku

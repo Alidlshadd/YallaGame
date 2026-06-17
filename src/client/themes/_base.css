@@ -501,6 +501,48 @@ body {
   }
 }
 
+/* ─── App copyright footer ───────────────────────────────────────────
+   Sits at document bottom (after <main>), always rendered. Hidden on
+   in-game scenes (admin/playerRoom) and the join card so it doesn't
+   crowd those focused screens. Uses <bdi dir="ltr"> around the brand
+   word so RTL languages don't mirror "Yalla Game".  */
+
+.app-footer {
+  position: relative;
+  z-index: var(--z-surface);
+  padding: var(--s-5) var(--s-4) calc(var(--s-5) + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.55));
+  text-align: center;
+  pointer-events: auto;
+}
+.app-footer-text {
+  margin: 0;
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--text-muted);
+}
+.app-footer-mark { color: color-mix(in srgb, #d4af37 70%, var(--text-muted)); }
+.app-footer-brand {
+  color: color-mix(in srgb, #d4af37 85%, var(--text-primary));
+  font-family: "Cinzel", serif;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: none;
+}
+/* Hide footer on in-game scenes + join card — those screens are
+   visually focused and don't want a chrome strip at the bottom. */
+body:has(#joinView.active-view) .app-footer,
+body:has(#adminView.active-view) .app-footer,
+body:has(#playerRoomView.active-view) .app-footer {
+  display: none;
+}
+
 /* ─── Spy HUD chip safety net ────────────────────────────────────────
    <div class="spy-hud"> in index.html holds a live "HH:MM:SSZ //
    CLASSIFIED" chip that only belongs to the Spy world. Its visible
