@@ -135,20 +135,32 @@ function formatTime(ms: number): string {
 
 function spyText(lang: LangCode, key: "wordForPlayer" | "wordForSpy" | "citizensWin" | "spiesWin"): string {
   const text = {
-    tr: {
-      wordForPlayer: "Gizli kelime",
-      wordForSpy: "Gizli kelime sana gosterilmiyor. Sorulara uyum sagla ve fark edilme.",
-      citizensWin: "Oyuncular casusu buldu.",
-      spiesWin: "Casus oyunu kazandi."
-    },
     en: {
       wordForPlayer: "Secret word",
       wordForSpy: "The secret word is hidden from you. Blend in and avoid suspicion.",
       citizensWin: "The players found the spy.",
       spiesWin: "The spy won the game."
+    },
+    tr: {
+      wordForPlayer: "Gizli kelime",
+      wordForSpy: "Gizli kelime sana gösterilmiyor. Sorulara uyum sağla ve fark edilme.",
+      citizensWin: "Oyuncular casusu buldu.",
+      spiesWin: "Casus oyunu kazandı."
+    },
+    ar: {
+      wordForPlayer: "الكلمة السرية",
+      wordForSpy: "الكلمة السرية مخفية عنك. اندمج مع الباقين ولا تكشف نفسك.",
+      citizensWin: "اللاعبون اكتشفوا الجاسوس.",
+      spiesWin: "الجاسوس فاز باللعبة."
+    },
+    ku: {
+      wordForPlayer: "وشەی نهێنی",
+      wordForSpy: "وشە نهێنییەکە لێت شاراوەیە. لەگەڵ یاریزانانی تردا تێکەڵ بە و خۆت دەرمەخە.",
+      citizensWin: "یاریزانان سیخوڕیان دۆزییەوە.",
+      spiesWin: "سیخوڕ یارییەکەی بردەوە."
     }
   }
-  return (lang === "tr" ? text.tr : text.en)[key]
+  return text[lang]?.[key] ?? text.en[key]
 }
 
 function localReviewText(

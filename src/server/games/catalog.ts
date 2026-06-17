@@ -295,14 +295,14 @@ export const GAME_CATALOG: readonly Game[] = [
         key: "roundMinutes",
         min: 1,
         max: 20,
-        label: { ku: "Discussion Time", ar: "Discussion Time", en: "Discussion Time", tr: "Soru Suresi" }
+        label: { ku: "کاتی گفتوگۆ", ar: "وقت النقاش", en: "Discussion Time", tr: "Tartışma Süresi" }
       },
       {
         type: "number",
         key: "guessAttempts",
         min: 1,
         max: 5,
-        label: { ku: "Guess Attempts", ar: "Guess Attempts", en: "Guess Attempts", tr: "Tahmin Hakki" }
+        label: { ku: "هەوڵی پێشبینی", ar: "محاولات التخمين", en: "Guess Attempts", tr: "Tahmin Hakkı" }
       },
       {
         type: "number",
