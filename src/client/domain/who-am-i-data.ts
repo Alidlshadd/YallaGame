@@ -10,14 +10,10 @@ import {
 
 /**
  * Who Am I facade. The actual data now lives in
- * `src/client/data/word-categories.ts`. This file preserves the original
- * `WhoAmICategory` shape (icon + difficulty non-optional in the view) and
- * the `pickWhoAmIWord` helper so the existing localPlay.ts consumers
- * don't have to change.
- *
- * Random Mix is computed dynamically from "all categories enabled for
- * Who Am I" — that way adding/removing a category in the shared file is
- * automatically reflected in the Random Mix pool.
+ * `src/client/data/word-categories.ts` as LocalizedWord[]. This file
+ * preserves the legacy `WhoAmICategory` shape (icon + difficulty
+ * non-optional, words as parallel arrays per language) so the
+ * existing localPlay.ts consumers don't have to change.
  */
 
 export { RANDOM_MIX_KEY, resolveCategoryLabel }
@@ -33,13 +29,22 @@ export interface WhoAmICategory {
 
 const FALLBACK_ICON = "❓"
 const FALLBACK_DIFFICULTY: CategoryDifficulty = "medium"
+const LANGS: readonly LangCode[] = ["en", "tr", "ar", "ku"]
+
+const flattenWords = (cat: WordCategory): Partial<Record<LangCode, string[]>> => {
+  const out: Partial<Record<LangCode, string[]>> = {}
+  for (const lang of LANGS) {
+    out[lang] = cat.words.map(w => (w[lang] && w[lang].length > 0 ? w[lang] : w.en))
+  }
+  return out
+}
 
 const toWhoAmICategory = (c: WordCategory): WhoAmICategory => ({
   key: c.key,
   icon: c.icon ?? FALLBACK_ICON,
   difficulty: c.difficulty ?? FALLBACK_DIFFICULTY,
   label: c.label,
-  words: c.words
+  words: flattenWords(c)
 })
 
 export const WHO_AM_I_CATEGORIES: readonly WhoAmICategory[] =

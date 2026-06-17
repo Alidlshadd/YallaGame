@@ -6,9 +6,9 @@ import {
 
 /**
  * Spy Game word-category facade. The actual data now lives in
- * `src/client/data/word-categories.ts`. This file keeps the original
- * `SpyWordCategory` shape (which uses `id` instead of `key`) and the
- * `getSpyWords` / `pickSpyWord` / `parseCustomSpyWords` helpers so the
+ * `src/client/data/word-categories.ts` as LocalizedWord[]. This file
+ * keeps the original `SpyWordCategory` shape (which uses `id` instead
+ * of `key` and stores parallel arrays of strings per language) so the
  * existing localPlay.ts consumers don't have to change.
  */
 
@@ -18,10 +18,20 @@ export interface SpyWordCategory {
   words: Partial<Record<LangCode, string[]>>
 }
 
+const LANGS: readonly LangCode[] = ["en", "tr", "ar", "ku"]
+
+const flattenWords = (cat: WordCategory): Partial<Record<LangCode, string[]>> => {
+  const out: Partial<Record<LangCode, string[]>> = {}
+  for (const lang of LANGS) {
+    out[lang] = cat.words.map(w => (w[lang] && w[lang].length > 0 ? w[lang] : w.en))
+  }
+  return out
+}
+
 const toSpyCategory = (c: WordCategory): SpyWordCategory => ({
   id: c.key,
   label: c.label,
-  words: c.words
+  words: flattenWords(c)
 })
 
 export const SPY_WORD_CATEGORIES: readonly SpyWordCategory[] =

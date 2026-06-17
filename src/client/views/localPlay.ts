@@ -20,7 +20,10 @@ import "../themes/local-play.css"
 const STORAGE_KEY = "role-room:local-play"
 const SPY_GAME_ID = "spy-game"
 const WHO_AM_I_GAME_ID = "who-am-i"
-const DEFAULT_SPY_CATEGORIES = ["places", "food", "jobs", "objects"]
+/* After the unified word-categories.ts refactor: pick 4 broad categories
+   that exist in the shared file and produce playable spy rounds out of the
+   box. "iraq-kurdistan-cities" gives the audience a local hook. */
+const DEFAULT_SPY_CATEGORIES = ["iraq-kurdistan-cities", "food-drinks", "jobs", "objects"]
 const WHO_AM_I_RECENT_LIMIT = 8
 
 type Step =
@@ -95,6 +98,48 @@ function loadState(): void {
     const raw = sessionStorage.getItem(STORAGE_KEY)
     if (raw) state = { ...freshState(), ...JSON.parse(raw) }
   } catch { state = freshState() }
+  migrateCategoryKeys()
+}
+
+/**
+ * Map legacy category keys to their new equivalents after the unified
+ * word-categories.ts refactor. Anything that has neither a remap nor a
+ * matching current key is dropped — and if the resulting list is empty,
+ * the Spy game falls back to its safe defaults so the user isn't stuck
+ * with an unrunnable selection. Who Am I falls back to Random Mix.
+ */
+function migrateCategoryKeys(): void {
+  const SPY_KEY_REMAP: Record<string, string> = {
+    food: "food-drinks",
+    school: "school-items",
+    home: "home-items",
+    entertainment: "movies-entertainment",
+    city: "iraq-kurdistan-cities",
+    famous_places: "famous-places",
+    daily_actions: "movies-entertainment",
+    famous: "movies-entertainment"
+  }
+
+  const validSpyIds = new Set(SPY_WORD_CATEGORIES.map(c => c.id))
+  const remappedSpy: string[] = []
+  for (const id of state.spyCategoryIds) {
+    const next = SPY_KEY_REMAP[id] ?? id
+    if (validSpyIds.has(next) && !remappedSpy.includes(next)) remappedSpy.push(next)
+  }
+  if (remappedSpy.length === 0) {
+    state.spyCategoryIds = [...DEFAULT_SPY_CATEGORIES].filter(id => validSpyIds.has(id))
+  } else {
+    state.spyCategoryIds = remappedSpy
+  }
+
+  const WHO_KEY_REMAP: Record<string, string> = {
+    famous: "movies-entertainment"
+  }
+  if (state.whoCategoryKey && state.whoCategoryKey !== RANDOM_MIX_KEY) {
+    const next = WHO_KEY_REMAP[state.whoCategoryKey] ?? state.whoCategoryKey
+    const valid = WHO_AM_I_CATEGORIES.some(c => c.key === next)
+    state.whoCategoryKey = valid ? next : RANDOM_MIX_KEY
+  }
 }
 
 function clearLocalState(): void {
