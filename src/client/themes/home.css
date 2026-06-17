@@ -1633,3 +1633,126 @@ img.hero-emblem-mark {
   }
   .shelf-card { opacity: 1; transform: none; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   MOBILE HERO POLISH (≤ 768px) — desktop/tablet untouched
+   ───────────────────────────────────────────────────────────────────
+   The default mobile collapse (the 900px block above) gave us a stacked
+   column but the first viewport was still cramped: a huge "YALLA GAME"
+   title competing with a giant decorative emblem competing with the
+   header + lang switcher + description + 3 CTAs. This block thins out
+   everything mobile-only so the first screen feels intentional.
+   ═══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  /* ─── Top header chrome — leave room for iPhone notch via env() ─── */
+  .brand {
+    top: max(var(--s-3), env(safe-area-inset-top));
+    left: max(var(--s-3), env(safe-area-inset-left));
+    gap: 8px;
+  }
+  .brand-mark { width: 32px; height: 32px; }
+  .brand-text strong { font-size: 13px; letter-spacing: 0.06em; }
+  .brand-text span   { font-size: 10px; letter-spacing: 0.02em; }
+
+  .hud {
+    top: max(var(--s-3), env(safe-area-inset-top));
+    right: max(var(--s-3), env(safe-area-inset-right));
+    gap: 6px;
+  }
+  .lang-switch { padding: 2px; gap: 0; }
+  .lang-switch button { padding: 5px 9px; font-size: 11px; }
+  .mute-toggle { width: 32px; height: 32px; font-size: 14px; }
+
+  /* Top nav becomes secondary on mobile — sits below brand, smaller. */
+  .main-nav {
+    top: calc(max(var(--s-3), env(safe-area-inset-top)) + 38px);
+    padding: 4px 8px;
+  }
+  .main-nav button { padding: 5px 9px; font-size: 10px; letter-spacing: 0.08em; }
+
+  /* ─── Hero shell — tighter, more breathable rhythm ─── */
+  .hero-slide {
+    padding-top: calc(env(safe-area-inset-top) + 96px);
+    padding-bottom: var(--s-6);
+    padding-inline: var(--s-4);
+    gap: var(--s-5);
+  }
+
+  /* Stack the left + emblem column with explicit ordering: left content
+     first, decorative emblem AFTER the CTAs. Keeps users focused on the
+     headline + actions and demotes the emblem to a closing flourish. */
+  .hero-grid { gap: var(--s-5); }
+  .hero-left  { order: 1; gap: var(--s-3); }
+  .hero-right { order: 2; }
+
+  /* Title — drop dramatically. Was clamp(40px,12vw,64px) on ≤900,
+     now max ~36px so the headline doesn't dominate the viewport. */
+  .hero-slide .mega-title {
+    font-size: clamp(28px, 8.5vw, 36px);
+    line-height: 1.02;
+    letter-spacing: 0.04em;
+  }
+
+  /* The hero-brand-row carries a duplicate big logo + the title. On phones
+     the secondary mark eats space — let just the title stand. */
+  .hero-brand-row { gap: 0; }
+  .hero-brand-row > img.hero-brand-mark { display: none; }
+
+  .hero-tagline { font-size: 15px; }
+  .hero-body {
+    font-size: 13.5px;
+    line-height: 1.55;
+    max-width: 38ch;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* CTA group — compact, full-width-stacked when short on room. */
+  .hero-actions { width: 100%; max-width: 360px; gap: var(--s-3); }
+  .hero-actions .cta-local,
+  .hero-actions .cta-row { align-self: stretch; }
+
+  .cta-row { gap: var(--s-2); }
+  .hero-slide .cta-create,
+  .hero-slide .cta-join {
+    flex: 1 1 0;
+    justify-content: center;
+    padding: 12px 18px;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    min-height: 44px; /* touch target */
+  }
+
+  /* Local Play card — already compact at 560px breakpoint; tighten more */
+  .hero-slide .cta-local {
+    padding: 8px 12px 8px 10px;
+    min-height: 54px;
+    border-radius: 14px;
+  }
+  .hero-slide .cta-local-icon { width: 32px; height: 32px; }
+  .hero-slide .cta-local-icon svg { width: 18px; height: 18px; }
+  .hero-slide .cta-local-text strong { font-size: 12px; letter-spacing: 0.10em; }
+  .hero-slide .cta-local-text span   { font-size: 10px; }
+
+  .hero-hint { font-size: 11px; }
+
+  /* Decorative right emblem — keep it but make it a small closing
+     flourish that sits BELOW the CTAs, never competes with the title.
+     Also kill the floating banners + embers on phones to reduce GPU
+     load and visual noise on small screens. */
+  .hero-emblem-panel { width: min(180px, 50%); margin-top: var(--s-2); }
+  .hero-emblem-ring { width: 95%; height: 95%; }
+  .hero-emblem-mark { width: 96px; height: 96px; font-size: 50px; }
+  .hero-banners,
+  .hero-embers { display: none; }
+}
+
+/* Very narrow phones — collapse CTA row to vertical stack so each
+   button fits even with long Arabic/Kurdish labels. */
+@media (max-width: 420px) {
+  .hero-slide .cta-row { flex-direction: column; }
+  .hero-slide .cta-create,
+  .hero-slide .cta-join { width: 100%; }
+}
+
