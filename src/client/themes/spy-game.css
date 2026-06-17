@@ -44,7 +44,9 @@
   100% { transform: translateY(110vh); }
 }
 
-/* HUD strip (top center) */
+/* HUD strip (top center). Visibility is gated by [data-theme="spy-game"]
+   below — the default `display: none` lives in _base.css so the chip is
+   hidden globally even when this lazy stylesheet hasn't loaded yet. */
 .spy-hud {
   position: fixed;
   z-index: var(--z-hud);
@@ -57,7 +59,6 @@
   letter-spacing: 0.1em;
   opacity: 0.6;
   pointer-events: none;
-  display: none;
 }
 
 [data-theme="spy-game"] .spy-hud { display: block; }

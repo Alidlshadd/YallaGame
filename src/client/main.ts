@@ -28,12 +28,13 @@ async function bootstrap() {
     btn.addEventListener("click", async () => {
       const lang = btn.dataset.lang as LangCode
       setLang(lang)
-      const active = document.querySelector<HTMLElement>("section.view.active-view")
-      if (!active) return
-
-      const id = active.id as Parameters<typeof setView>[0]
-      await setView("homeView")
-      await setView(id)
+      // refreshCurrentView re-mounts whatever view is showing so every
+      // string that captured getLang() at render time picks up the new
+      // value. The old "setView(homeView) then setView(currentId)"
+      // dance was a no-op on the home page (router.setView early-returns
+      // when currentId === target), so on the home stage the language
+      // appeared not to switch until the user reloaded the page.
+      await refreshCurrentView()
     })
   })
 

@@ -501,6 +501,18 @@ body {
   }
 }
 
+/* ─── Spy HUD chip safety net ────────────────────────────────────────
+   <div class="spy-hud"> in index.html holds a live "HH:MM:SSZ //
+   CLASSIFIED" chip that only belongs to the Spy world. Its visible
+   styling lives in spy-game.css — which is LAZY-loaded by applyTheme().
+   On the home page (or any non-Spy page) the lazy stylesheet isn't
+   loaded yet, so the rule that hides the chip would never apply and
+   the clock leaks above the global header. We hide it here, in the
+   always-loaded base sheet, so it stays gone until the Spy theme
+   activates. The spy-game.css override [data-theme="spy-game"] .spy-hud
+   wins on specificity once that theme is live. */
+.spy-hud { display: none; }
+
 /* ─── Spy FX text safety net ────────────────────────────────────────
    buildSpyFx() creates raw text nodes (HUD, binary columns) that only
    become positioned overlays under [data-theme="spy-game"]. If they're
