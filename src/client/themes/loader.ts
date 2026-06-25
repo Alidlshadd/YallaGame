@@ -1,12 +1,13 @@
-export type ThemeName = "vampire-village" | "mafia-classic" | "spy-game" | "who-am-i"
+export type ThemeName = "vampire-village" | "mafia-classic" | "spy-game" | "who-am-i" | "football-player-guess"
 
-const KNOWN_THEMES: ThemeName[] = ["vampire-village", "mafia-classic", "spy-game", "who-am-i"]
+const KNOWN_THEMES: ThemeName[] = ["vampire-village", "mafia-classic", "spy-game", "who-am-i", "football-player-guess"]
 
 const loaders: Record<ThemeName, () => Promise<unknown>> = {
   "vampire-village": () => import("./vampire-village.css"),
   "mafia-classic":   () => import("./mafia-classic.css"),
   "spy-game":        () => import("./spy-game.css"),
-  "who-am-i":        () => import("./who-am-i.css")
+  "who-am-i":        () => import("./who-am-i.css"),
+  "football-player-guess": () => import("./football-player-guess.css")
 }
 
 const loaded = new Set<ThemeName>()

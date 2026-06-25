@@ -684,6 +684,7 @@ body[data-perf="low"] *::after {
 .game-card[data-theme="vampire-village"] { --card-glow: #8b1538; }
 .game-card[data-theme="mafia-classic"]   { --card-glow: #c9a961; }
 .game-card[data-theme="spy-game"]        { --card-glow: #3fb8af; }
+.game-card[data-theme="football-player-guess"] { --card-glow: #f4d06f; }
 
 .game-icon {
   font-size: 64px;

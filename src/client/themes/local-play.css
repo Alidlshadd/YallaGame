@@ -310,6 +310,7 @@
 .lp-game-card[data-theme="vampire-village"] { --card-glow: #c41e3a; }
 .lp-game-card[data-theme="mafia-classic"]   { --card-glow: #d4af37; }
 .lp-game-card[data-theme="spy-game"]        { --card-glow: #3fb8af; }
+.lp-game-card[data-theme="football-player-guess"] { --card-glow: #f4d06f; }
 
 .lp-game-card:hover {
   transform: translateY(-4px);
@@ -1049,6 +1050,184 @@
 
 /* ─── HOME BRAND-HUB Local Play CTA ──────────────────────── */
 
+/* Football Player Guess */
+
+.lp-football-settings,
+.lp-football-fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.lp-football-settings {
+  padding: var(--s-4);
+  background:
+    linear-gradient(160deg, rgba(6, 19, 15, 0.78), rgba(10, 42, 25, 0.58)),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 72px);
+  border: 1px solid rgba(244, 208, 111, 0.22);
+  border-radius: 14px;
+}
+
+.lp-football-fieldset {
+  padding-bottom: var(--s-3);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.lp-football-fieldset:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.lp-football-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.lp-football-group-label {
+  margin: var(--s-1) 0 0;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--type-xs);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.lp-football-option {
+  min-height: 40px;
+  padding: 8px 14px;
+  background: rgba(0, 0, 0, 0.34);
+  border: 1px solid var(--border-faint);
+  border-radius: 999px;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--type-sm);
+  cursor: pointer;
+  transition: border-color 180ms, background 180ms, color 180ms;
+}
+
+.lp-football-option:hover {
+  border-color: var(--theme-accent, #39d47a);
+}
+
+.lp-football-option.selected {
+  border-color: var(--theme-glow, #f4d06f);
+  background: rgba(244, 208, 111, 0.15);
+  color: var(--theme-glow, #f4d06f);
+}
+
+.lp-football-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.lp-football-toggle input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--theme-accent, #39d47a);
+}
+
+.lp-football-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-6) var(--s-4);
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(244, 208, 111, 0.22), transparent 48%),
+    linear-gradient(160deg, rgba(8, 37, 22, 0.95), rgba(3, 15, 11, 0.88));
+  border: 1px solid rgba(244, 208, 111, 0.48);
+  border-radius: 18px;
+  box-shadow:
+    0 18px 46px -12px rgba(0, 0, 0, 0.68),
+    inset 0 0 0 1px rgba(255,255,255,0.06),
+    0 0 42px -10px rgba(57, 212, 122, 0.42);
+}
+
+.lp-football-card::before {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  pointer-events: none;
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 12px;
+}
+
+.lp-football-player-name {
+  max-width: 100%;
+  color: var(--theme-glow, #f4d06f);
+}
+
+.lp-football-hints {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--s-2);
+  min-height: 32px;
+}
+
+.lp-football-hint {
+  padding: 6px 10px;
+  background: rgba(57, 212, 122, 0.14);
+  border: 1px solid rgba(57, 212, 122, 0.35);
+  border-radius: 999px;
+  color: var(--text-primary);
+  font-size: var(--type-xs);
+  font-weight: 700;
+}
+
+.lp-football-hint.muted {
+  background: rgba(255,255,255,0.06);
+  border-color: var(--border-faint);
+  color: var(--text-muted);
+}
+
+.lp-football-guess-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--s-2);
+}
+
+.lp-football-guess-input {
+  min-width: 0;
+  padding: 12px 14px;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid var(--border-faint);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.lp-football-guess-input:focus {
+  outline: none;
+  border-color: var(--theme-accent, #39d47a);
+}
+
+.lp-football-timer {
+  color: var(--theme-glow, #f4d06f);
+}
+
+.lp-football-timer.danger {
+  color: #ff6868;
+}
+
+.lp-actions button[disabled] {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+@media (max-width: 600px) {
+  .lp-football-guess-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .home-stage .cta-local {
   margin-top: var(--s-3);
   display: inline-flex;
@@ -1198,4 +1377,3 @@ html[data-theme="who-am-i"] .local-play-content::after {
 html:not([data-theme]) .local-play-content {
   border-color: rgba(212, 175, 55, 0.25);
 }
-

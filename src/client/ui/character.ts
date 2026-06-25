@@ -1,4 +1,5 @@
 import { el } from "./dom.js"
+import { worldCoverPath } from "../data/assets.js"
 // Per-theme CSS is loaded lazily by applyTheme() (themes/loader.ts). All
 // .theme-fx rules are gated by [data-theme="..."], so the FX previews on
 // home are inert until the user opens that world (at which point the loader
@@ -72,12 +73,12 @@ export function buildThemeFx(theme: string): HTMLDivElement | null {
 
 /**
  * Build a character frame with image + atmospheric layers + theme-specific FX.
- * Frame uses /assets/worlds/<theme>-cover.webp from publicDir.
+ * Frame uses the public world cover asset for the selected theme.
  */
 export function buildCharacterFrame(theme: string, alt: string): HTMLDivElement {
   const frame = el("div", { class: "character-frame" }) as HTMLDivElement
   const img = el("img", {
-    src: `/assets/worlds/${theme}-cover.webp`,
+    src: worldCoverPath(theme),
     alt,
     loading: "lazy",
     decoding: "async"

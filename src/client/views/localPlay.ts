@@ -7,6 +7,7 @@ import { play } from "../services/sound.js"
 import { applyTheme, clearTheme } from "../themes/loader.js"
 import { showReveal } from "../ui/roleReveal.js"
 import { getGames } from "./home.js"
+import { worldCoverPath } from "../data/assets.js"
 import { buildRolePool, assignRolesLocally, type LocalAssignment } from "../domain/local-roles.js"
 import { SPY_WORD_CATEGORIES, pickSpyWord } from "../domain/spy-data.js"
 import {
@@ -15,11 +16,29 @@ import {
   pickWhoAmIWord,
   resolveCategoryLabel
 } from "../domain/who-am-i-data.js"
+import {
+  FOOTBALL_CLUB_OPTIONS,
+  FOOTBALL_DIFFICULTY_OPTIONS,
+  FOOTBALL_EUROPE_LEAGUE_KEYS,
+  FOOTBALL_LEAGUE_OPTIONS,
+  FOOTBALL_MAX_HINTS,
+  FOOTBALL_ROUND_SECONDS,
+  FOOTBALL_STAR_CATEGORY_OPTIONS,
+  footballLeagueLabel,
+  pickFootballCards,
+  type FootballCategoryKey,
+  type FootballClubKey,
+  type FootballDifficulty,
+  type FootballLeagueKey,
+  type FootballPlayerCard,
+  type FootballStarCategoryKey
+} from "../domain/football-player-data.js"
 import "../themes/local-play.css"
 
 const STORAGE_KEY = "role-room:local-play"
 const SPY_GAME_ID = "spy-game"
 const WHO_AM_I_GAME_ID = "who-am-i"
+const FOOTBALL_GAME_ID = "football-player-guess"
 const DEFAULT_SPY_CATEGORIES = ["places", "food", "jobs", "objects"]
 const WHO_AM_I_RECENT_LIMIT = 8
 
@@ -37,7 +56,16 @@ type Step =
   | "whoCountdown"
   | "whoRound"
   | "whoTimeUp"
+  | "footballTurn"
+  | "footballSummary"
 type SpyResult = "citizens" | "spies"
+
+interface FootballAssignment {
+  name: string
+  card: FootballPlayerCard
+  hintsUsed: number
+  solved: boolean
+}
 
 interface LocalState {
   step: Step
@@ -54,10 +82,23 @@ interface LocalState {
   selectedSuspect: string | null
   lastVoteMessage: string | null
   result: SpyResult | null
+  starterName: string | null
   whoCategoryKey: string
   whoCurrentWord: string | null
   whoCurrentWordCategory: string | null
   whoRecentWords: string[]
+  footballCategoryKey: FootballCategoryKey
+  footballLeagueKey: FootballLeagueKey
+  footballStarCategoryKey: FootballStarCategoryKey
+  footballClubKey: FootballClubKey
+  footballDifficulty: FootballDifficulty
+  footballRoundSeconds: number
+  footballHintsEnabled: boolean
+  footballMaxHints: number
+  footballDuplicateCards: boolean
+  footballAssignments: FootballAssignment[]
+  footballCurrentIndex: number
+  footballMessage: string | null
 }
 
 let state: LocalState = freshState()
@@ -79,10 +120,23 @@ function freshState(): LocalState {
     selectedSuspect: null,
     lastVoteMessage: null,
     result: null,
+    starterName: null,
     whoCategoryKey: RANDOM_MIX_KEY,
     whoCurrentWord: null,
     whoCurrentWordCategory: null,
-    whoRecentWords: []
+    whoRecentWords: [],
+    footballCategoryKey: "mixed",
+    footballLeagueKey: "mixed",
+    footballStarCategoryKey: "all",
+    footballClubKey: "all",
+    footballDifficulty: "easy",
+    footballRoundSeconds: 60,
+    footballHintsEnabled: true,
+    footballMaxHints: 1,
+    footballDuplicateCards: false,
+    footballAssignments: [],
+    footballCurrentIndex: 0,
+    footballMessage: null
   }
 }
 
@@ -113,6 +167,10 @@ function isSpyGame(game: Game): boolean {
 
 function isWhoAmIGame(game: Game): boolean {
   return game.id === WHO_AM_I_GAME_ID
+}
+
+function isFootballGame(game: Game): boolean {
+  return game.id === FOOTBALL_GAME_ID
 }
 
 function buildErrorMessage(container: HTMLElement, text: string): void {
@@ -212,6 +270,7 @@ function prepareRound(game: Game, lang: LangCode): void {
   state.selectedSuspect = null
   state.lastVoteMessage = null
   state.result = null
+  state.starterName = null
   state.voteAttemptsLeft = Math.max(1, settingNumber("guessAttempts", 1))
 
   if (isSpyGame(game)) {
@@ -224,6 +283,7 @@ function prepareRound(game: Game, lang: LangCode): void {
 }
 
 function initialStepForGame(game: Game): Step {
+  if (isFootballGame(game)) return "settings"
   return isWhoAmIGame(game) ? "whoSetup" : "names"
 }
 
@@ -279,6 +339,8 @@ export const localPlayView = {
       else if (state.step === "whoCountdown" && game) renderWhoAmICountdown(container, lang, render, id => { activeTimer = id })
       else if (state.step === "whoRound" && game) renderWhoAmIRound(container, lang, render, id => { activeTimer = id })
       else if (state.step === "whoTimeUp" && game) renderWhoAmITimeUp(container, lang, render)
+      else if (state.step === "footballTurn" && game) renderFootballTurn(container, render, id => { activeTimer = id })
+      else if (state.step === "footballSummary" && game) renderFootballSummary(container, lang, render, game)
       else {
         state.step = "game"
         renderGamePicker(container, lang, render)
@@ -332,7 +394,7 @@ function renderGamePicker(container: HTMLDivElement, lang: LangCode, render: () 
       },
       [
         el("img", {
-          src: `/assets/worlds/${game.theme}-cover.webp`,
+          src: worldCoverPath(game.theme),
           alt: game.title[lang],
           loading: "lazy",
           decoding: "async",
@@ -347,7 +409,7 @@ function renderGamePicker(container: HTMLDivElement, lang: LangCode, render: () 
     )
     card.addEventListener("click", () => {
       void play("click")
-      const nextStep: Step = isWhoAmIGame(game) ? "whoSetup" : "names"
+      const nextStep = initialStepForGame(game)
       state = { ...freshState(), gameId: game.id, settings: { ...game.defaultSettings }, step: nextStep }
       render()
     })
@@ -480,6 +542,11 @@ function buildSetupHeader(eyebrow: string, title: string, subtitle?: string): HT
 }
 
 function renderSettings(container: HTMLDivElement, lang: LangCode, render: () => void, game: Game): void {
+  if (isFootballGame(game)) {
+    renderFootballSettings(container, lang, render, game)
+    return
+  }
+
   const settingsEl = el("div", { class: "lp-settings" })
 
   if (isSpyGame(game)) {
@@ -621,6 +688,10 @@ function renderReveal(container: HTMLDivElement, lang: LangCode, render: () => v
       if (state.currentRevealIndex >= state.assignments.length) {
         if (isSpyGame(game)) {
           state.roundEndsAt = Date.now() + settingNumber("roundMinutes", 5) * 60_000
+          if (state.assignments.length > 0) {
+            const pick = state.assignments[Math.floor(Math.random() * state.assignments.length)]!
+            state.starterName = pick.name
+          }
           state.step = "discussion"
         } else {
           state.step = "adminReview"
@@ -672,9 +743,13 @@ function renderDiscussion(container: HTMLDivElement, render: () => void, setTime
   if (!state.roundEndsAt) {
     state.roundEndsAt = Date.now() + settingNumber("roundMinutes", 5) * 60_000
   }
+  if (!state.starterName && state.assignments.length > 0) {
+    const pick = state.assignments[Math.floor(Math.random() * state.assignments.length)]!
+    state.starterName = pick.name
+  }
 
   const timer = el("div", { class: "lp-timer" }, ["00:00"])
-  const firstQuestioner = state.assignments[0]?.name ?? "Player 1"
+  const firstQuestioner = state.starterName ?? state.assignments[0]?.name ?? "Player 1"
   const endBtn = el("button", { class: "lp-primary", type: "button" }, ["End Discussion"])
   endBtn.addEventListener("click", () => {
     state.step = "vote"
@@ -840,6 +915,382 @@ function renderDone(container: HTMLDivElement, lang: LangCode, render: () => voi
 /* ────────────────────────────────────────────────────────────────
    WHO AM I — single-device flow (no names, countdown, seconds timer)
    ──────────────────────────────────────────────────────────────── */
+
+/* Football Player Guess - named local flow with hidden football cards. */
+
+function footballOptionButton(
+  label: string,
+  selected: boolean,
+  onClick: () => void
+): HTMLButtonElement {
+  const btn = el("button", {
+    class: selected ? "lp-football-option selected" : "lp-football-option",
+    type: "button",
+    "aria-pressed": selected ? "true" : "false"
+  }, [label]) as HTMLButtonElement
+  btn.addEventListener("click", () => {
+    void play("click", 0.3)
+    onClick()
+  })
+  return btn
+}
+
+function renderFootballSettings(container: HTMLDivElement, lang: LangCode, render: () => void, game: Game): void {
+  const settingsEl = el("div", { class: "lp-football-settings" })
+
+  const buildLeagueButton = (opt: (typeof FOOTBALL_LEAGUE_OPTIONS)[number]): HTMLButtonElement =>
+    footballOptionButton(opt.label, state.footballLeagueKey === opt.key, () => {
+      state.footballLeagueKey = opt.key
+      render()
+    })
+
+  const leagueMainRow = el("div", { class: "lp-football-options" })
+  const leagueEuropeRow = el("div", { class: "lp-football-options" })
+  const europeanKeys = new Set<string>(["european-mixed", ...FOOTBALL_EUROPE_LEAGUE_KEYS])
+  for (const opt of FOOTBALL_LEAGUE_OPTIONS) {
+    if (europeanKeys.has(opt.key)) leagueEuropeRow.appendChild(buildLeagueButton(opt))
+    else leagueMainRow.appendChild(buildLeagueButton(opt))
+  }
+
+  const starCategoryRow = el("div", { class: "lp-football-options" })
+  for (const opt of FOOTBALL_STAR_CATEGORY_OPTIONS) {
+    starCategoryRow.appendChild(footballOptionButton(opt.label, state.footballStarCategoryKey === opt.key, () => {
+      state.footballStarCategoryKey = opt.key
+      render()
+    }))
+  }
+
+  const clubMainRow = el("div", { class: "lp-football-options" })
+  const clubPopularRow = el("div", { class: "lp-football-options" })
+  const virtualClubKeys = new Set<FootballClubKey>(["all", "mixed-clubs", "world-popular-clubs"])
+  for (const opt of FOOTBALL_CLUB_OPTIONS) {
+    const row = virtualClubKeys.has(opt.key) ? clubMainRow : clubPopularRow
+    row.appendChild(footballOptionButton(opt.label, state.footballClubKey === opt.key, () => {
+      state.footballClubKey = opt.key
+      render()
+    }))
+  }
+
+  const difficultyRow = el("div", { class: "lp-football-options" })
+  for (const opt of FOOTBALL_DIFFICULTY_OPTIONS) {
+    difficultyRow.appendChild(footballOptionButton(opt.label, state.footballDifficulty === opt.key, () => {
+      state.footballDifficulty = opt.key
+      render()
+    }))
+  }
+
+  const timeRow = el("div", { class: "lp-football-options" })
+  for (const seconds of FOOTBALL_ROUND_SECONDS) {
+    const label = seconds === 0 ? "No time" : `${seconds}s`
+    timeRow.appendChild(footballOptionButton(label, state.footballRoundSeconds === seconds, () => {
+      state.footballRoundSeconds = seconds
+      render()
+    }))
+  }
+
+  const hintsToggle = el("label", { class: "lp-football-toggle" }, [
+    el("span", {}, ["Hints"]),
+    el("input", { type: "checkbox" })
+  ])
+  const hintsInput = hintsToggle.querySelector("input") as HTMLInputElement
+  hintsInput.checked = state.footballHintsEnabled
+  hintsInput.addEventListener("change", () => {
+    state.footballHintsEnabled = hintsInput.checked
+    render()
+  })
+
+  const hintsRow = el("div", { class: "lp-football-options" })
+  for (const count of FOOTBALL_MAX_HINTS) {
+    hintsRow.appendChild(footballOptionButton(String(count), state.footballMaxHints === count, () => {
+      state.footballMaxHints = count
+      render()
+    }))
+  }
+
+  const duplicateToggle = el("label", { class: "lp-football-toggle" }, [
+    el("span", {}, ["Duplicate cards"]),
+    el("input", { type: "checkbox" })
+  ])
+  const duplicateInput = duplicateToggle.querySelector("input") as HTMLInputElement
+  duplicateInput.checked = state.footballDuplicateCards
+  duplicateInput.addEventListener("change", () => {
+    state.footballDuplicateCards = duplicateInput.checked
+    saveState()
+  })
+
+  settingsEl.append(
+    el("section", { class: "lp-football-fieldset" }, [
+      el("h3", { class: "lp-section-title" }, ["League Category"]),
+      el("p", { class: "lp-football-group-label" }, ["All"]),
+      leagueMainRow,
+      el("p", { class: "lp-football-group-label" }, ["Europe"]),
+      leagueEuropeRow
+    ]),
+    el("section", { class: "lp-football-fieldset" }, [
+      el("h3", { class: "lp-section-title" }, ["Star Category"]),
+      starCategoryRow
+    ]),
+    el("section", { class: "lp-football-fieldset" }, [
+      el("h3", { class: "lp-section-title" }, ["Club Filter"]),
+      el("p", { class: "lp-football-group-label" }, ["Groups"]),
+      clubMainRow,
+      el("p", { class: "lp-football-group-label" }, ["Club Popular XI"]),
+      clubPopularRow
+    ]),
+    el("section", { class: "lp-football-fieldset" }, [
+      el("h3", { class: "lp-section-title" }, ["Difficulty"]),
+      difficultyRow
+    ]),
+    el("section", { class: "lp-football-fieldset" }, [
+      el("h3", { class: "lp-section-title" }, ["Round time"]),
+      timeRow
+    ]),
+    el("section", { class: "lp-football-fieldset" }, [
+      hintsToggle,
+      hintsRow
+    ]),
+    el("section", { class: "lp-football-fieldset" }, [
+      duplicateToggle
+    ])
+  )
+
+  const startBtn = el("button", { class: "lp-primary", type: "button" }, ["Start Football Guess"])
+  startBtn.addEventListener("click", () => {
+    void play("transition")
+    try {
+      prepareFootballRound()
+      render()
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to assign football cards"
+      if (msg === "NOT_ENOUGH_FOOTBALL_CARDS") {
+        buildErrorMessage(container, "Not enough unique cards in this league, star, or club filter. Enable duplicate cards, choose broader filters, or use easier difficulty.")
+      } else if (msg === "NO_FOOTBALL_CARDS") {
+        buildErrorMessage(container, "No football cards match this league, star, and club filter.")
+      } else {
+        buildErrorMessage(container, msg)
+      }
+    }
+  })
+
+  const backBtn = el("button", { class: "lp-back", type: "button" }, ["<- Back"])
+  backBtn.addEventListener("click", () => {
+    if (presetGameId) {
+      clearLocalState()
+      sessionStorage.setItem("role-room:selectedGame", presetGameId)
+      void setView("gameInfoView")
+      return
+    }
+    state.step = "game"
+    render()
+  })
+
+  const totalSteps = 3
+  container.append(
+    renderProgressBar(0, totalSteps),
+    presetGameId ? buildSelectedGameSummary(game, lang) : el("div", { class: "lp-selected-empty" }),
+    buildSetupHeader(
+      `Setup - Step 1 of ${totalSteps}`,
+      "Football Setup",
+      "No player names needed. Pick options and start guessing."
+    ),
+    settingsEl,
+    el("div", { class: "lp-error" }, []),
+    el("div", { class: "lp-actions" }, [backBtn, startBtn])
+  )
+}
+
+function prepareFootballRound(): void {
+  const names = state.playerNames.length > 0 ? state.playerNames : ["Player"]
+  const cards = pickFootballCards(
+    names.length,
+    state.footballCategoryKey,
+    state.footballLeagueKey,
+    state.footballStarCategoryKey,
+    state.footballClubKey,
+    state.footballDifficulty,
+    state.footballDuplicateCards
+  )
+  state.footballAssignments = names.map((name, idx) => ({
+    name,
+    card: cards[idx]!,
+    hintsUsed: 0,
+    solved: false
+  }))
+  state.footballCurrentIndex = 0
+  state.footballMessage = null
+  state.roundEndsAt = null
+  state.step = "footballTurn"
+}
+
+function normalizeGuess(value: string): string {
+  return value.trim().toLowerCase().replace(/\s+/g, " ")
+}
+
+function advanceFootballTurn(render: () => void): void {
+  if (state.playerNames.length === 0) {
+    prepareFootballRound()
+    render()
+    return
+  }
+  state.footballCurrentIndex += 1
+  state.footballMessage = null
+  state.roundEndsAt = null
+  if (state.footballCurrentIndex >= state.footballAssignments.length) {
+    state.step = "footballSummary"
+  }
+  render()
+}
+
+function renderFootballTurn(container: HTMLDivElement, render: () => void, setTimer: (id: number) => void): void {
+  const current = state.footballAssignments[state.footballCurrentIndex]
+  if (!current) {
+    state.step = "footballSummary"
+    render()
+    return
+  }
+
+  if (state.footballRoundSeconds > 0 && !state.roundEndsAt && !current.solved) {
+    state.roundEndsAt = Date.now() + state.footballRoundSeconds * 1000
+  }
+
+  const timer = el("div", { class: "lp-timer lp-football-timer" }, [state.footballRoundSeconds === 0 ? "NO TIME" : "00"])
+  if (state.footballRoundSeconds > 0) {
+    const updateTimer = () => {
+      const remainingMs = (state.roundEndsAt ?? Date.now()) - Date.now()
+      const remaining = Math.max(0, Math.ceil(remainingMs / 1000))
+      timer.textContent = String(remaining)
+      timer.classList.toggle("danger", remaining <= 5 && remaining > 0)
+      if (remainingMs <= 0 && !current.solved) {
+        state.footballMessage = `Time is up. The card was ${current.card.name}.`
+        if (state.playerNames.length === 0) {
+          current.solved = true
+          state.roundEndsAt = null
+          render()
+        } else {
+          advanceFootballTurn(render)
+        }
+      }
+    }
+    updateTimer()
+    setTimer(window.setInterval(updateTimer, 250))
+  }
+
+  const hints = current.card.hints.slice(0, current.hintsUsed)
+  const hintList = el("div", { class: "lp-football-hints" })
+  if (hints.length === 0) {
+    hintList.appendChild(el("span", { class: "lp-football-hint muted" }, ["No hints used"]))
+  } else {
+    for (const hint of hints) hintList.appendChild(el("span", { class: "lp-football-hint" }, [hint]))
+  }
+
+  const card = el("div", { class: "lp-football-card" }, [
+    el("p", { class: "lp-who-meta" }, [`${footballLeagueLabel(current.card.leagueCategory)} - ${current.card.position} - ${current.card.difficulty}`]),
+    el("p", { class: "lp-who-identity-label" }, [state.playerNames.length === 0 ? "Football Player Card" : `${current.name}'s card`]),
+    el("h1", { class: "lp-who-word lp-football-player-name" }, [current.card.name]),
+    hintList
+  ])
+
+  const guessInput = el("input", {
+    class: "lp-football-guess-input",
+    type: "text",
+    maxlength: "48",
+    placeholder: "Type final guess"
+  }) as HTMLInputElement
+
+  const submitBtn = el("button", { class: "lp-primary", type: "button" }, ["Submit Guess"])
+  submitBtn.addEventListener("click", () => {
+    const guess = normalizeGuess(guessInput.value)
+    if (!guess) {
+      buildErrorMessage(container, "Enter a guess first.")
+      return
+    }
+    if (guess === normalizeGuess(current.card.name)) {
+      current.solved = true
+      state.roundEndsAt = null
+      state.footballMessage = `Correct. ${current.name} found ${current.card.name}.`
+    } else {
+      state.footballMessage = `Wrong guess: ${guessInput.value.trim()}. Keep asking.`
+    }
+    render()
+  })
+
+  const hintBtn = el("button", { class: "lp-secondary", type: "button" }, ["Show Hint"])
+  const maxHints = state.footballHintsEnabled ? state.footballMaxHints : 0
+  hintBtn.toggleAttribute("disabled", !state.footballHintsEnabled || current.hintsUsed >= maxHints)
+  hintBtn.addEventListener("click", () => {
+    if (!state.footballHintsEnabled || current.hintsUsed >= maxHints) return
+    current.hintsUsed += 1
+    state.footballMessage = `Hint ${current.hintsUsed} shown.`
+    render()
+  })
+
+  const nextBtnLabel = state.playerNames.length === 0
+    ? "New Card"
+    : state.footballCurrentIndex + 1 >= state.footballAssignments.length ? "Finish Game" : "Next Player"
+  const nextBtn = el("button", { class: "lp-secondary", type: "button" }, [nextBtnLabel])
+  nextBtn.addEventListener("click", () => {
+    void play("click")
+    advanceFootballTurn(render)
+  })
+
+  container.append(
+    renderProgressBar(1, 3),
+    el("p", { class: "lp-sub lp-who-active-cat" }, [
+      state.playerNames.length === 0 ? "Football Card" : `Player ${state.footballCurrentIndex + 1} of ${state.footballAssignments.length}`
+    ]),
+    timer,
+    card,
+    el("div", { class: "lp-football-guess-row" }, [guessInput, submitBtn]),
+    el("div", { class: "lp-error" }, [state.footballMessage ?? ""]),
+    el("div", { class: "lp-actions lp-who-actions" }, [hintBtn, nextBtn])
+  )
+}
+
+function renderFootballSummary(container: HTMLDivElement, lang: LangCode, render: () => void, game: Game): void {
+  const solved = state.footballAssignments.filter(a => a.solved).length
+  const list = el("div", { class: "lp-done-list lp-football-summary" })
+  for (const a of state.footballAssignments) {
+    list.appendChild(el("div", { class: "lp-done-row" }, [
+      el("span", { class: "lp-done-icon" }, [a.solved ? "OK" : "--"]),
+      el("span", { class: "lp-done-name" }, [a.name]),
+      el("span", { class: "lp-done-role" }, [a.card.name])
+    ]))
+  }
+
+  const sameGroupBtn = el("button", { class: "lp-primary", type: "button" }, ["New Cards"])
+  sameGroupBtn.addEventListener("click", () => {
+    void play("transition")
+    try {
+      prepareFootballRound()
+      render()
+    } catch (err) {
+      buildErrorMessage(container, err instanceof Error ? err.message : "Failed to start")
+    }
+  })
+
+  const settingsBtn = el("button", { class: "lp-secondary", type: "button" }, ["Settings"])
+  settingsBtn.addEventListener("click", () => {
+    state.step = "settings"
+    render()
+  })
+
+  const homeBtn = el("button", { class: "lp-back", type: "button" }, [localReviewText(lang, "doneBack")])
+  homeBtn.addEventListener("click", () => {
+    void play("click")
+    clearLocalState()
+    clearTheme()
+    setView("homeView")
+  })
+
+  container.append(
+    renderProgressBar(4, 4),
+    el("h2", { class: "lp-title" }, ["Final Score"]),
+    el("p", { class: "lp-sub" }, [`${solved} of ${state.footballAssignments.length} players guessed correctly in ${game.title[lang]}.`]),
+    list,
+    el("div", { class: "lp-error" }, []),
+    el("div", { class: "lp-actions" }, [homeBtn, settingsBtn, sameGroupBtn])
+  )
+}
 
 function clampRoundSeconds(value: number): number {
   if (!Number.isFinite(value)) return 60

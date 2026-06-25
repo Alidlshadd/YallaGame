@@ -1,0 +1,619 @@
+Football Player Guess - 570 player card names
+
+Austrian Bundesliga (10)
+- Alexander Prass
+- Benjamin Sesko
+- Guido Burgstaller
+- Junior Adamu
+- Karim Konate
+- Marco Grull
+- Matthias Seidl
+- Maurits Kjaergaard
+- Nicolas Seiwald
+- Oscar Gloukh
+
+Belgian Pro League (10)
+- Andreas Skov Olsen
+- Bilal El Khannouss
+- Cameron Puertas
+- Charles Vanhoutte
+- Gift Orban
+- Hans Vanaken
+- Igor Thiago
+- Kasper Dolberg
+- Raphael Onyedika
+- Tolu Arokodare
+
+Bundesliga (37)
+- Alphonso Davies
+- Andreas Brehme
+- Bastian Schweinsteiger
+- Berti Vogts
+- Dayot Upamecano
+- Florian Wirtz
+- Franz Beckenbauer
+- Gerd Muller
+- Gregor Kobel
+- Harry Kane
+- Jamal Musiala
+- Joshua Kimmich
+- Jurgen Klinsmann
+- Karl-Heinz Rummenigge
+- Kim Min-jae
+- Kingsley Coman
+- Koen Casteels
+- Leon Goretzka
+- Leroy Sane
+- Lothar Matthaus
+- Lucas Hernandez
+- Manuel Neuer
+- Marco Reus
+- Mats Hummels
+- Matthias Sammer
+- Miroslav Klose
+- Oliver Kahn
+- Paul Breitner
+- Philipp Lahm
+- Pierre Littbarski
+- Rudi Voller
+- Sepp Maier
+- Serge Gnabry
+- Thomas Muller
+- Toni Kroos
+- Uwe Seeler
+- Xavi Simons
+
+Classic Legends (63)
+- Abedi Pele
+- Alan Shearer
+- Arjen Robben
+- Billy Wright
+- Bobby Charlton
+- Brian Laudrup
+- Cafu
+- Carlos Alberto
+- Carlos Valderrama
+- Claudio Caniggia
+- Claudio Taffarel
+- Daniel Passarella
+- Davor Suker
+- Dennis Bergkamp
+- Didi
+- Djalma Santos
+- Edgar Davids
+- Enzo Francescoli
+- Eusebio
+- Ferenc Puskas
+- Franck Ribery
+- Garrincha
+- George Best
+- Gerson
+- Gheorghe Hagi
+- Gilmar
+- Gordon Banks
+- Henrik Larsson
+- Hristo Stoichkov
+- Jairzinho
+- Javier Zanetti
+- Jean-Marie Pfaff
+- Jorge Campos
+- Jose Luis Chilavert
+- Jozsef Bozsik
+- Juan Roman Riquelme
+- Julio Cesar
+- Junior
+- Lev Yashin
+- Mario Kempes
+- Michel Preudhomme
+- Nilton Santos
+- Pat Jennings
+- Pele
+- Pepe
+- Peter Shilton
+- Predrag Mijatovic
+- Ray Clemence
+- Rivaldo
+- Roberto Rivelino
+- Roger Milla
+- Roy Keane
+- Ruud Gullit
+- Ruud Krol
+- Ruud van Nistelrooy
+- Sami Hyypia
+- Samuel Kuffour
+- Sandor Kocsis
+- Socrates
+- Tomas Rosicky
+- Ubaldo Fillol
+- Victor Valdes
+- Zlatan Ibrahimovic
+
+Croatian HNL (10)
+- Bruno Petkovic
+- Dion Drena Beljo
+- Lovro Majer
+- Luka Ivanusec
+- Luka Sucic
+- Marcelo Brozovic
+- Marko Livaja
+- Martin Baturina
+- Matija Frigan
+- Mislav Orsic
+
+Czech First League (10)
+- Adam Hlozek
+- Alex Kral
+- Antonin Barak
+- Jan Kuchta
+- Ladislav Krejci
+- Lukas Provod
+- Patrik Schick
+- Tomas Chory
+- Tomas Soucek
+- Vaclav Jurecka
+
+Danish Superliga (10)
+- Andreas Cornelius
+- Christian Norgaard
+- Ernest Nuamah
+- Jesper Lindstrom
+- Mikkel Damsgaard
+- Mohamed Elyounoussi
+- Morten Hjulmand
+- Patrick Mortensen
+- Roony Bardghji
+- Thomas Delaney
+
+Eredivisie (10)
+- Brian Brobbey
+- Guus Til
+- Jerdy Schouten
+- Johan Bakayoko
+- Kenneth Taylor
+- Luuk de Jong
+- Malik Tillman
+- Quinten Timber
+- Santiago Gimenez
+- Steven Bergwijn
+
+Greek Super League (10)
+- Andraz Sporar
+- Ayoub El Kaabi
+- Bernard
+- Daniel Podence
+- Fotis Ioannidis
+- Kiril Despodov
+- Konstantinos Fortounis
+- Levi Garcia
+- Mijat Gacinovic
+- Sergio Araujo
+
+La Liga (75)
+- Alejandro Balde
+- Alfredo Di Stefano
+- Alvaro Morata
+- Andoni Zubizarreta
+- Andres Iniesta
+- Ansu Fati
+- Antoine Griezmann
+- Antonio Rudiger
+- Arda Guler
+- Ariel Ortega
+- Aurelien Tchouameni
+- Carles Puyol
+- Casemiro
+- Dani Alves
+- Dani Carvajal
+- Dani Olmo
+- David Silva
+- David Villa
+- Diego Forlan
+- Diego Maradona
+- Eder Militao
+- Eduardo Camavinga
+- Federico Valverde
+- Ferland Mendy
+- Fernando Hierro
+- Ferran Torres
+- Frenkie de Jong
+- Gareth Bale
+- Gavi
+- Gerard Pique
+- Giorgi Mamardashvili
+- Guti
+- Hugo Sanchez
+- Iker Casillas
+- Ilkay Gundogan
+- James Rodriguez
+- Jan Oblak
+- Joao Felix
+- Johan Cruyff
+- Kaka
+- Koke
+- Lamine Yamal
+- Lionel Messi
+- Luis Figo
+- Luka Modric
+- Marc-Andre ter Stegen
+- Marcelo
+- Martin Zubimendi
+- Memphis Depay
+- Michael Laudrup
+- Mikel Merino
+- Pedri
+- Radamel Falcao
+- Raphael Varane
+- Raphinha
+- Raul
+- Rene Higuita
+- Ricardo Zamora
+- Robert Lewandowski
+- Roberto Baggio
+- Roberto Carlos
+- Rodrygo
+- Romario
+- Ronald Araujo
+- Ronald Koeman
+- Ronaldinho
+- Ronaldo Nazario
+- Samuel Eto'o
+- Sergio Busquets
+- Sergio Ramos
+- Thibaut Courtois
+- Unai Simon
+- Vinicius Junior
+- Xavi
+- Zinedine Zidane
+
+Ligue 1 (20)
+- Achraf Hakimi
+- Edinson Cavani
+- Fabien Barthez
+- Gianluigi Donnarumma
+- Jules Kounde
+- Kylian Mbappe
+- Lilian Thuram
+- Manuel Ugarte
+- Marcel Desailly
+- Marco Verratti
+- Marquinhos
+- Michel Platini
+- Neymar
+- Nuno Mendes
+- Ousmane Dembele
+- Randal Kolo Muani
+- Theo Hernandez
+- Vitinha
+- Warren Zaire-Emery
+- Yassine Bounou
+
+Norwegian Eliteserien (10)
+- Akor Adams
+- Albert Gronbaek
+- Amahl Pellegrino
+- Bard Finne
+- Emil Breivik
+- Hugo Vetlesen
+- Markus Henriksen
+- Ola Solbakken
+- Patrick Berg
+- Sondre Fet
+
+Other Leagues (17)
+- Anatoliy Trubin
+- Aymeric Laporte
+- Denzel Dumfries
+- Diogo Costa
+- Emiliano Martinez
+- Enzo Fernandez
+- Giovanni Reyna
+- Illan Meslier
+- Jeremie Frimpong
+- Jude Bellingham
+- Kalidou Koulibaly
+- Kevin De Bruyne
+- Moises Caicedo
+- Philippe Coutinho
+- Piero Hincapie
+- Rodri
+- Wojciech Szczesny
+
+Polish Ekstraklasa (10)
+- Arkadiusz Milik
+- Bartosz Slisz
+- Damian Szymanski
+- Efthymis Koulouris
+- Erik Exposito
+- Jakub Moder
+- Kamil Grosicki
+- Krzysztof Piatek
+- Piotr Zielinski
+- Sebastian Szymanski
+
+Portuguese Liga (11)
+- Alan Varela
+- Angel Di Maria
+- Florentino Luis
+- Francisco Trincao
+- Hulk
+- Joao Neves
+- Mehdi Taremi
+- Orkun Kokcu
+- Pedro Goncalves
+- Rafa Silva
+- Viktor Gyokeres
+
+Premier League (114)
+- Aaron Ramsdale
+- Alexander Isak
+- Alexis Mac Allister
+- Alisson Becker
+- Andre Onana
+- Andrew Robertson
+- Ashley Cole
+- Ben White
+- Bernardo Silva
+- Bernd Leno
+- Bobby Moore
+- Branislav Ivanovic
+- Bruno Fernandes
+- Bukayo Saka
+- Callum Wilson
+- Carlos Tevez
+- Cesc Fabregas
+- Christian Eriksen
+- Christopher Nkunku
+- Claude Makelele
+- Cody Gakpo
+- Conor Gallagher
+- Cristian Romero
+- Darwin Nunez
+- David Beckham
+- David Raya
+- David Seaman
+- Declan Rice
+- Didier Drogba
+- Diogo Jota
+- Dirk Kuyt
+- Dominik Szoboszlai
+- Eden Hazard
+- Ederson
+- Edwin van der Sar
+- Eric Cantona
+- Erling Haaland
+- Fernando Torres
+- Frank Lampard
+- Freddie Ljungberg
+- Gabriel Jesus
+- Gabriel Martinelli
+- Gary Lineker
+- George Weah
+- Ian Rush
+- Ivan Toney
+- Jaap Stam
+- Jadon Sancho
+- James Maddison
+- Jarrod Bowen
+- Jay-Jay Okocha
+- Jens Lehmann
+- Joao Cancelo
+- John Stones
+- John Terry
+- Jordan Pickford
+- Jose Sa
+- Josko Gvardiol
+- Julian Alvarez
+- Kai Havertz
+- Kenny Dalglish
+- Kepa Arrizabalaga
+- Kyle Walker
+- Levi Colwill
+- Lisandro Martinez
+- Luis Diaz
+- Luis Suarez
+- Manuel Akanji
+- Marc Guehi
+- Marcus Rashford
+- Martin Odegaard
+- Mason Mount
+- Mesut Ozil
+- Michael Ballack
+- Michael Owen
+- Micky van de Ven
+- Mohamed Salah
+- Moussa Diaby
+- N'Golo Kante
+- Nathan Ake
+- Nemanja Vidic
+- Nick Pope
+- Nicolas Jackson
+- Ollie Watkins
+- Patrick Vieira
+- Pau Torres
+- Paul Pogba
+- Paul Scholes
+- Peter Schmeichel
+- Petr Cech
+- Phil Foden
+- Rasmus Hojlund
+- Reece James
+- Ricardo Carvalho
+- Richarlison
+- Rio Ferdinand
+- Robert Pires
+- Robert Sanchez
+- Robin van Persie
+- Ruben Dias
+- Ryan Gravenberch
+- Sergio Aguero
+- Sol Campbell
+- Son Heung-min
+- Steven Gerrard
+- Teddy Sheringham
+- Thierry Henry
+- Trent Alexander-Arnold
+- Vincent Kompany
+- Virgil van Dijk
+- Wayne Rooney
+- William Saliba
+- Xabi Alonso
+- Yaya Toure
+
+Saudi Pro League (3)
+- Cristiano Ronaldo
+- Karim Benzema
+- Sadio Mane
+
+Scottish Premiership (10)
+- Callum McGregor
+- Cyriel Dessers
+- Daizen Maeda
+- James Tavernier
+- Kyogo Furuhashi
+- Lawrence Shankland
+- Matt O'Riley
+- Nicolas Raskin
+- Reo Hatate
+- Todd Cantwell
+
+Serbian SuperLiga (10)
+- Aleksandar Katai
+- Aleksandar Mitrovic
+- Cherif Ndiaye
+- Guelor Kanga
+- Luka Jovic
+- Marko Grujic
+- Mirko Ivanic
+- Samed Bazdar
+- Sasa Zdjelar
+- Uros Spajic
+
+Serie A (78)
+- Adrien Rabiot
+- Alessandro Bastoni
+- Alessandro Del Piero
+- Alessandro Nesta
+- Alex Meret
+- Andrea Pirlo
+- Andriy Shevchenko
+- Ciro Immobile
+- Clarence Seedorf
+- Claudio Gentile
+- Daniele De Rossi
+- David Trezeguet
+- Deco
+- Dejan Stankovic
+- Demetrio Albertini
+- Dida
+- Diego Godin
+- Dino Zoff
+- Dusan Vlahovic
+- Esteban Cambiasso
+- Fabio Cannavaro
+- Federico Chiesa
+- Federico Dimarco
+- Fernando Redondo
+- Fikayo Tomori
+- Francesco Totti
+- Franco Baresi
+- Frank Rijkaard
+- Gabriel Batistuta
+- Gaetano Scirea
+- Gennaro Gattuso
+- Giacinto Facchetti
+- Gianfranco Zola
+- Gianluigi Buffon
+- Gianni Rivera
+- Giorgio Chiellini
+- Giuseppe Bergomi
+- Giuseppe Meazza
+- Guglielmo Vicario
+- Hakan Calhanoglu
+- Hernan Crespo
+- Ismael Bennacer
+- Ivan Provedel
+- Juan Sebastian Veron
+- Khvicha Kvaratskhelia
+- Laurent Blanc
+- Lautaro Martinez
+- Leonardo Bonucci
+- Lorenzo Insigne
+- Marco van Basten
+- Marek Hamsik
+- Matthijs de Ligt
+- Mattia Perin
+- Mike Maignan
+- Milan Skriniar
+- Nicolas Otamendi
+- Nicolo Barella
+- Nils Liedholm
+- Omar Sivori
+- Paolo Maldini
+- Paolo Rossi
+- Paulo Dybala
+- Pavel Nedved
+- Rafael Leao
+- Romelu Lukaku
+- Rui Costa
+- Sandro Mazzola
+- Sandro Tonali
+- Sergej Milinkovic-Savic
+- Tammy Abraham
+- Thiago Silva
+- Victor Osimhen
+- Walter Samuel
+- Walter Zenga
+- Wesley Sneijder
+- Weston McKennie
+- Yunus Musah
+- Zvonimir Boban
+
+Swedish Allsvenskan (10)
+- Alexander Jeremejeff
+- Anders Christiansen
+- Hugo Larsson
+- Isaac Kiese Thelin
+- Nahir Besara
+- Oliver Berg
+- Samuel Gustafson
+- Sebastian Nanasi
+- Taha Ali
+- Viktor Djukanovic
+
+Swiss Super League (10)
+- Andi Zeqiri
+- Ardon Jashari
+- Cedric Itten
+- Fabian Rieder
+- Granit Xhaka
+- Jean-Pierre Nsame
+- Thierno Barry
+- Vincent Sierro
+- Xherdan Shaqiri
+- Zeki Amdouni
+
+Turkish Super Lig (12)
+- Alex de Souza
+- Baris Alper Yilmaz
+- Dries Mertens
+- Edin Dzeko
+- Fernando Muslera
+- Fred
+- Gedson Fernandes
+- Hakim Ziyech
+- Lucas Torreira
+- Mauro Icardi
+- Michy Batshuayi
+- Tadic
+
+Ukrainian Premier League (10)
+- Artem Dovbyk
+- Danylo Sikan
+- Georgiy Sudakov
+- Mykhailo Mudryk
+- Mykola Shaparenko
+- Oleksandr Zinchenko
+- Ruslan Malinovskyi
+- Taras Stepanenko
+- Viktor Tsygankov
+- Vladyslav Vanat

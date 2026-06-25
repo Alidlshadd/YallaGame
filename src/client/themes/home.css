@@ -971,6 +971,12 @@ img.hero-emblem-mark {
   --card-bg-from: #042026;
   --card-bg-to: #02080c;
 }
+.shelf-card[data-theme="football-player-guess"] {
+  --card-accent: #39d47a;
+  --card-glow: #f4d06f;
+  --card-bg-from: #10361f;
+  --card-bg-to: #06130f;
+}
 
 /* Ornate gold book frame — baseline drop-shadow gives "standing on shelf" weight */
 .book-frame {

@@ -4,6 +4,7 @@ import { getLang, t } from "../services/i18n.js"
 import { setView } from "../router.js"
 import { showToast } from "../ui/toast.js"
 import { clearTheme } from "../themes/loader.js"
+import { worldCoverPath } from "../data/assets.js"
 // Per-theme CSS is loaded lazily by applyTheme() (themes/loader.ts) when a
 // world is opened — every .theme-fx rule is gated by [data-theme="..."], so
 // nothing visible on the home page depends on them being preloaded.
@@ -40,7 +41,8 @@ const GAME_TAGLINES: Record<string, string> = {
   "vampire-village": "LIE. SEDUCE. SURVIVE.",
   "mafia-classic":   "TRUST IS A WEAPON.",
   "spy-game":        "SECRETS. MISSIONS. DECEPTION.",
-  "who-am-i":        "ASK. GUESS. LAUGH."
+  "who-am-i":        "ASK. GUESS. LAUGH.",
+  "football-player-guess": "ASK. DRIBBLE. GUESS."
 }
 
 function taglineFor(game: Game, lang: ReturnType<typeof getLang>): string {
@@ -223,7 +225,7 @@ function buildHeroSlide(lang: ReturnType<typeof getLang>, hasGames: boolean): HT
 
 function buildBookCover(game: Game, lang: ReturnType<typeof getLang>, idx: number): HTMLElement {
   const card = el("button", {
-    class: "shelf-card",
+    class: "shelf-card game-card",
     type: "button",
     "data-game": game.id,
     "data-theme": game.theme,
@@ -246,7 +248,7 @@ function buildBookCover(game: Game, lang: ReturnType<typeof getLang>, idx: numbe
   const backdrop = el("div", { class: "book-backdrop", "aria-hidden": "true" })
   const isFirst = idx === 0
   const img = el("img", {
-    src: `/assets/worlds/${game.theme}-cover.webp`,
+    src: worldCoverPath(game.theme),
     alt: game.title[lang],
     loading: isFirst ? "eager" : "lazy",
     decoding: "async",
@@ -334,7 +336,7 @@ function buildCreatePicker(lang: ReturnType<typeof getLang>, close: () => void):
       "data-theme": g.theme
     }, [
       el("img", {
-        src: `/assets/worlds/${g.theme}-cover.webp`,
+        src: worldCoverPath(g.theme),
         alt: g.title[lang],
         loading: "lazy",
         decoding: "async",

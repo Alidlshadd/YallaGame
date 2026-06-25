@@ -314,6 +314,61 @@ export const GAME_CATALOG: readonly Game[] = [
     ]
   },
   {
+    id: "football-player-guess",
+    icon: "FC",
+    theme: "football-player-guess",
+    minPlayers: 2,
+    defaultSettings: {},
+    title: { ku: "Football Player Guess", ar: "Football Player Guess", en: "Football Player Guess", tr: "Football Player Guess" },
+    subtitle: {
+      ku: "A football guessing game with hidden player cards.",
+      ar: "A football guessing game with hidden player cards.",
+      en: "A football guessing game with hidden player cards.",
+      tr: "Gizli futbolcu kartlariyla oynanan tahmin oyunu."
+    },
+    rules: {
+      ku: [
+        "Host starts a local game and enters player names.",
+        "Each player receives a hidden football player card.",
+        "The active player asks yes/no questions.",
+        "Guess the footballer before the time ends."
+      ],
+      ar: [
+        "Host starts a local game and enters player names.",
+        "Each player receives a hidden football player card.",
+        "The active player asks yes/no questions.",
+        "Guess the footballer before the time ends."
+      ],
+      en: [
+        "The host starts a local game and enters player names.",
+        "Each player receives a hidden football player card.",
+        "The active player asks yes/no questions.",
+        "Guess the footballer before the time ends."
+      ],
+      tr: [
+        "Host local oyunu baslatir ve oyuncu isimlerini girer.",
+        "Her oyuncuya gizli bir futbolcu karti verilir.",
+        "Sira kendisinde olan oyuncu evet/hayir sorulari sorar.",
+        "Sure bitmeden futbolcuyu tahmin etmeye calisir."
+      ]
+    },
+    roles: [
+      {
+        id: "football-player-card",
+        icon: "FC",
+        filler: true,
+        name: { ku: "Football Player Card", ar: "Football Player Card", en: "Football Player Card", tr: "Futbolcu Karti" },
+        desc: {
+          ku: "A hidden football identity assigned to a player.",
+          ar: "A hidden football identity assigned to a player.",
+          en: "A hidden football identity assigned to a player.",
+          tr: "Oyuncuya atanan gizli futbolcu kimligi."
+        }
+      }
+    ],
+    settings: []
+  },
+  {
     id: "who-am-i",
     icon: "❓",
     theme: "who-am-i",

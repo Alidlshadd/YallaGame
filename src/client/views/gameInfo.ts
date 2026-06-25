@@ -9,6 +9,7 @@ import { showToast } from "../ui/toast.js"
 import { getGames } from "./home.js"
 import { applyTheme, clearTheme } from "../themes/loader.js"
 import { play } from "../services/sound.js"
+import { worldCoverPath } from "../data/assets.js"
 import { getWorldDetail } from "../data/worldDetails.js"
 import type { CategoryDifficulty } from "../data/worldDetails.js"
 import { buildCategoryIconSvg } from "../data/categoryIcons.js"
@@ -86,6 +87,9 @@ function buildBatSvg(): SVGSVGElement {
 
 function buildThemeIcon(theme: string): HTMLElement | SVGSVGElement {
   if (theme === "vampire-village") return buildBatSvg()
+  if (theme === "football-player-guess") {
+    return el("span", { class: "gi-theme-icon gi-theme-icon--glyph", "aria-hidden": "true" }, ["FC"])
+  }
   const mark =
     theme === "mafia-classic" ? "♠" :
     theme === "spy-game"      ? "✦" :
@@ -110,7 +114,7 @@ function buildHero(
   const poster = el("div", { class: "gi-poster" })
   const posterFrame = el("div", { class: "gi-poster-frame" })
   const posterImg = el("img", {
-    src: `/assets/worlds/${game.theme}-cover.webp`,
+    src: worldCoverPath(game.theme),
     alt: game.title[lang],
     loading: "eager",
     decoding: "async",
@@ -141,6 +145,7 @@ function buildHero(
   }
 
   const createBtn = el("button", {
+    id: "createSelectedRoomBtn",
     class: "gi-cta gi-cta-primary",
     type: "button"
   }, [
@@ -401,9 +406,10 @@ function buildCategories(
   if (!cats || cats.length === 0) return null
 
   /* Preview: only the 6 featured cards. The full list lives in the setup modal. */
-  const featured = FEATURED_CATEGORY_KEYS
+  let featured = FEATURED_CATEGORY_KEYS
     .map(k => cats.find(c => c.key === k))
     .filter((c): c is NonNullable<typeof c> => c != null)
+  if (featured.length === 0) featured = cats.slice(0, 6)
 
   const grid = el("div", { class: "gi-categories gi-categories--preview" })
   for (const c of featured) grid.appendChild(buildCategoryCard(c, lang))
@@ -475,6 +481,18 @@ function openCategorySetup(
       el("h3", { class: "gi-setup-group-title" }, [
         el("span", { class: "gi-ornament" }, ["❖"]),
         el("span", {}, [t(g.title)])
+      ]),
+      grid
+    ]))
+  }
+
+  if (groups.children.length === 0) {
+    const grid = el("div", { class: "gi-categories gi-categories--setup" })
+    for (const c of cats) grid.appendChild(buildCategoryCard(c, lang))
+    groups.appendChild(el("section", { class: "gi-setup-group" }, [
+      el("h3", { class: "gi-setup-group-title" }, [
+        el("span", { class: "gi-ornament" }, ["FC"]),
+        el("span", {}, [t("categoriesTitle")])
       ]),
       grid
     ]))

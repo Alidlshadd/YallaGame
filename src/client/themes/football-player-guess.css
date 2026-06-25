@@ -1,0 +1,40 @@
+/* Football Player Guess - stadium / pitch / gold card theme */
+
+[data-theme="football-player-guess"] {
+  --theme-bg: #06130f;
+  --theme-accent: #39d47a;
+  --theme-glow: #f4d06f;
+  --theme-surface: rgba(6, 19, 15, 0.76);
+  --theme-display: "Cinzel", serif;
+  --theme-display-tracking: 0.04em;
+  --theme-display-transform: uppercase;
+}
+
+[data-theme="football-player-guess"] .atmosphere {
+  background-image:
+    radial-gradient(ellipse at 50% -10%, rgba(255, 255, 255, 0.16), transparent 45%),
+    radial-gradient(ellipse at 15% 20%, rgba(57, 212, 122, 0.14), transparent 48%),
+    radial-gradient(ellipse at 85% 25%, rgba(244, 208, 111, 0.10), transparent 44%),
+    linear-gradient(180deg, #06130f 0%, #071a12 54%, #0d311d 100%);
+}
+
+[data-theme="football-player-guess"] .atmosphere::before {
+  background:
+    linear-gradient(90deg, transparent 0 8%, rgba(255,255,255,0.08) 8.4% 8.8%, transparent 9.2% 90.8%, rgba(255,255,255,0.08) 91.2% 91.6%, transparent 92%),
+    linear-gradient(0deg, transparent 0 47%, rgba(255,255,255,0.08) 47.3% 47.8%, transparent 48.2%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 96px);
+  opacity: 0.55;
+  transform: perspective(900px) rotateX(58deg) translateY(22%);
+  transform-origin: 50% 100%;
+}
+
+[data-theme="football-player-guess"] .atmosphere::after {
+  background:
+    radial-gradient(circle 220px at 20% 0%, rgba(255,255,255,0.18), transparent 70%),
+    radial-gradient(circle 220px at 80% 0%, rgba(255,255,255,0.16), transparent 70%),
+    radial-gradient(circle 2px at 18% 28%, rgba(244,208,111,0.75), transparent 3px),
+    radial-gradient(circle 2px at 32% 18%, rgba(255,255,255,0.50), transparent 3px),
+    radial-gradient(circle 2px at 66% 24%, rgba(244,208,111,0.70), transparent 3px),
+    radial-gradient(circle 2px at 82% 18%, rgba(255,255,255,0.50), transparent 3px);
+  opacity: 0.9;
+}
