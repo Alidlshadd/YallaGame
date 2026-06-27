@@ -180,7 +180,7 @@ const FOOTBALL: WorldDetail = {
     title:    { en: "Ready to enter FC World?",         tr: "FC World'e girmeye hazır mısın?",    ar: "هل أنت مستعد لدخول عالم FC؟",       ku: "ئامادەی بچیتە جیهانی FC؟" },
     subtitle: { en: "Step onto the pitch. Reveal the legend.", tr: "Sahaya çık. Efsaneyi ortaya çıkar.", ar: "ادخل الملعب. اكشف الأسطورة.", ku: "بێ بۆ سەر یاریگا. پاڵەوانەکە ئاشکرا بکە." }
   },
-  detailBackground:   "/assets/world-bg/football-player-guess-detail.png",
+  detailBackground:   "/assets/world-bg/football-sections-bg.png",
   sectionsBackground: "/assets/world-bg/football-sections-bg.png",
   ctaBackground:      "/assets/world-bg/football-cta-bg.png"
 }

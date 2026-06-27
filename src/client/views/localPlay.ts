@@ -1179,10 +1179,6 @@ function prepareFootballRound(): void {
   state.step = "footballTurn"
 }
 
-function normalizeGuess(value: string): string {
-  return value.trim().toLowerCase().replace(/\s+/g, " ")
-}
-
 function advanceFootballTurn(render: () => void): void {
   if (state.playerNames.length === 0) {
     prepareFootballRound()
@@ -1247,30 +1243,6 @@ function renderFootballTurn(container: HTMLDivElement, render: () => void, setTi
     hintList
   ])
 
-  const guessInput = el("input", {
-    class: "lp-football-guess-input",
-    type: "text",
-    maxlength: "48",
-    placeholder: "Type final guess"
-  }) as HTMLInputElement
-
-  const submitBtn = el("button", { class: "lp-primary", type: "button" }, ["Submit Guess"])
-  submitBtn.addEventListener("click", () => {
-    const guess = normalizeGuess(guessInput.value)
-    if (!guess) {
-      buildErrorMessage(container, "Enter a guess first.")
-      return
-    }
-    if (guess === normalizeGuess(current.card.name)) {
-      current.solved = true
-      state.roundEndsAt = null
-      state.footballMessage = `Correct. ${current.name} found ${current.card.name}.`
-    } else {
-      state.footballMessage = `Wrong guess: ${guessInput.value.trim()}. Keep asking.`
-    }
-    render()
-  })
-
   const hintBtn = el("button", { class: "lp-secondary", type: "button" }, ["Show Hint"])
   const maxHints = state.footballHintsEnabled ? state.footballMaxHints : 0
   hintBtn.toggleAttribute("disabled", !state.footballHintsEnabled || current.hintsUsed >= maxHints)
@@ -1278,6 +1250,17 @@ function renderFootballTurn(container: HTMLDivElement, render: () => void, setTi
     if (!state.footballHintsEnabled || current.hintsUsed >= maxHints) return
     current.hintsUsed += 1
     state.footballMessage = `Hint ${current.hintsUsed} shown.`
+    render()
+  })
+
+  const solvedBtn = el("button", { class: "lp-primary", type: "button" }, [current.solved ? "Solved ✓" : "Mark as Solved"])
+  solvedBtn.addEventListener("click", () => {
+    void play("click")
+    current.solved = !current.solved
+    state.roundEndsAt = null
+    state.footballMessage = current.solved
+      ? `${state.playerNames.length === 0 ? "Card" : current.name} marked as solved.`
+      : null
     render()
   })
 
@@ -1297,9 +1280,8 @@ function renderFootballTurn(container: HTMLDivElement, render: () => void, setTi
     ]),
     timer,
     card,
-    el("div", { class: "lp-football-guess-row" }, [guessInput, submitBtn]),
     el("div", { class: "lp-error" }, [state.footballMessage ?? ""]),
-    el("div", { class: "lp-actions lp-who-actions" }, [hintBtn, nextBtn])
+    el("div", { class: "lp-actions lp-who-actions" }, [hintBtn, solvedBtn, nextBtn])
   )
 }
 
