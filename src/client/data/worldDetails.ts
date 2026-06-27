@@ -156,6 +156,35 @@ const SPY: WorldDetail = {
   ctaBackground:      "/assets/world-bg/spy-cta-bg.webp"
 }
 
+const FOOTBALL: WorldDetail = {
+  slogan: "ASK. DRIBBLE. GUESS.",
+  description: {
+    en: "A premium football guessing duel inside a floodlit stadium. Each player holds a hidden star — ask sharp questions, burn your hints wisely, and unmask the legend before the whistle.",
+    tr: "Spot ışıkları altında, premium bir futbolcu tahmin düellosu. Her oyuncunun elinde gizli bir yıldız vardır — keskin sorular sor, ipuçlarını akıllıca harca ve düdük çalmadan efsaneyi çöz.",
+    ar: "نزال تخمين كروي فاخر تحت أضواء الملعب. كل لاعب يحمل نجمًا خفيًا — اسأل أسئلة ذكية، استخدم تلميحاتك بحكمة، واكشف الأسطورة قبل صفارة النهاية.",
+    ku: "دۆڕانەوەی پێشبینی فووتباڵی فاخر لە ژێر چراکانی یاریگادا. هەر یاریزانێک ئەستێرەیەکی شاراوەی هەیە — پرسیاری ورد بکە، ئامرازەکانت بە زیرەکی بەکاربهێنە و پاڵەوانەکە بدۆزەرەوە پێش کۆتایی کاتەکە."
+  },
+  tags: [
+    { en: "Football Stars",   tr: "Futbol Yıldızları",  ar: "نجوم كرة القدم",  ku: "ئەستێرە فووتباڵییەکان" },
+    { en: "2 – 12 Players",   tr: "2 – 12 Oyuncu",      ar: "٢ – ١٢ لاعبون",   ku: "٢ – ١٢ یاریزان" },
+    { en: "Guessing Duel",    tr: "Tahmin Düellosu",    ar: "نزال تخمين",       ku: "دۆڕانەوەی پێشبینی" },
+    { en: "Local Party",      tr: "Yerel Parti",        ar: "محلي/حفلة",        ku: "ناوخۆیی / پارتی" }
+  ],
+  stats: {
+    recommendedPlayers: "2 – 12",
+    sessionTime: { en: "10 – 25 Min",       tr: "10 – 25 Dk",        ar: "١٠ – ٢٥ دقيقة",     ku: "١٠ – ٢٥ خولەک" },
+    difficulty:  { en: "Easy – Medium",     tr: "Kolay – Orta",      ar: "سهل – متوسط",       ku: "ئاسان – ناوەند" },
+    bestFor:     { en: "Football Fans",     tr: "Futbol Severler",   ar: "لعشاق كرة القدم",   ku: "بۆ هۆگرانی تۆپی پێ" }
+  },
+  bottomCTA: {
+    title:    { en: "Ready to enter FC World?",         tr: "FC World'e girmeye hazır mısın?",    ar: "هل أنت مستعد لدخول عالم FC؟",       ku: "ئامادەی بچیتە جیهانی FC؟" },
+    subtitle: { en: "Step onto the pitch. Reveal the legend.", tr: "Sahaya çık. Efsaneyi ortaya çıkar.", ar: "ادخل الملعب. اكشف الأسطورة.", ku: "بێ بۆ سەر یاریگا. پاڵەوانەکە ئاشکرا بکە." }
+  },
+  detailBackground:   "/assets/world-bg/football-player-guess-detail.png",
+  sectionsBackground: "/assets/world-bg/football-sections-bg.png",
+  ctaBackground:      "/assets/world-bg/football-cta-bg.png"
+}
+
 const WHO_AM_I: WorldDetail = {
   slogan: "ASK. GUESS. LAUGH.",
   description: {
@@ -329,10 +358,11 @@ const WHO_AM_I: WorldDetail = {
 }
 
 const WORLDS: Record<string, WorldDetail> = {
-  "vampire-village": VAMPIRE,
-  "mafia-classic":   MAFIA,
-  "spy-game":        SPY,
-  "who-am-i":        WHO_AM_I
+  "vampire-village":        VAMPIRE,
+  "mafia-classic":          MAFIA,
+  "spy-game":               SPY,
+  "who-am-i":               WHO_AM_I,
+  "football-player-guess":  FOOTBALL
 }
 
 export function getWorldDetail(gameId: string): WorldDetail | undefined {
