@@ -1,6 +1,11 @@
 node_modules/
 dist/
-data/
+# Only the repo-root /data/ folder (server SQLite runtime store).
+# Without the leading "/", `data/` matched ANY data directory in the
+# tree — including src/client/data/, which silently dropped
+# worldDetails.ts / categoryIcons.ts from every push and broke
+# production builds. Keep this anchored.
+/data/
 coverage/
 .env
 .env.local

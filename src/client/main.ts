@@ -28,12 +28,13 @@ async function bootstrap() {
     btn.addEventListener("click", async () => {
       const lang = btn.dataset.lang as LangCode
       setLang(lang)
-      const active = document.querySelector<HTMLElement>("section.view.active-view")
-      if (!active) return
-
-      const id = active.id as Parameters<typeof setView>[0]
-      await setView("homeView")
-      await setView(id)
+      // refreshCurrentView re-mounts whatever view is showing so every
+      // string that captured getLang() at render time picks up the new
+      // value. The old "setView(homeView) then setView(currentId)"
+      // dance was a no-op on the home page (router.setView early-returns
+      // when currentId === target), so on the home stage the language
+      // appeared not to switch until the user reloaded the page.
+      await refreshCurrentView()
     })
   })
 
@@ -56,24 +57,18 @@ async function bootstrap() {
     })
   })
 
-  // Keep audio code out of the first bundle until the user touches the control.
-  const muteBtn = document.getElementById("muteToggle") as HTMLButtonElement | null
-  if (muteBtn) {
-    const renderMute = (m: boolean) => {
-      muteBtn.setAttribute("aria-pressed", String(m))
-      const icon = muteBtn.firstElementChild
-      if (icon) icon.textContent = m ? "\u{1F507}" : "\u{1F50A}"
-    }
-    renderMute(localStorage.getItem("role-room:muted") !== "0")
-    muteBtn.addEventListener("click", async () => {
-      const { init: initSound, isMuted, setMuted, play } = await import("./services/sound.js")
-      initSound()
-      const next = !isMuted()
-      setMuted(next)
-      renderMute(next)
-      await play("mute-toggle")
-    })
-  }
+  // Mute toggle wiring removed — the platform doesn't ship background
+  // music yet, so the button was confusing. services/sound.ts stays
+  // intact (still used for click/transition SFX) and the saved
+  // localStorage("role-room:muted") preference is preserved for when
+  // the toggle is re-added alongside music.
+
+  // Copyright footer — keep the year in sync with the user's clock so
+  // the line auto-rolls over each January without a deploy. The string
+  // tail ("All rights reserved.") is data-i18n driven via applyAll(),
+  // so the language switcher already updates it without extra wiring.
+  const yearEl = document.getElementById("appFooterYear")
+  if (yearEl) yearEl.textContent = String(new Date().getFullYear())
 
   // Spy HUD clock (decorative, only visible when spy theme active)
   const clockEl = document.getElementById("spyHudClock")
