@@ -1,4 +1,4 @@
-/* Football Player Guess - stadium / pitch / gold card theme */
+/* Football Player Guess — stadium / pitch / gold-card theme with cinematic motion */
 
 [data-theme="football-player-guess"] {
   --theme-bg: #06130f;
@@ -10,6 +10,7 @@
   --theme-display-transform: uppercase;
 }
 
+/* Base atmosphere — deep stadium tint with soft golden ambient */
 [data-theme="football-player-guess"] .atmosphere {
   background-image:
     radial-gradient(ellipse at 50% -10%, rgba(255, 255, 255, 0.16), transparent 45%),
@@ -18,23 +19,130 @@
     linear-gradient(180deg, #06130f 0%, #071a12 54%, #0d311d 100%);
 }
 
+/* Pitch-perspective grid floor with subtle drift */
 [data-theme="football-player-guess"] .atmosphere::before {
   background:
     linear-gradient(90deg, transparent 0 8%, rgba(255,255,255,0.08) 8.4% 8.8%, transparent 9.2% 90.8%, rgba(255,255,255,0.08) 91.2% 91.6%, transparent 92%),
-    linear-gradient(0deg, transparent 0 47%, rgba(255,255,255,0.08) 47.3% 47.8%, transparent 48.2%),
-    repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 96px);
-  opacity: 0.55;
+    linear-gradient(0deg, transparent 0 47%, rgba(255,255,255,0.09) 47.3% 47.8%, transparent 48.2%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 96px),
+    repeating-linear-gradient(0deg,  rgba(57,212,122,0.05) 0 1px, transparent 1px 72px);
+  opacity: 0.6;
   transform: perspective(900px) rotateX(58deg) translateY(22%);
   transform-origin: 50% 100%;
+  animation: fpg-pitch-drift 24s linear infinite;
 }
 
+@keyframes fpg-pitch-drift {
+  0%   { background-position: 0 0, 0 0, 0 0, 0 0; }
+  100% { background-position: 0 0, 0 0, 96px 0, 0 72px; }
+}
+
+/* Stadium floodlights — two soft cones that breathe with sparkles */
 [data-theme="football-player-guess"] .atmosphere::after {
   background:
-    radial-gradient(circle 220px at 20% 0%, rgba(255,255,255,0.18), transparent 70%),
-    radial-gradient(circle 220px at 80% 0%, rgba(255,255,255,0.16), transparent 70%),
-    radial-gradient(circle 2px at 18% 28%, rgba(244,208,111,0.75), transparent 3px),
-    radial-gradient(circle 2px at 32% 18%, rgba(255,255,255,0.50), transparent 3px),
-    radial-gradient(circle 2px at 66% 24%, rgba(244,208,111,0.70), transparent 3px),
-    radial-gradient(circle 2px at 82% 18%, rgba(255,255,255,0.50), transparent 3px);
+    radial-gradient(circle 260px at 18% -2%, rgba(255,255,255,0.22), transparent 70%),
+    radial-gradient(circle 260px at 82% -2%, rgba(255,255,255,0.20), transparent 70%),
+    radial-gradient(circle 2px at 18% 28%, rgba(244,208,111,0.85), transparent 3px),
+    radial-gradient(circle 2px at 32% 18%, rgba(255,255,255,0.55), transparent 3px),
+    radial-gradient(circle 2px at 66% 24%, rgba(244,208,111,0.80), transparent 3px),
+    radial-gradient(circle 2px at 82% 18%, rgba(255,255,255,0.55), transparent 3px),
+    radial-gradient(circle 2px at 12% 42%, rgba(244,208,111,0.55), transparent 3px),
+    radial-gradient(circle 2px at 88% 48%, rgba(255,255,255,0.45), transparent 3px),
+    radial-gradient(circle 2px at 50% 32%, rgba(244,208,111,0.45), transparent 3px);
   opacity: 0.9;
+  animation: fpg-flood-breathe 6.5s ease-in-out infinite alternate,
+             fpg-sparkle-flicker 3.2s ease-in-out infinite alternate;
+}
+
+@keyframes fpg-flood-breathe {
+  0%   { filter: brightness(0.95); }
+  100% { filter: brightness(1.18); }
+}
+
+@keyframes fpg-sparkle-flicker {
+  0%, 60% { opacity: 0.9; }
+  30%     { opacity: 1; }
+  80%     { opacity: 0.75; }
+  100%    { opacity: 0.95; }
+}
+
+/* Game-info hero — animated golden vignette sweep on the FUT card poster */
+[data-theme="football-player-guess"] .gi-poster-frame {
+  position: relative;
+  overflow: hidden;
+}
+
+[data-theme="football-player-guess"] .gi-poster-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(115deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.12) 45%,
+    rgba(244, 208, 111, 0.22) 50%,
+    rgba(255, 255, 255, 0.12) 55%,
+    transparent 70%);
+  background-size: 220% 220%;
+  background-position: 200% 200%;
+  mix-blend-mode: screen;
+  animation: fpg-poster-shimmer 6.5s ease-in-out 1.4s infinite;
+}
+
+@keyframes fpg-poster-shimmer {
+  0%   { background-position: 200% 200%; opacity: 0; }
+  18%  { opacity: 0.85; }
+  78%  { opacity: 0.85; }
+  100% { background-position: -100% -100%; opacity: 0; }
+}
+
+/* Subtle golden glow halo behind the FUT poster */
+[data-theme="football-player-guess"] .gi-poster {
+  filter: drop-shadow(0 0 28px rgba(244, 208, 111, 0.32));
+}
+
+/* Hero CTA buttons — gold gradient accent for "Create Room" */
+[data-theme="football-player-guess"] .gi-cta-primary {
+  background: linear-gradient(180deg, #f4d06f 0%, #c89a35 100%);
+  border-color: rgba(244, 208, 111, 0.55);
+  color: #0a1f14;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.25);
+  box-shadow:
+    0 12px 30px -10px rgba(244, 208, 111, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 220ms;
+}
+
+[data-theme="football-player-guess"] .gi-cta-primary:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 18px 40px -10px rgba(244, 208, 111, 0.75),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+/* Tag chips with subtle gold border */
+[data-theme="football-player-guess"] .gi-tag {
+  border-color: rgba(244, 208, 111, 0.32);
+  background: linear-gradient(180deg, rgba(244, 208, 111, 0.08), rgba(57, 212, 122, 0.06));
+}
+
+/* "FC" eyebrow glyph — soft gold ring pulse */
+[data-theme="football-player-guess"] .gi-theme-icon--glyph {
+  position: relative;
+  color: #f4d06f;
+  text-shadow: 0 0 14px rgba(244, 208, 111, 0.7);
+}
+
+[data-theme="football-player-guess"] .gi-theme-icon--glyph::before {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 1px solid rgba(244, 208, 111, 0.4);
+  animation: fpg-fc-ring 2.4s ease-in-out infinite;
+}
+
+@keyframes fpg-fc-ring {
+  0%, 100% { transform: scale(1);   opacity: 0.7; }
+  50%      { transform: scale(1.18); opacity: 0; }
 }
