@@ -6,6 +6,7 @@ import type { GameResolver } from "../domain/visibility.js"
 import { bind } from "./bind.js"
 import { projectRoomFor } from "../domain/visibility.js"
 import { makeSecret } from "../domain/codes.js"
+import { fillerRoleId } from "../domain/roles.js"
 import { JoinPayload } from "./schemas.js"
 import type { Config } from "../config.js"
 
@@ -27,10 +28,14 @@ export function registerPlayerHandlers(socket: TypedSocket, deps: PlayerDeps): v
       const game = deps.resolveGame(room.gameId)
       if (!game) throw new Error("UNKNOWN_GAME")
 
+      // Late joiners / role-less rebinds get the filler role once roles are out.
+      const roleFor = (current: string | null) =>
+        current ?? (room.assigned ? fillerRoleId(game) : null)
+
       if (playerId) {
         const existing = room.players.find(p => p.id === playerId)
         if (existing) {
-          bound = { ...existing, connected: true }
+          bound = { ...existing, connected: true, role: roleFor(existing.role) }
           return { ...room, players: room.players.map(p => p.id === playerId ? bound! : p) }
         }
       }
@@ -38,13 +43,11 @@ export function registerPlayerHandlers(socket: TypedSocket, deps: PlayerDeps): v
       const collision = room.players.find(p => p.name.toLowerCase() === name.toLowerCase())
       if (collision && collision.connected) throw new Error("NAME_TAKEN")
       if (collision && !collision.connected) {
-        bound = { ...collision, connected: true }
+        bound = { ...collision, connected: true, role: roleFor(collision.role) }
         return { ...room, players: room.players.map(p => p.id === collision.id ? bound! : p) }
       }
 
-      if (room.players.length >= deps.config.MAX_PLAYERS_PER_ROOM) throw new Error("ROOM_FULL")
-
-      const fresh: Player = { id: makeSecret(), name, role: null, connected: true }
+      const fresh: Player = { id: makeSecret(), name, role: roleFor(null), connected: true }
       bound = fresh
       return { ...room, players: [...room.players, fresh] }
     })
