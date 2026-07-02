@@ -21,7 +21,7 @@ const tr: Translations = {
   heroBody: "Bir kişi oda kurar, diğerleri telefonundan kodla katılır. Her oyuncuya gizli bir rol verilir. Konuş, blöf yap, birlikte kazan. Birden fazla oyun dünyası. Sonsuz hikâyeler.",
   noDownloadHint: "Uygulama indirmek yok. Telefon tarayıcından gir.",
   featRoomCode: "Oda Kodu",
-  featRoomCodeDesc: "6 haneli basit bir kod ile anında oda kur veya gir.",
+  featRoomCodeDesc: "5 karakterlik basit bir kod ile anında oda kur veya gir.",
   featHostControl: "Yönetici Kontrolü",
   featHostControlDesc: "Yönetici odayı çalıştırır, oyuncuları yönetir ve akışı kontrol eder.",
   featSecretRoles: "Gizli Roller",

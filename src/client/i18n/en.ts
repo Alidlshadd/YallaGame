@@ -19,7 +19,7 @@ const en = {
   heroBody: "One host creates a room and others join from their phones. Each player gets a secret role. Talk, bluff, and win together. Multiple game worlds. Endless stories.",
   noDownloadHint: "No app download required. Join from your phone browser.",
   featRoomCode: "Room Code",
-  featRoomCodeDesc: "Create or join rooms instantly with a simple 6-digit code.",
+  featRoomCodeDesc: "Create or join rooms instantly with a simple 5-character code.",
   featHostControl: "Host Control",
   featHostControlDesc: "The host runs the room, manages players, and controls the game flow.",
   featSecretRoles: "Secret Roles",

@@ -63,6 +63,11 @@ export const adminView = {
         return
       }
       listEl.classList.remove("empty")
+      const roleName = (id: string | null) => {
+        if (!id || !room) return "—"
+        const role = room.game.roles.find(r => r.id === id)
+        return role ? `${role.icon} ${role.name[lang]}` : id
+      }
       for (const p of room.players) {
         const kickBtn = el("button", {
           class: "kick-btn", type: "button", title: t("kick"), "aria-label": `${t("kick")} ${p.name}`
@@ -76,7 +81,7 @@ export const adminView = {
         })
         const row = el("div", { class: `player-row ${p.connected ? "" : "off"}` }, [
           el("span", { class: "player-name" }, [p.name]),
-          el("span", { class: "player-role" }, [p.role ?? "—"]),
+          el("span", { class: "player-role" }, [roleName(p.role)]),
           kickBtn
         ])
         listEl.appendChild(row)

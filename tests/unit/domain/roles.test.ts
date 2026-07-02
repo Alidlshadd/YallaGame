@@ -49,6 +49,24 @@ describe("buildRolePool", () => {
   it("throws TOO_MANY_SPECIAL_ROLES when count exceeds player count", () => {
     expect(() => buildRolePool(game, { vampires: 3 }, 2)).toThrow(/TOO_MANY_SPECIAL_ROLES/)
   })
+
+  it("cycles through all filler roles when a game has several (who-am-i categories)", () => {
+    const multiFiller: Game = {
+      ...game,
+      defaultSettings: {},
+      settings: [],
+      roles: [
+        { id: "animal", icon: "a", filler: true, name: game.roles[0]!.name, desc: game.roles[0]!.desc },
+        { id: "job",    icon: "j", filler: true, name: game.roles[0]!.name, desc: game.roles[0]!.desc },
+        { id: "object", icon: "o", filler: true, name: game.roles[0]!.name, desc: game.roles[0]!.desc }
+      ]
+    }
+    const pool = buildRolePool(multiFiller, {}, 7)
+    expect(pool).toHaveLength(7)
+    // every filler category appears; not everyone gets the same one
+    expect(new Set(pool)).toEqual(new Set(["animal", "job", "object"]))
+    expect(pool.filter(r => r === "animal").length).toBeLessThan(7)
+  })
 })
 
 describe("assignRolesToConnected", () => {

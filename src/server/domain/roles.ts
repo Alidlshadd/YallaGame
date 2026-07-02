@@ -7,7 +7,8 @@ export function fillerRoleId(game: Game): RoleId {
 }
 
 export function buildRolePool(game: Game, settings: Settings, playerCount: number): RoleId[] {
-  const fillerId = fillerRoleId(game)
+  const fillers = game.roles.filter(r => r.filler)
+  if (fillers.length === 0) throw new Error("NO_FILLER_ROLE")
 
   const pool: RoleId[] = []
   for (const role of game.roles) {
@@ -20,7 +21,10 @@ export function buildRolePool(game: Game, settings: Settings, playerCount: numbe
   }
 
   if (pool.length > playerCount) throw new Error("TOO_MANY_SPECIAL_ROLES")
-  while (pool.length < playerCount) pool.push(fillerId)
+  // Cycle through fillers so games with several filler roles (who-am-i
+  // categories) spread them across players instead of repeating the first.
+  let next = 0
+  while (pool.length < playerCount) pool.push(fillers[next++ % fillers.length]!.id)
   return pool
 }
 
