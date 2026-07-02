@@ -13,7 +13,8 @@ import {
   ReconnectPayload,
   UpdateSettingsPayload,
   AssignRolesPayload,
-  ClearRolesPayload
+  ClearRolesPayload,
+  KickPlayerPayload
 } from "./schemas.js"
 import { logger } from "../logger.js"
 import type { Config } from "../config.js"
@@ -127,6 +128,19 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
         role: p.role, roleData: role, name: p.name, code, game
       })
     }
+    return { room: projectRoomFor(updated, { kind: "admin", adminSecret }, deps.resolveGame) }
+  })
+
+  bind(socket, "admin:kick-player", KickPlayerPayload, async ({ code, adminSecret, playerId }) => {
+    const updated = await deps.store.update(code, room => {
+      if (room.adminSecret !== adminSecret) throw new Error("INVALID_ADMIN")
+      if (!room.players.some(p => p.id === playerId)) throw new Error("INVALID_INPUT")
+      return { ...room, players: room.players.filter(p => p.id !== playerId) }
+    })
+    deps.io.to(`p:${code}:${playerId}`).emit("player:kicked")
+    deps.io.in(`p:${code}:${playerId}`).socketsLeave([`room:${code}`, `p:${code}:${playerId}`])
+    await broadcastRoom(deps, updated)
+    logger.info({ code, playerId }, "player kicked")
     return { room: projectRoomFor(updated, { kind: "admin", adminSecret }, deps.resolveGame) }
   })
 

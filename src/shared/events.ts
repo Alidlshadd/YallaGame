@@ -22,6 +22,7 @@ export interface ClientToServerEvents {
   "admin:update-settings": (p: { code: string; adminSecret: string; settings: Partial<Settings> },  cb: Ack<AdminRoomData>)  => void
   "admin:assign-roles":    (p: { code: string; adminSecret: string },                               cb: Ack<AdminRoomData>)  => void
   "admin:clear-roles":     (p: { code: string; adminSecret: string },                               cb: Ack<AdminRoomData>)  => void
+  "admin:kick-player":     (p: { code: string; adminSecret: string; playerId: string },             cb: Ack<AdminRoomData>)  => void
   "player:join":           (p: { code: string; name: string; playerId?: string },                   cb: Ack<PlayerJoinData>) => void
 }
 
@@ -30,6 +31,7 @@ export interface ServerToClientEvents {
   "room:status":          (room: VisibleRoom) => void
   "player:role-assigned": (payload: RoleAssignedPayload) => void
   "player:role-cleared":  () => void
+  "player:kicked":        () => void
 }
 
 export type InterServerEvents = Record<string, never>

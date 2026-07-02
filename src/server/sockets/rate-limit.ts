@@ -4,6 +4,7 @@ const COOLDOWNS_MS: Record<string, number> = {
   "admin:update-settings": 200,
   "admin:assign-roles":    200,
   "admin:clear-roles":     200,
+  "admin:kick-player":     200,
   "admin:reconnect":       200
 }
 

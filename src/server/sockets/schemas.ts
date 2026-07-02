@@ -11,6 +11,11 @@ export const UpdateSettingsPayload = z.object({
 })
 export const AssignRolesPayload   = ReconnectPayload
 export const ClearRolesPayload    = ReconnectPayload
+export const KickPlayerPayload    = z.object({
+  code: RoomCode,
+  adminSecret: z.string().min(1).max(64),
+  playerId: z.string().min(1).max(64)
+})
 export const JoinPayload          = z.object({
   code: RoomCode,
   name: z.string().trim().min(1).max(24),
