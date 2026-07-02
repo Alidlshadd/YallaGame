@@ -1,8 +1,13 @@
 import type { Game, Player, RoleId, Settings } from "@shared/types.js"
 
-export function buildRolePool(game: Game, settings: Settings, playerCount: number): RoleId[] {
+export function fillerRoleId(game: Game): RoleId {
   const filler = game.roles.find(r => r.filler)
   if (!filler) throw new Error("NO_FILLER_ROLE")
+  return filler.id
+}
+
+export function buildRolePool(game: Game, settings: Settings, playerCount: number): RoleId[] {
+  const fillerId = fillerRoleId(game)
 
   const pool: RoleId[] = []
   for (const role of game.roles) {
@@ -15,7 +20,7 @@ export function buildRolePool(game: Game, settings: Settings, playerCount: numbe
   }
 
   if (pool.length > playerCount) throw new Error("TOO_MANY_SPECIAL_ROLES")
-  while (pool.length < playerCount) pool.push(filler.id)
+  while (pool.length < playerCount) pool.push(fillerId)
   return pool
 }
 
@@ -28,12 +33,17 @@ function shuffle<T>(arr: readonly T[], rng: () => number): T[] {
   return out
 }
 
-export function assignRolesToPlayers(
+/** Distributes the pool over connected players only; disconnected players end with role: null. */
+export function assignRolesToConnected(
   players: readonly Player[],
   pool: readonly RoleId[],
   rng: () => number
 ): Player[] {
-  if (pool.length !== players.length) throw new Error("POOL_LENGTH_MISMATCH")
+  const connectedCount = players.filter(p => p.connected).length
+  if (pool.length !== connectedCount) throw new Error("POOL_LENGTH_MISMATCH")
   const shuffled = shuffle(pool, rng)
-  return players.map((p, i) => ({ ...p, role: shuffled[i]! }))
+  let next = 0
+  return players.map(p =>
+    p.connected ? { ...p, role: shuffled[next++]! } : { ...p, role: null }
+  )
 }

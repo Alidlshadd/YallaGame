@@ -6,7 +6,7 @@ import type { GameResolver } from "../domain/visibility.js"
 import { bind } from "./bind.js"
 import { projectRoomFor } from "../domain/visibility.js"
 import { normalizeSettings } from "../domain/settings.js"
-import { buildRolePool, assignRolesToPlayers } from "../domain/roles.js"
+import { buildRolePool, assignRolesToConnected } from "../domain/roles.js"
 import { makeRoomCode, makeSecret } from "../domain/codes.js"
 import {
   CreateRoomPayload,
@@ -112,17 +112,19 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
       if (room.adminSecret !== adminSecret) throw new Error("INVALID_ADMIN")
       const game = deps.resolveGame(room.gameId)
       if (!game) throw new Error("UNKNOWN_GAME")
-      if (room.players.length < game.minPlayers) throw new Error("NEED_MORE_PLAYERS")
-      const pool = buildRolePool(game, room.settings, room.players.length)
-      const players = assignRolesToPlayers(room.players, pool, deps.rng)
+      const connectedCount = room.players.filter(p => p.connected).length
+      if (connectedCount < game.minPlayers) throw new Error("NEED_MORE_PLAYERS")
+      const pool = buildRolePool(game, room.settings, connectedCount)
+      const players = assignRolesToConnected(room.players, pool, deps.rng)
       return { ...room, players, assigned: true }
     })
     const game = deps.resolveGame(updated.gameId)!
     await broadcastRoom(deps, updated)
     for (const p of updated.players) {
+      if (!p.role) continue
       const role = game.roles.find(r => r.id === p.role)!
       deps.io.to(`p:${code}:${p.id}`).emit("player:role-assigned", {
-        role: p.role!, roleData: role, name: p.name, code, game
+        role: p.role, roleData: role, name: p.name, code, game
       })
     }
     return { room: projectRoomFor(updated, { kind: "admin", adminSecret }, deps.resolveGame) }
