@@ -64,9 +64,20 @@ export const adminView = {
       }
       listEl.classList.remove("empty")
       for (const p of room.players) {
+        const kickBtn = el("button", {
+          class: "kick-btn", type: "button", title: t("kick"), "aria-label": `${t("kick")} ${p.name}`
+        }, ["✕"])
+        kickBtn.addEventListener("click", async () => {
+          if (!room) return
+          const s = session.load(); if (s?.kind !== "admin") return
+          void play("click")
+          const r = await emit("admin:kick-player", { code: room.code, adminSecret: s.adminSecret, playerId: p.id })
+          if (!r.ok) showToast(t("errorGeneric"))
+        })
         const row = el("div", { class: `player-row ${p.connected ? "" : "off"}` }, [
           el("span", { class: "player-name" }, [p.name]),
-          el("span", { class: "player-role" }, [p.role ?? "—"])
+          el("span", { class: "player-role" }, [p.role ?? "—"]),
+          kickBtn
         ])
         listEl.appendChild(row)
       }

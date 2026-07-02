@@ -111,6 +111,8 @@ const tr: Translations = {
   clearRoles: "Rolleri Temizle",
   connected: "Çevrimiçi",
   noPlayers: "Henüz oyuncu gelmedi.",
+  kick: "At",
+  kickedFromRoom: "Odadan çıkarıldın.",
   rulesTitle: "Nasıl Oynanır",
   rolesTitle: "Roller",
   errorNameTaken: "Bu isim zaten kullanılıyor.",

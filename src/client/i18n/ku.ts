@@ -111,6 +111,8 @@ const ku: Translations = {
   clearRoles: "ڕۆڵەکان بسڕەوە",
   connected: "ئۆنلاین",
   noPlayers: "هێشتا هیچ یاریزانێک نەهاتووە.",
+  kick: "دەرکردن",
+  kickedFromRoom: "لە ژوورەکە دەرکرایت.",
   rulesTitle: "چۆن یاری دەکرێت",
   rolesTitle: "ڕۆڵەکان",
   errorNameTaken: "ئەم ناوە پێشتر بەکارهاتووە.",

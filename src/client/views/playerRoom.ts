@@ -7,6 +7,7 @@ import { applyTheme, clearTheme } from "../themes/loader.js"
 import { showReveal } from "../ui/roleReveal.js"
 import { setView } from "../router.js"
 import { play } from "../services/sound.js"
+import { showToast } from "../ui/toast.js"
 import type { PlayerJoinData, RoleAssignedPayload } from "@shared/events.js"
 
 export const playerRoomView = {
@@ -71,8 +72,16 @@ export const playerRoomView = {
       renderSettled()
     }
 
+    const onKicked = () => {
+      session.clear()
+      clearTheme()
+      showToast(t("kickedFromRoom"))
+      void setView("homeView")
+    }
+
     socket.on("player:role-assigned", onAssigned)
     socket.on("player:role-cleared",  onCleared)
+    socket.on("player:kicked",        onKicked)
 
     const onLeave = () => {
       if (!confirm("Leave this room?")) return
@@ -90,6 +99,7 @@ export const playerRoomView = {
     return () => {
       socket.off("player:role-assigned", onAssigned)
       socket.off("player:role-cleared",  onCleared)
+      socket.off("player:kicked",        onKicked)
       leaveBtn.removeEventListener("click", onLeave)
     }
   }

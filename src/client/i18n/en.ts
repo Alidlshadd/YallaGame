@@ -109,6 +109,8 @@ const en = {
   clearRoles: "Clear Roles",
   connected: "Online",
   noPlayers: "No players have joined yet.",
+  kick: "Kick",
+  kickedFromRoom: "You were removed from the room.",
   rulesTitle: "How to Play",
   rolesTitle: "Roles",
   errorNameTaken: "That name is taken.",

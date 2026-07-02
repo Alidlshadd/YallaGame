@@ -111,6 +111,8 @@ const ar: Translations = {
   clearRoles: "مسح الأدوار",
   connected: "متصل",
   noPlayers: "لم يدخل أي لاعب بعد.",
+  kick: "طرد",
+  kickedFromRoom: "تم إخراجك من الغرفة.",
   rulesTitle: "كيفية اللعب",
   rolesTitle: "الأدوار",
   errorNameTaken: "هذا الاسم مستخدم مسبقا.",
