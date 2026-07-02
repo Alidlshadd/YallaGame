@@ -29,6 +29,7 @@ export const joinView = {
 
     const onCodeInput = () => {
       void play("click", 0.3)
+      code.value = code.value.toUpperCase()
       if (code.value.length === 5) code.classList.add("locked")
       else code.classList.remove("locked")
     }
