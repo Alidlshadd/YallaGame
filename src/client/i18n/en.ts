@@ -116,7 +116,6 @@ const en = {
   errorNameRequired: "Please enter your name.",
   errorNeedMorePlayers: "Need more players to start.",
   errorTooManySpecial: "Too many special roles for this many players.",
-  errorRoomFull: "Room is full.",
   errorRateLimited: "Slow down a little.",
   errorServerBusy: "Server is busy, try again.",
   errorInvalidAdmin: "You are not the admin of this room.",

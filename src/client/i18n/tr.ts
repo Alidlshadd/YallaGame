@@ -118,7 +118,6 @@ const tr: Translations = {
   errorNameRequired: "Lütfen adını yaz.",
   errorNeedMorePlayers: "Yeterli oyuncu yok.",
   errorTooManySpecial: "Bu oyuncu sayısı için özel rol sayısı çok fazla.",
-  errorRoomFull: "Oda dolu.",
   errorRateLimited: "Biraz yavaşla.",
   errorServerBusy: "Sunucu meşgul, tekrar dene.",
   errorInvalidAdmin: "Bu odanın admini değilsin.",

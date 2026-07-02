@@ -98,7 +98,6 @@ export type ErrorCode =
   | "TOO_MANY_SPECIAL_ROLES"
   | "INVALID_INPUT"
   | "RATE_LIMITED"
-  | "ROOM_FULL"
   | "SERVER_BUSY"
   | "AUTHZ_MISMATCH"
   | "NO_FILLER_ROLE"

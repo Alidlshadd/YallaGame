@@ -118,7 +118,6 @@ const ku: Translations = {
   errorNameRequired: "تکایە ناوی خۆت بنووسە.",
   errorNeedMorePlayers: "یاریزان بەشی پێویست نییە.",
   errorTooManySpecial: "ژمارەی ڕۆڵە تایبەتەکان زۆرە بۆ ئەم ژمارەی یاریزانە.",
-  errorRoomFull: "ژوورەکە پڕە.",
   errorRateLimited: "کەمێک ئارام بە.",
   errorServerBusy: "سێرڤەر سەرقاڵە، دوبارە هەوڵبدە.",
   errorInvalidAdmin: "تۆ ئەدمینی ئەم ژوورە نیت.",

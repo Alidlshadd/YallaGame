@@ -118,7 +118,6 @@ const ar: Translations = {
   errorNameRequired: "اكتب اسمك من فضلك.",
   errorNeedMorePlayers: "عدد اللاعبين غير كاف.",
   errorTooManySpecial: "عدد الأدوار الخاصة كبير جدا لهذا العدد من اللاعبين.",
-  errorRoomFull: "الغرفة ممتلئة.",
   errorRateLimited: "تمهل قليلا.",
   errorServerBusy: "الخادم مشغول، حاول مرة أخرى.",
   errorInvalidAdmin: "أنت لست مدير هذه الغرفة.",

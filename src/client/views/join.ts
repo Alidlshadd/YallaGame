@@ -13,7 +13,6 @@ const ERR_TO_KEY: Partial<Record<ErrorCode, keyof Translations>> = {
   NAME_TAKEN: "errorNameTaken",
   NAME_REQUIRED: "errorNameRequired",
   ROOM_NOT_FOUND: "errorRoomNotFound",
-  ROOM_FULL: "errorRoomFull",
   RATE_LIMITED: "errorRateLimited",
   SERVER_BUSY: "errorServerBusy"
 }

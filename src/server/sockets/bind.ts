@@ -10,7 +10,7 @@ type TypedSocket = Socket<ClientToServerEvents, ServerToClientEvents, never, Soc
 const ERROR_CODES = new Set<ErrorCode>([
   "INVALID_ADMIN","ROOM_NOT_FOUND","NAME_REQUIRED","NAME_TAKEN",
   "NEED_MORE_PLAYERS","TOO_MANY_SPECIAL_ROLES","INVALID_INPUT","RATE_LIMITED",
-  "ROOM_FULL","SERVER_BUSY","AUTHZ_MISMATCH","NO_FILLER_ROLE","UNKNOWN_GAME"
+  "SERVER_BUSY","AUTHZ_MISMATCH","NO_FILLER_ROLE","UNKNOWN_GAME"
 ])
 
 function toErrorCode(err: unknown): ErrorCode {

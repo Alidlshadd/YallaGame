@@ -56,7 +56,6 @@ Open http://localhost:3000.
 | `ALLOWED_ORIGIN` | unset (all) | CORS origin for Socket.IO |
 | `ROOM_TTL_HOURS` | `8` | Rooms older than this are GC'd |
 | `LOG_LEVEL` | `info` | pino level |
-| `MAX_PLAYERS_PER_ROOM` | `25` | Per-room cap |
 | `MAX_ROOMS_PER_SOCKET` | `5` | Anti-abuse per admin socket |
 | `MAX_TOTAL_ROOMS` | `10000` | Server-wide cap |
 
