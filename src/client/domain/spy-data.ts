@@ -57,13 +57,38 @@ export function getSpyWords(
   return [...words, ...customWords]
 }
 
+export interface SpyWordPick {
+  word: string
+  /** Label of the category the word came from; null for custom words. */
+  categoryLabel: LocalizedText | null
+}
+
+export function pickSpyWordWithCategory(
+  lang: LangCode,
+  categoryIds: readonly string[],
+  customWordsText: string,
+  rng: () => number = Math.random
+): SpyWordPick {
+  const selected = new Set(categoryIds)
+  const pool: SpyWordPick[] = []
+  for (const category of SPY_WORD_CATEGORIES) {
+    if (!selected.has(category.id)) continue
+    for (const word of category.words[lang] ?? category.words.en ?? []) {
+      pool.push({ word, categoryLabel: category.label })
+    }
+  }
+  for (const word of parseCustomSpyWords(customWordsText)) {
+    pool.push({ word, categoryLabel: null })
+  }
+  if (pool.length === 0) throw new Error("NO_SPY_WORDS")
+  return pool[Math.floor(rng() * pool.length)]!
+}
+
 export function pickSpyWord(
   lang: LangCode,
   categoryIds: readonly string[],
   customWordsText: string,
   rng: () => number = Math.random
 ): string {
-  const words = getSpyWords(lang, categoryIds, parseCustomSpyWords(customWordsText))
-  if (words.length === 0) throw new Error("NO_SPY_WORDS")
-  return words[Math.floor(rng() * words.length)]!
+  return pickSpyWordWithCategory(lang, categoryIds, customWordsText, rng).word
 }

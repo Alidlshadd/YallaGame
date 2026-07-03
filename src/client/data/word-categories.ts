@@ -1072,6 +1072,224 @@ export const WORD_CATEGORIES: readonly WordCategory[] = [
       w("star-night", "Star",         "Yıldız",       "نجم",           "ئەستێرە"),
       w("volcano",    "Volcano",      "Yanardağ",     "بركان",         "ئاگرکێو")
     ]
+  },
+
+  /* ─── 22. FOOTBALL CLUBS ─────────────────────────────────────────── */
+  {
+    key: "football-clubs",
+    icon: "⚽",
+    difficulty: "easy",
+    games: BOTH,
+    label: { en: "Football Clubs", tr: "Futbol Kulüpleri", ar: "أندية كرة القدم", ku: "یانە فووتباڵییەکان" },
+    description: {
+      en: "Famous football clubs from Europe and the region.",
+      tr: "Avrupa ve bölgeden ünlü futbol kulüpleri.",
+      ar: "أندية كرة قدم مشهورة من أوروبا والمنطقة.",
+      ku: "یانە بەناوبانگەکانی فووتباڵ لە ئەورووپا و ناوچەکە."
+    },
+    words: [
+      w("real-madrid",   "Real Madrid",        "Real Madrid",       "ريال مدريد",        "ڕیاڵ مەدرید"),
+      w("barcelona",     "Barcelona",          "Barcelona",         "برشلونة",           "بارسلۆنا"),
+      w("man-united",    "Manchester United",  "Manchester United", "مانشستر يونايتد",   "مانچێستەر یونایتد"),
+      w("man-city",      "Manchester City",    "Manchester City",   "مانشستر سيتي",      "مانچێستەر سیتی"),
+      w("liverpool",     "Liverpool",          "Liverpool",         "ليفربول",           "لیڤەرپوول"),
+      w("chelsea",       "Chelsea",            "Chelsea",           "تشيلسي",            "چێلسی"),
+      w("arsenal",       "Arsenal",            "Arsenal",           "أرسنال",            "ئارسێناڵ"),
+      w("bayern",        "Bayern Munich",      "Bayern Münih",      "بايرن ميونخ",       "بایرن میونیخ"),
+      w("dortmund",      "Borussia Dortmund",  "Borussia Dortmund", "بوروسيا دورتموند",  "بۆروسیا دۆرتموند"),
+      w("psg",           "Paris Saint-Germain","Paris Saint-Germain","باريس سان جيرمان", "پاریس سان ژێرمەن"),
+      w("juventus",      "Juventus",           "Juventus",          "يوفنتوس",           "یوڤێنتوس"),
+      w("ac-milan",      "AC Milan",           "AC Milan",          "إيه سي ميلان",      "ئەی سی میلان"),
+      w("inter",         "Inter Milan",        "Inter",             "إنتر ميلان",        "ئینتەر میلان"),
+      w("atletico",      "Atletico Madrid",    "Atletico Madrid",   "أتلتيكو مدريد",     "ئەتلێتیکۆ مەدرید"),
+      w("galatasaray",   "Galatasaray",        "Galatasaray",       "غلطة سراي",         "گاڵاتاسارای"),
+      w("fenerbahce",    "Fenerbahce",         "Fenerbahçe",        "فنربخشة",           "فێنەرباغچە"),
+      w("besiktas",      "Besiktas",           "Beşiktaş",          "بشكتاش",            "بێشکتاش"),
+      w("ajax",          "Ajax",               "Ajax",              "أياكس",             "ئایاکس"),
+      w("benfica",       "Benfica",            "Benfica",           "بنفيكا",            "بێنفیکا"),
+      w("al-hilal",      "Al-Hilal",           "Al-Hilal",          "الهلال",            "ئەلهیلال")
+    ]
+  },
+
+  /* ─── 23. CLOTHES ────────────────────────────────────────────────── */
+  {
+    key: "clothes",
+    icon: "👕",
+    difficulty: "easy",
+    games: BOTH,
+    label: { en: "Clothes", tr: "Kıyafetler", ar: "ملابس", ku: "جلوبەرگ" },
+    description: {
+      en: "Everyday clothing and accessories.",
+      tr: "Günlük kıyafetler ve aksesuarlar.",
+      ar: "ملابس وإكسسوارات يومية.",
+      ku: "جلوبەرگ و ئاکسسواری ڕۆژانە."
+    },
+    words: [
+      w("tshirt",     "T-shirt",   "Tişört",        "تي شيرت",     "تیشێرت"),
+      w("shirt",      "Shirt",     "Gömlek",        "قميص",        "کراس"),
+      w("trousers",   "Trousers",  "Pantolon",      "بنطال",       "پانتۆڵ"),
+      w("jeans",      "Jeans",     "Kot Pantolon",  "جينز",        "جینز"),
+      w("dress",      "Dress",     "Elbise",        "فستان",       "کراسی ژنانە"),
+      w("skirt",      "Skirt",     "Etek",          "تنورة",       "تەنوورە"),
+      w("jacket",     "Jacket",    "Ceket",         "سترة",        "چاکەت"),
+      w("coat",       "Coat",      "Palto",         "معطف",        "پاڵتۆ"),
+      w("sweater",    "Sweater",   "Kazak",         "كنزة",        "بلوز"),
+      w("scarf",      "Scarf",     "Atkı",          "وشاح",        "ملوانکە"),
+      w("hat",        "Hat",       "Şapka",         "قبعة",        "کڵاو"),
+      w("gloves",     "Gloves",    "Eldiven",       "قفازات",      "دەستکێش"),
+      w("socks",      "Socks",     "Çorap",         "جوارب",       "گۆرەوی"),
+      w("shoes",      "Shoes",     "Ayakkabı",      "حذاء",        "پێڵاو"),
+      w("boots",      "Boots",     "Bot",           "جزمة",        "پووتین"),
+      w("sandals",    "Sandals",   "Sandalet",      "صندل",        "ساندەڵ"),
+      w("belt",       "Belt",      "Kemer",         "حزام",        "قایش"),
+      w("tie",        "Tie",       "Kravat",        "ربطة عنق",    "بۆینباخ"),
+      w("glasses",    "Glasses",   "Gözlük",        "نظارات",      "چاویلکە"),
+      w("watch",      "Watch",     "Kol Saati",     "ساعة يد",     "کاتژمێری دەست")
+    ]
+  },
+
+  /* ─── 24. MUSIC & INSTRUMENTS ────────────────────────────────────── */
+  {
+    key: "music-instruments",
+    icon: "🎵",
+    difficulty: "medium",
+    games: BOTH,
+    label: { en: "Music & Instruments", tr: "Müzik & Enstrümanlar", ar: "موسيقى وآلات", ku: "مۆسیقا و ئامێرەکان" },
+    description: {
+      en: "Instruments and music words from the region and the world.",
+      tr: "Bölgeden ve dünyadan enstrümanlar ve müzik kavramları.",
+      ar: "آلات موسيقية وكلمات من المنطقة والعالم.",
+      ku: "ئامێری مۆسیقا و وشەکانی مۆسیقا لە ناوچەکە و جیهان."
+    },
+    words: [
+      w("guitar",     "Guitar",     "Gitar",       "غيتار",        "گیتار"),
+      w("piano",      "Piano",      "Piyano",      "بيانو",        "پیانۆ"),
+      w("violin",     "Violin",     "Keman",       "كمان",         "کەمان"),
+      w("drums",      "Drums",      "Davul",       "طبول",         "تەپڵ"),
+      w("flute",      "Flute",      "Flüt",        "ناي",          "شمشاڵ"),
+      w("saz",        "Saz",        "Saz",         "طنبور",        "تەمبوور"),
+      w("oud",        "Oud",        "Ud",          "عود",          "عوود"),
+      w("zurna",      "Zurna",      "Zurna",       "زرنة",         "زوڕنا"),
+      w("daf",        "Daf",        "Def",         "دف",           "دەف"),
+      w("trumpet",    "Trumpet",    "Trompet",     "بوق",          "کەڕەنا"),
+      w("microphone", "Microphone", "Mikrofon",    "ميكروفون",     "مایکرۆفۆن"),
+      w("singer",     "Singer",     "Şarkıcı",     "مغني",         "گۆرانیبێژ"),
+      w("song",       "Song",       "Şarkı",       "أغنية",        "گۆرانی"),
+      w("concert",    "Concert",    "Konser",      "حفلة موسيقية", "کۆنسێرت"),
+      w("orchestra",  "Orchestra",  "Orkestra",    "أوركسترا",     "ئۆرکێسترا"),
+      w("dj",         "DJ",         "DJ",          "دي جي",        "دی جەی"),
+      w("headphones-music", "Headphones", "Kulaklık", "سماعات",    "هێدفۆن"),
+      w("melody",     "Melody",     "Melodi",      "لحن",          "ئاواز")
+    ]
+  },
+
+  /* ─── 25. KITCHEN ITEMS ──────────────────────────────────────────── */
+  {
+    key: "kitchen-items",
+    icon: "🍳",
+    difficulty: "easy",
+    games: BOTH,
+    label: { en: "Kitchen Items", tr: "Mutfak Eşyaları", ar: "أدوات المطبخ", ku: "کەلوپەلی چێشتخانە" },
+    description: {
+      en: "Tools and utensils found in every kitchen.",
+      tr: "Her mutfakta bulunan araç gereçler.",
+      ar: "أدوات موجودة في كل مطبخ.",
+      ku: "ئامراز و کەلوپەلی ناو هەموو چێشتخانەیەک."
+    },
+    words: [
+      w("pan",           "Frying Pan",  "Tava",           "مقلاة",        "تاوە"),
+      w("pot",           "Pot",         "Tencere",        "قدر",          "مەنجەڵ"),
+      w("kettle",        "Kettle",      "Çaydanlık",      "غلاية",        "قوری"),
+      w("teapot",        "Teapot",      "Demlik",         "إبريق شاي",    "چایدان"),
+      w("knife",         "Knife",       "Bıçak",          "سكين",         "چەقۆ"),
+      w("fork",          "Fork",        "Çatal",          "شوكة",         "چەتاڵ"),
+      w("spoon",         "Spoon",       "Kaşık",          "ملعقة",        "کەوچک"),
+      w("plate",         "Plate",       "Tabak",          "صحن",          "قاپ"),
+      w("glass-cup",     "Glass",       "Bardak",         "كوب",          "پەرداخ"),
+      w("cutting-board", "Cutting Board","Kesme Tahtası", "لوح تقطيع",    "تەختەی بڕین"),
+      w("oven-kitchen",  "Oven",        "Fırın",          "فرن",          "فڕن"),
+      w("blender",       "Blender",     "Blender",        "خلاط",         "بلێندەر"),
+      w("grater",        "Grater",      "Rende",          "مبشرة",        "ڕەندە"),
+      w("tray",          "Tray",        "Tepsi",          "صينية",        "سینی"),
+      w("bowl",          "Bowl",        "Kase",           "وعاء",         "قاپی قووڵ"),
+      w("jug",           "Jug",         "Sürahi",         "إبريق",        "دۆلکە"),
+      w("strainer",      "Strainer",    "Süzgeç",         "مصفاة",        "پاڵێوک"),
+      w("rolling-pin",   "Rolling Pin", "Oklava",         "شوبك",         "تیرۆک"),
+      w("apron",         "Apron",       "Önlük",          "مريلة",        "بەروانکە"),
+      w("thermos",       "Thermos",     "Termos",         "ترمس",         "تێرمۆس")
+    ]
+  },
+
+  /* ─── 26. HOLIDAYS & EVENTS ──────────────────────────────────────── */
+  {
+    key: "holidays-events",
+    icon: "🎉",
+    difficulty: "medium",
+    games: BOTH,
+    label: { en: "Holidays & Events", tr: "Bayramlar & Etkinlikler", ar: "أعياد ومناسبات", ku: "جەژن و بۆنەکان" },
+    description: {
+      en: "Celebrations, holidays, and special days.",
+      tr: "Kutlamalar, bayramlar ve özel günler.",
+      ar: "احتفالات وأعياد وأيام خاصة.",
+      ku: "ئاهەنگ و جەژن و ڕۆژە تایبەتەکان."
+    },
+    words: [
+      w("newroz",         "Newroz",          "Nevruz",           "نوروز",           "نەورۆز"),
+      w("eid",            "Eid",             "Ramazan Bayramı",  "عيد الفطر",       "جەژنی ڕەمەزان"),
+      w("eid-adha",       "Eid al-Adha",     "Kurban Bayramı",   "عيد الأضحى",      "جەژنی قوربان"),
+      w("wedding",        "Wedding",         "Düğün",            "زفاف",            "زەماوەند"),
+      w("birthday",       "Birthday",        "Doğum Günü",       "عيد ميلاد",       "ڕۆژی لەدایکبوون"),
+      w("new-year",       "New Year",        "Yılbaşı",          "رأس السنة",       "سەری ساڵ"),
+      w("graduation",     "Graduation",      "Mezuniyet",        "تخرج",            "دەرچوون"),
+      w("picnic",         "Picnic",          "Piknik",           "نزهة",            "سەیران"),
+      w("engagement",     "Engagement",      "Nişan",            "خطوبة",           "نیشانکردن"),
+      w("ramadan",        "Ramadan",         "Ramazan",          "رمضان",           "ڕەمەزان"),
+      w("iftar",          "Iftar",           "İftar",            "إفطار",           "بەربانگ"),
+      w("henna-night",    "Henna Night",     "Kına Gecesi",      "ليلة الحناء",     "شەوی خەنە"),
+      w("funfair",        "Funfair",         "Lunapark",         "مدينة ملاهي",     "یاریگای ئاهەنگ"),
+      w("fireworks",      "Fireworks",       "Havai Fişek",      "ألعاب نارية",     "ئاگربازی"),
+      w("parade",         "Parade",          "Geçit Töreni",     "استعراض",         "ڕێپێوان"),
+      w("festival",       "Festival",        "Festival",         "مهرجان",          "فیستیڤاڵ"),
+      w("camping-trip",   "Camping",         "Kamp",             "تخييم",           "خێوەتگە"),
+      w("mothers-day",    "Mother's Day",    "Anneler Günü",     "عيد الأم",        "ڕۆژی دایک")
+    ]
+  },
+
+  /* ─── 27. SUPERHEROES & CHARACTERS ───────────────────────────────── */
+  {
+    key: "heroes-characters",
+    icon: "🦸",
+    difficulty: "easy",
+    games: BOTH,
+    label: { en: "Heroes & Characters", tr: "Kahramanlar & Karakterler", ar: "أبطال وشخصيات", ku: "پاڵەوان و کارەکتەرەکان" },
+    description: {
+      en: "Superheroes and famous fictional characters.",
+      tr: "Süper kahramanlar ve ünlü kurgu karakterleri.",
+      ar: "أبطال خارقون وشخصيات خيالية شهيرة.",
+      ku: "پاڵەوانە سەرسوڕهێنەرەکان و کارەکتەرە بەناوبانگەکان."
+    },
+    words: [
+      w("superman",       "Superman",        "Superman",        "سوبرمان",         "سوپەرمان"),
+      w("batman",         "Batman",          "Batman",          "باتمان",          "باتمان"),
+      w("spiderman",      "Spider-Man",      "Örümcek Adam",    "سبايدرمان",       "سپایدەرمان"),
+      w("ironman",        "Iron Man",        "Iron Man",        "الرجل الحديدي",   "ئایرۆنمان"),
+      w("hulk",           "Hulk",            "Hulk",            "هالك",            "هەڵک"),
+      w("thor",           "Thor",            "Thor",            "ثور",             "سۆر"),
+      w("captain-america","Captain America", "Kaptan Amerika",  "كابتن أمريكا",    "کاپتن ئەمریکا"),
+      w("wonder-woman",   "Wonder Woman",    "Wonder Woman",    "المرأة المعجزة",  "وۆندەر وومان"),
+      w("harry-potter",   "Harry Potter",    "Harry Potter",    "هاري بوتر",       "هاری پۆتەر"),
+      w("mickey-mouse",   "Mickey Mouse",    "Mickey Mouse",    "ميكي ماوس",       "میکی ماوس"),
+      w("tom-jerry",      "Tom and Jerry",   "Tom ve Jerry",    "توم وجيري",       "تۆم و جێری"),
+      w("spongebob",      "SpongeBob",       "Sünger Bob",      "سبونج بوب",       "سپۆنج بۆب"),
+      w("pikachu",        "Pikachu",         "Pikachu",         "بيكاتشو",         "پیکاچو"),
+      w("mario",          "Super Mario",     "Super Mario",     "سوبر ماريو",      "سوپەر ماریۆ"),
+      w("sonic",          "Sonic",           "Sonic",           "سونيك",           "سۆنیک"),
+      w("elsa",           "Elsa",            "Elsa",            "إلسا",            "ئێلسا"),
+      w("shrek",          "Shrek",           "Shrek",           "شريك",            "شرێک"),
+      w("minions",        "Minions",         "Minyonlar",       "المينيونز",       "مینیۆنەکان"),
+      w("aladdin",        "Aladdin",         "Alaaddin",        "علاء الدين",      "عەلائەدین"),
+      w("cinderella",     "Cinderella",      "Külkedisi",       "سندريلا",         "سیندرێلا")
+    ]
   }
 ] as const
 /* eslint-enable max-len */

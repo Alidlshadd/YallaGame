@@ -9,7 +9,8 @@ import { showReveal } from "../ui/roleReveal.js"
 import { getGames } from "./home.js"
 import { worldCoverPath } from "../data/assets.js"
 import { buildRolePool, assignRolesLocally, type LocalAssignment } from "../domain/local-roles.js"
-import { SPY_WORD_CATEGORIES, pickSpyWord } from "../domain/spy-data.js"
+import { SPY_WORD_CATEGORIES, pickSpyWordWithCategory } from "../domain/spy-data.js"
+import { getCategoryByKey } from "../data/word-categories.js"
 import {
   WHO_AM_I_CATEGORIES,
   RANDOM_MIX_KEY,
@@ -51,6 +52,7 @@ type Step =
   | "settings"
   | "reveal"
   | "adminReview"
+  | "starter"
   | "discussion"
   | "vote"
   | "result"
@@ -80,6 +82,7 @@ interface LocalState {
   spyCategoryIds: string[]
   customSpyWords: string
   spyWord: string | null
+  spyHintCategory: Record<LangCode, string> | null
   roundEndsAt: number | null
   voteAttemptsLeft: number
   selectedSuspect: string | null
@@ -118,6 +121,7 @@ function freshState(): LocalState {
     spyCategoryIds: [...DEFAULT_SPY_CATEGORIES],
     customSpyWords: "",
     spyWord: null,
+    spyHintCategory: null,
     roundEndsAt: null,
     voteAttemptsLeft: 1,
     selectedSuspect: null,
@@ -236,34 +240,133 @@ function formatTime(ms: number): string {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
 }
 
-function spyText(lang: LangCode, key: "wordForPlayer" | "wordForSpy" | "citizensWin" | "spiesWin"): string {
-  const text = {
-    en: {
-      wordForPlayer: "Secret word",
-      wordForSpy: "The secret word is hidden from you. Blend in and avoid suspicion.",
-      citizensWin: "The players found the spy.",
-      spiesWin: "The spy won the game."
-    },
-    tr: {
-      wordForPlayer: "Gizli kelime",
-      wordForSpy: "Gizli kelime sana gösterilmiyor. Sorulara uyum sağla ve fark edilme.",
-      citizensWin: "Oyuncular casusu buldu.",
-      spiesWin: "Casus oyunu kazandı."
-    },
-    ar: {
-      wordForPlayer: "الكلمة السرية",
-      wordForSpy: "الكلمة السرية مخفية عنك. اندمج مع الباقين ولا تكشف نفسك.",
-      citizensWin: "اللاعبون اكتشفوا الجاسوس.",
-      spiesWin: "الجاسوس فاز باللعبة."
-    },
-    ku: {
-      wordForPlayer: "وشەی نهێنی",
-      wordForSpy: "وشە نهێنییەکە لێت شاراوەیە. لەگەڵ یاریزانانی تردا تێکەڵ بە و خۆت دەرمەخە.",
-      citizensWin: "یاریزانان سیخوڕیان دۆزییەوە.",
-      spiesWin: "سیخوڕ یارییەکەی بردەوە."
-    }
+const SPY_TEXT = {
+  en: {
+    wordForPlayer: "Secret word",
+    wordForSpy: "The secret word is hidden from you. Blend in and avoid suspicion.",
+    spyHint: "Your hint — the word's category:",
+    citizensWin: "The players found the spy.",
+    spiesWin: "The spy won the game.",
+    starterTitle: "Who asks first?",
+    starterIs: "starts the round with the first question.",
+    startDiscussion: "Start Discussion",
+    discussionTitle: "Discussion Time",
+    discussionHint: "Ask each other questions without revealing the word.",
+    firstQuestion: "First question",
+    activeTopics: "Active topics",
+    endDiscussion: "End Discussion",
+    voteTitle: "Who is the Spy?",
+    voteHint: "Choose one suspect. Attempts left",
+    sendVote: "Send Vote",
+    chooseSuspect: "Choose a suspected spy.",
+    wrongGuess: "Wrong guess. Attempts left",
+    spiesLabel: "Spies",
+    newGameSame: "New Game (Same Group)",
+    settingsLabel: "Settings",
+    backHome: "Back to Home",
+    categoriesTitle: "Word categories",
+    categoriesSub: "Pick one or more topics. Normal players see the secret word; spies do not.",
+    customWords: "Custom words"
+  },
+  tr: {
+    wordForPlayer: "Gizli kelime",
+    wordForSpy: "Gizli kelime sana gösterilmiyor. Sorulara uyum sağla ve fark edilme.",
+    spyHint: "İpucun — kelimenin kategorisi:",
+    citizensWin: "Oyuncular casusu buldu.",
+    spiesWin: "Casus oyunu kazandı.",
+    starterTitle: "İlk soruyu kim soracak?",
+    starterIs: "ilk soruyu sorarak turu başlatır.",
+    startDiscussion: "Tartışmayı Başlat",
+    discussionTitle: "Tartışma Zamanı",
+    discussionHint: "Kelimeyi açık etmeden birbirinize sorular sorun.",
+    firstQuestion: "İlk soru",
+    activeTopics: "Aktif konular",
+    endDiscussion: "Tartışmayı Bitir",
+    voteTitle: "Casus Kim?",
+    voteHint: "Bir şüpheli seç. Kalan hak",
+    sendVote: "Oyu Gönder",
+    chooseSuspect: "Şüpheli bir casus seç.",
+    wrongGuess: "Yanlış tahmin. Kalan hak",
+    spiesLabel: "Casuslar",
+    newGameSame: "Yeni Oyun (Aynı Grup)",
+    settingsLabel: "Ayarlar",
+    backHome: "Ana Sayfaya Dön",
+    categoriesTitle: "Kelime kategorileri",
+    categoriesSub: "Bir veya daha fazla konu seç. Normal oyuncular gizli kelimeyi görür; casuslar görmez.",
+    customWords: "Özel kelimeler"
+  },
+  ar: {
+    wordForPlayer: "الكلمة السرية",
+    wordForSpy: "الكلمة السرية مخفية عنك. اندمج مع الباقين ولا تكشف نفسك.",
+    spyHint: "تلميحك — فئة الكلمة:",
+    citizensWin: "اللاعبون اكتشفوا الجاسوس.",
+    spiesWin: "الجاسوس فاز باللعبة.",
+    starterTitle: "من يسأل أولا؟",
+    starterIs: "يبدأ الجولة بالسؤال الأول.",
+    startDiscussion: "ابدأ النقاش",
+    discussionTitle: "وقت النقاش",
+    discussionHint: "اطرحوا الأسئلة على بعضكم دون كشف الكلمة.",
+    firstQuestion: "السؤال الأول",
+    activeTopics: "المواضيع الفعالة",
+    endDiscussion: "إنهاء النقاش",
+    voteTitle: "من هو الجاسوس؟",
+    voteHint: "اختر مشتبها به. المحاولات المتبقية",
+    sendVote: "إرسال التصويت",
+    chooseSuspect: "اختر جاسوسا مشتبها به.",
+    wrongGuess: "تخمين خاطئ. المحاولات المتبقية",
+    spiesLabel: "الجواسيس",
+    newGameSame: "لعبة جديدة (نفس المجموعة)",
+    settingsLabel: "الإعدادات",
+    backHome: "العودة للرئيسية",
+    categoriesTitle: "فئات الكلمات",
+    categoriesSub: "اختر موضوعا أو أكثر. اللاعبون العاديون يرون الكلمة السرية؛ الجواسيس لا يرونها.",
+    customWords: "كلمات مخصصة"
+  },
+  ku: {
+    wordForPlayer: "وشەی نهێنی",
+    wordForSpy: "وشە نهێنییەکە لێت شاراوەیە. لەگەڵ یاریزانانی تردا تێکەڵ بە و خۆت دەرمەخە.",
+    spyHint: "ئاماژەکەت — پۆلی وشەکە:",
+    citizensWin: "یاریزانان سیخوڕیان دۆزییەوە.",
+    spiesWin: "سیخوڕ یارییەکەی بردەوە.",
+    starterTitle: "کێ یەکەم پرسیار دەکات؟",
+    starterIs: "بە یەکەم پرسیار خولەکە دەست پێ دەکات.",
+    startDiscussion: "دەستپێکردنی گفتوگۆ",
+    discussionTitle: "کاتی گفتوگۆ",
+    discussionHint: "پرسیار لە یەکتری بکەن بەبێ ئاشکراکردنی وشەکە.",
+    firstQuestion: "یەکەم پرسیار",
+    activeTopics: "بابەتە چالاکەکان",
+    endDiscussion: "کۆتایی گفتوگۆ",
+    voteTitle: "سیخوڕ کێیە؟",
+    voteHint: "گومانلێکراوێک هەڵبژێرە. هەوڵی ماوە",
+    sendVote: "ناردنی دەنگ",
+    chooseSuspect: "سیخوڕێکی گومانلێکراو هەڵبژێرە.",
+    wrongGuess: "پێشبینی هەڵە. هەوڵی ماوە",
+    spiesLabel: "سیخوڕەکان",
+    newGameSame: "یاری نوێ (هەمان گرووپ)",
+    settingsLabel: "ڕێکخستنەکان",
+    backHome: "گەڕانەوە بۆ سەرەکی",
+    categoriesTitle: "پۆلەکانی وشە",
+    categoriesSub: "یەک یان چەند بابەتێک هەڵبژێرە. یاریزانە ئاساییەکان وشە نهێنییەکە دەبینن؛ سیخوڕەکان نایبینن.",
+    customWords: "وشەی تایبەت"
   }
-  return text[lang]?.[key] ?? text.en[key]
+} as const
+
+type SpyTextKey = keyof typeof SPY_TEXT.en
+
+function spyText(lang: LangCode, key: SpyTextKey): string {
+  return SPY_TEXT[lang]?.[key] ?? SPY_TEXT.en[key]
+}
+
+/* Shared reveal-screen strings (used by every local game). */
+const REVEAL_TEXT = {
+  en: { playerOf: (n: number, total: number) => `Player ${n} of ${total}`, privacy: "Make sure only you can see the screen", tap: "Tap to See Your Role" },
+  tr: { playerOf: (n: number, total: number) => `Oyuncu ${n} / ${total}`, privacy: "Ekranı sadece senin gördüğünden emin ol", tap: "Rolünü Görmek İçin Dokun" },
+  ar: { playerOf: (n: number, total: number) => `اللاعب ${n} من ${total}`, privacy: "تأكد أنك الوحيد الذي يرى الشاشة", tap: "اضغط لرؤية دورك" },
+  ku: { playerOf: (n: number, total: number) => `یاریزان ${n} لە ${total}`, privacy: "دڵنیابە تەنها تۆ شاشەکە دەبینیت", tap: "دەستبنێ بۆ بینینی ڕۆڵەکەت" }
+} as const
+
+function revealText(lang: LangCode): { playerOf: (n: number, total: number) => string; privacy: string; tap: string } {
+  return REVEAL_TEXT[lang] ?? REVEAL_TEXT.en
 }
 
 function localReviewText(
@@ -331,9 +434,12 @@ function prepareRound(game: Game, lang: LangCode): void {
   state.voteAttemptsLeft = Math.max(1, settingNumber("guessAttempts", 1))
 
   if (isSpyGame(game)) {
-    state.spyWord = pickSpyWord(lang, state.spyCategoryIds, state.customSpyWords)
+    const pick = pickSpyWordWithCategory(lang, state.spyCategoryIds, state.customSpyWords)
+    state.spyWord = pick.word
+    state.spyHintCategory = pick.categoryLabel
   } else {
     state.spyWord = null
+    state.spyHintCategory = null
   }
 
   state.step = "reveal"
@@ -388,8 +494,9 @@ export const localPlayView = {
       else if (state.step === "settings" && game) renderSettings(container, lang, render, game)
       else if (state.step === "reveal" && game) renderReveal(container, lang, render, game)
       else if (state.step === "adminReview" && game) renderAdminReview(container, lang, render)
-      else if (state.step === "discussion" && game) renderDiscussion(container, render, id => { activeTimer = id })
-      else if (state.step === "vote" && game) renderVote(container, render)
+      else if (state.step === "starter" && game) renderSpyStarter(container, lang, render)
+      else if (state.step === "discussion" && game) renderDiscussion(container, lang, render, id => { activeTimer = id })
+      else if (state.step === "vote" && game) renderVote(container, lang, render)
       else if (state.step === "result" && game) renderSpyResult(container, lang, render, game)
       else if (state.step === "done" && game) renderDone(container, lang, render, game)
       else if (state.step === "whoSetup" && game) renderWhoAmISetup(container, lang, render)
@@ -684,9 +791,10 @@ function renderSpyWordSettings(lang: LangCode): HTMLElement {
       state.spyCategoryIds = [...selected]
     })
 
+    const cat = getCategoryByKey(category.id)
     grid.appendChild(el("label", { class: "lp-category-card" }, [
       checkbox,
-      el("span", {}, [category.label[lang]])
+      el("span", {}, [`${cat?.icon ? cat.icon + " " : ""}${category.label[lang]}`])
     ]))
   }
 
@@ -699,11 +807,11 @@ function renderSpyWordSettings(lang: LangCode): HTMLElement {
   custom.addEventListener("input", () => { state.customSpyWords = custom.value })
 
   return el("div", { class: "lp-spy-words" }, [
-    el("h3", { class: "lp-section-title" }, ["Word categories"]),
-    el("p", { class: "lp-sub" }, ["Pick one or more topics. Normal players see the secret word; spies do not."]),
+    el("h3", { class: "lp-section-title" }, [spyText(lang, "categoriesTitle")]),
+    el("p", { class: "lp-sub" }, [spyText(lang, "categoriesSub")]),
     grid,
     el("label", { class: "lp-custom-label" }, [
-      el("span", {}, ["Custom words"]),
+      el("span", {}, [spyText(lang, "customWords")]),
       custom
     ])
   ])
@@ -712,20 +820,21 @@ function renderSpyWordSettings(lang: LangCode): HTMLElement {
 function renderReveal(container: HTMLDivElement, lang: LangCode, render: () => void, game: Game): void {
   const player = state.assignments[state.currentRevealIndex]
   if (!player) {
-    state.step = isSpyGame(game) ? "discussion" : "done"
+    state.step = isSpyGame(game) ? "starter" : "done"
     render()
     return
   }
   const total = state.assignments.length
   const playerNumber = state.currentRevealIndex + 1
+  const rt = revealText(lang)
 
   const card = el("div", { class: "lp-reveal-stage" }, [
-    el("p", { class: "lp-reveal-progress" }, [`Player ${playerNumber} of ${total}`]),
+    el("p", { class: "lp-reveal-progress" }, [rt.playerOf(playerNumber, total)]),
     el("h1", { class: "lp-reveal-name" }, [player.name]),
-    el("p", { class: "lp-reveal-instruction" }, ["Make sure only you can see the screen"])
+    el("p", { class: "lp-reveal-instruction" }, [rt.privacy])
   ])
 
-  const revealBtn = el("button", { class: "lp-primary lp-reveal-cta", type: "button" }, ["Tap to See Your Role"])
+  const revealBtn = el("button", { class: "lp-primary lp-reveal-cta", type: "button" }, [rt.tap])
   revealBtn.addEventListener("click", async () => {
     void play("transition")
     const roleData = game.roles.find(r => r.id === player.roleId)
@@ -743,16 +852,7 @@ function renderReveal(container: HTMLDivElement, lang: LangCode, render: () => v
     await showReveal({ payload, lang, onClose: () => {
       state.currentRevealIndex += 1
       if (state.currentRevealIndex >= state.assignments.length) {
-        if (isSpyGame(game)) {
-          state.roundEndsAt = Date.now() + settingNumber("roundMinutes", 5) * 60_000
-          if (state.assignments.length > 0) {
-            const pick = state.assignments[Math.floor(Math.random() * state.assignments.length)]!
-            state.starterName = pick.name
-          }
-          state.step = "discussion"
-        } else {
-          state.step = "adminReview"
-        }
+        state.step = isSpyGame(game) ? "starter" : "adminReview"
       }
       render()
     }})
@@ -790,24 +890,55 @@ function renderAdminReview(container: HTMLDivElement, lang: LangCode, render: ()
 
 function buildSpyRevealRole(role: Role, roleId: string, lang: LangCode): Role {
   const desc = { ...role.desc }
-  desc[lang] = roleId === "spy"
-    ? spyText(lang, "wordForSpy")
-    : `${spyText(lang, "wordForPlayer")}: ${state.spyWord ?? "-"}`
+  if (roleId === "spy") {
+    const hintLabel = state.spyHintCategory?.[lang] ?? state.spyHintCategory?.en
+    desc[lang] = hintLabel
+      ? `${spyText(lang, "wordForSpy")} ${spyText(lang, "spyHint")} ${hintLabel}`
+      : spyText(lang, "wordForSpy")
+  } else {
+    desc[lang] = `${spyText(lang, "wordForPlayer")}: ${state.spyWord ?? "-"}`
+  }
   return { ...role, desc }
 }
 
-function renderDiscussion(container: HTMLDivElement, render: () => void, setTimer: (id: number) => void): void {
-  if (!state.roundEndsAt) {
-    state.roundEndsAt = Date.now() + settingNumber("roundMinutes", 5) * 60_000
-  }
+function renderSpyStarter(container: HTMLDivElement, lang: LangCode, render: () => void): void {
   if (!state.starterName && state.assignments.length > 0) {
     const pick = state.assignments[Math.floor(Math.random() * state.assignments.length)]!
     state.starterName = pick.name
   }
+  const starter = state.starterName ?? state.assignments[0]?.name ?? "-"
+
+  const startBtn = el("button", { class: "lp-primary lp-reveal-cta", type: "button" }, [
+    spyText(lang, "startDiscussion")
+  ])
+  startBtn.addEventListener("click", () => {
+    void play("transition")
+    // The round clock starts only when discussion actually begins.
+    state.roundEndsAt = Date.now() + settingNumber("roundMinutes", 5) * 60_000
+    state.step = "discussion"
+    render()
+  })
+
+  container.append(
+    renderProgressBar(4, 6),
+    el("div", { class: "lp-reveal-stage lp-starter-stage" }, [
+      el("p", { class: "lp-starter-dice" }, ["🎲"]),
+      el("h2", { class: "lp-title" }, [spyText(lang, "starterTitle")]),
+      el("h1", { class: "lp-reveal-name lp-starter-name" }, [starter]),
+      el("p", { class: "lp-reveal-instruction" }, [`${starter} ${spyText(lang, "starterIs")}`]),
+      startBtn
+    ])
+  )
+}
+
+function renderDiscussion(container: HTMLDivElement, lang: LangCode, render: () => void, setTimer: (id: number) => void): void {
+  if (!state.roundEndsAt) {
+    state.roundEndsAt = Date.now() + settingNumber("roundMinutes", 5) * 60_000
+  }
 
   const timer = el("div", { class: "lp-timer" }, ["00:00"])
-  const firstQuestioner = state.starterName ?? state.assignments[0]?.name ?? "Player 1"
-  const endBtn = el("button", { class: "lp-primary", type: "button" }, ["End Discussion"])
+  const firstQuestioner = state.starterName ?? state.assignments[0]?.name ?? "-"
+  const endBtn = el("button", { class: "lp-primary", type: "button" }, [spyText(lang, "endDiscussion")])
   endBtn.addEventListener("click", () => {
     state.step = "vote"
     render()
@@ -816,6 +947,7 @@ function renderDiscussion(container: HTMLDivElement, render: () => void, setTime
   const updateTimer = () => {
     const remaining = (state.roundEndsAt ?? Date.now()) - Date.now()
     timer.textContent = formatTime(remaining)
+    timer.classList.toggle("urgent", remaining > 0 && remaining <= 30_000)
     if (remaining <= 0) {
       state.step = "vote"
       render()
@@ -824,16 +956,25 @@ function renderDiscussion(container: HTMLDivElement, render: () => void, setTime
   updateTimer()
   setTimer(window.setInterval(updateTimer, 1000))
 
+  // Active topic chips help everyone (including the spy) stay oriented.
+  const topics = el("div", { class: "lp-topic-chips" })
+  for (const id of state.spyCategoryIds) {
+    const cat = SPY_WORD_CATEGORIES.find(c => c.id === id)
+    if (cat) topics.appendChild(el("span", { class: "lp-topic-chip" }, [cat.label[lang] ?? cat.label.en]))
+  }
+
   container.append(
     renderProgressBar(4, 6),
-    el("h2", { class: "lp-title" }, ["Discussion Time"]),
+    el("h2", { class: "lp-title" }, [spyText(lang, "discussionTitle")]),
     timer,
-    el("p", { class: "lp-sub" }, [`Ask each other questions without revealing the word. First question: ${firstQuestioner}`]),
+    el("p", { class: "lp-first-chip" }, [`💬 ${spyText(lang, "firstQuestion")}: ${firstQuestioner}`]),
+    el("p", { class: "lp-sub" }, [spyText(lang, "discussionHint")]),
+    topics,
     el("div", { class: "lp-actions" }, [endBtn])
   )
 }
 
-function renderVote(container: HTMLDivElement, render: () => void): void {
+function renderVote(container: HTMLDivElement, lang: LangCode, render: () => void): void {
   const list = el("div", { class: "lp-suspect-grid" })
   for (const player of state.assignments) {
     const selected = state.selectedSuspect === player.name
@@ -848,10 +989,10 @@ function renderVote(container: HTMLDivElement, render: () => void): void {
     list.appendChild(button)
   }
 
-  const submitBtn = el("button", { class: "lp-primary", type: "button" }, ["Send Vote"])
+  const submitBtn = el("button", { class: "lp-primary", type: "button" }, [spyText(lang, "sendVote")])
   submitBtn.addEventListener("click", () => {
     if (!state.selectedSuspect) {
-      buildErrorMessage(container, "Choose a suspected spy.")
+      buildErrorMessage(container, spyText(lang, "chooseSuspect"))
       return
     }
     const suspect = state.assignments.find(a => a.name === state.selectedSuspect)
@@ -864,7 +1005,7 @@ function renderVote(container: HTMLDivElement, render: () => void): void {
         state.result = "spies"
         state.step = "result"
       } else {
-        state.lastVoteMessage = `Wrong guess. ${state.voteAttemptsLeft} attempt left.`
+        state.lastVoteMessage = `${spyText(lang, "wrongGuess")}: ${state.voteAttemptsLeft}`
         state.selectedSuspect = null
       }
     }
@@ -873,12 +1014,12 @@ function renderVote(container: HTMLDivElement, render: () => void): void {
 
   container.append(
     renderProgressBar(5, 6),
-    el("h2", { class: "lp-title" }, ["Who is the Spy?"]),
-    el("p", { class: "lp-sub" }, [`Choose one suspect. Attempts left: ${state.voteAttemptsLeft}`]),
-    list,
-    el("div", { class: "lp-error" }, [state.lastVoteMessage ?? ""]),
-    el("div", { class: "lp-actions" }, [submitBtn])
+    el("h2", { class: "lp-title" }, [spyText(lang, "voteTitle")]),
+    el("p", { class: "lp-sub" }, [`${spyText(lang, "voteHint")}: ${state.voteAttemptsLeft}`]),
+    list
   )
+  if (state.lastVoteMessage) container.appendChild(el("div", { class: "lp-error" }, [state.lastVoteMessage]))
+  container.appendChild(el("div", { class: "lp-actions" }, [submitBtn]))
 }
 
 function renderSpyResult(container: HTMLDivElement, lang: LangCode, render: () => void, game: Game): void {
@@ -894,7 +1035,7 @@ function renderSpyResult(container: HTMLDivElement, lang: LangCode, render: () =
     ]))
   }
 
-  const sameGroupBtn = el("button", { class: "lp-primary", type: "button" }, ["New Game (Same Group)"])
+  const sameGroupBtn = el("button", { class: "lp-primary", type: "button" }, [spyText(lang, "newGameSame")])
   sameGroupBtn.addEventListener("click", () => {
     void play("click")
     try {
@@ -905,13 +1046,13 @@ function renderSpyResult(container: HTMLDivElement, lang: LangCode, render: () =
     }
   })
 
-  const settingsBtn = el("button", { class: "lp-secondary", type: "button" }, ["Settings"])
+  const settingsBtn = el("button", { class: "lp-secondary", type: "button" }, [spyText(lang, "settingsLabel")])
   settingsBtn.addEventListener("click", () => {
     state.step = "settings"
     render()
   })
 
-  const homeBtn = el("button", { class: "lp-back", type: "button" }, ["Back to Home"])
+  const homeBtn = el("button", { class: "lp-back", type: "button" }, [spyText(lang, "backHome")])
   homeBtn.addEventListener("click", () => {
     void play("click")
     clearLocalState()
@@ -923,13 +1064,12 @@ function renderSpyResult(container: HTMLDivElement, lang: LangCode, render: () =
     renderProgressBar(6, 6),
     el("h2", { class: "lp-title" }, [result === "citizens" ? spyText(lang, "citizensWin") : spyText(lang, "spiesWin")]),
     el("div", { class: "lp-result-card" }, [
-      el("span", { class: "lp-result-label" }, ["Secret word"]),
+      el("span", { class: "lp-result-label" }, [spyText(lang, "wordForPlayer")]),
       el("strong", {}, [state.spyWord ?? "-"]),
-      el("span", { class: "lp-result-label" }, ["Spies"]),
+      el("span", { class: "lp-result-label" }, [spyText(lang, "spiesLabel")]),
       el("strong", {}, [spies.join(", ") || "-"])
     ]),
     list,
-    el("div", { class: "lp-error" }, []),
     el("div", { class: "lp-actions" }, [homeBtn, settingsBtn, sameGroupBtn])
   )
 }
