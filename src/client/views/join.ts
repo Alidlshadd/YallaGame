@@ -19,13 +19,21 @@ const ERR_TO_KEY: Partial<Record<ErrorCode, keyof Translations>> = {
 
 export const joinView = {
   id: "joinView" as const,
-  mount() {
+  mount(ctx: { code?: string } = {}) {
     const code = $<HTMLInputElement>("#joinCodeInput")
     const name = $<HTMLInputElement>("#playerNameInput")
     const msg  = $<HTMLDivElement>("#joinMessage")
 
     code.classList.remove("locked")
     msg.classList.add("hidden"); msg.textContent = ""
+
+    // Invite link (/?join=CODE) prefills and locks the code so the
+    // player only has to type their name.
+    if (typeof ctx.code === "string" && ctx.code) {
+      code.value = ctx.code.toUpperCase()
+      if (code.value.length === 5) code.classList.add("locked")
+      name.focus()
+    }
 
     const onCodeInput = () => {
       void play("click", 0.3)

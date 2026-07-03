@@ -146,6 +146,18 @@ export const adminView = {
       catch { /* clipboard may be blocked */ }
     }
 
+    const onShare = async () => {
+      if (!room) return
+      void play("click", 0.4)
+      const url = `${location.origin}/?join=${room.code}`
+      if (navigator.share) {
+        try { await navigator.share({ title: "Yalla Game", text: t("shareInviteText"), url }); return }
+        catch { /* user cancelled the share sheet — fall through to copy */ }
+      }
+      try { await navigator.clipboard.writeText(url); showToast(t("linkCopied")) }
+      catch { showToast(url) }
+    }
+
     const onLeave = () => {
       if (!confirm("Leave this room? The room will be abandoned.")) return
       void play("click")
@@ -157,11 +169,13 @@ export const adminView = {
     const saveBtn   = $<HTMLButtonElement>("#saveSettingsBtn")
     const clearBtn  = $<HTMLButtonElement>("#clearRolesBtn")
     const copyBtn   = $<HTMLButtonElement>("#copyCodeBtn")
+    const shareBtn  = $<HTMLButtonElement>("#shareLinkBtn")
     const leaveBtn  = $<HTMLButtonElement>("#adminLeaveBtn")
     saveBtn.addEventListener("click", onSave)
     assignBtn.addEventListener("click", onAssign)
     clearBtn.addEventListener("click", onClear)
     copyBtn.addEventListener("click", onCopy)
+    shareBtn.addEventListener("click", onShare)
     leaveBtn.addEventListener("click", onLeave)
 
     return () => {
@@ -170,6 +184,7 @@ export const adminView = {
       assignBtn.removeEventListener("click", onAssign)
       clearBtn.removeEventListener("click", onClear)
       copyBtn.removeEventListener("click", onCopy)
+      shareBtn.removeEventListener("click", onShare)
       leaveBtn.removeEventListener("click", onLeave)
     }
   }

@@ -2644,6 +2644,13 @@ body[data-perf="low"] *::after {
   flex-wrap: wrap;
 }
 
+.admin-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+}
+
 .admin-header h2 {
   margin: 0;
   color: var(--theme-glow);

@@ -86,6 +86,18 @@ async function bootstrap() {
 
   const existing = session.load()
   const catalogPromise = loadCatalog()
+
+  // Shared invite links: /?join=CODE opens the join view with the code
+  // prefilled. The param is consumed (removed from the URL) so reloads
+  // afterwards behave normally, and an explicit invite wins over any
+  // stale session in this browser.
+  const joinParam = new URLSearchParams(location.search).get("join")?.trim().toUpperCase() ?? ""
+  if (/^[A-Z2-9]{5}$/.test(joinParam)) {
+    history.replaceState(null, "", location.pathname)
+    clearTheme()
+    await setView("joinView", { code: joinParam })
+    return
+  }
   if (existing?.kind === "admin") {
     await catalogPromise
     const { emit } = await import("./services/socket.js")
