@@ -357,6 +357,104 @@ function spyText(lang: LangCode, key: SpyTextKey): string {
   return SPY_TEXT[lang]?.[key] ?? SPY_TEXT.en[key]
 }
 
+/* Shared setup-screen strings (used by every local game). */
+const SETUP_TEXT = {
+  en: {
+    step: (n: number, total: number) => `Setup · Step ${n} of ${total}`,
+    localStep: (n: number, total: number) => `Local Play · Step ${n} of ${total}`,
+    chooseGame: "Choose Your Game",
+    chooseGameSub: "Pick a game everyone wants to play",
+    minPlayers: (min: number) => `Minimum ${min} players`,
+    playerNames: "Player Names",
+    playerNamesSub: (title: string, min: number) => `Enter the players joining this ${title} session (min ${min}).`,
+    playerPlaceholder: (n: number) => `Player ${n}`,
+    addPlayer: "+ Add Player",
+    continueBtn: "Continue ->",
+    backBtn: "<- Back",
+    needAtLeast: (min: number, have: number) => `Need at least ${min} players (you have ${have})`,
+    duplicateNames: (names: string) => `Duplicate names: ${names}`,
+    spySetup: "Spy Setup",
+    configure: "Configure",
+    customiseSub: (count: number, title: string) => `${count} players · customise ${title}`,
+    startSpy: "Start Spy Game",
+    assignRoles: "Assign Roles",
+    tooManySpies: "Too many spies for this player count.",
+    noWords: "Choose at least one word category or add custom words."
+  },
+  tr: {
+    step: (n: number, total: number) => `Kurulum · Adım ${n} / ${total}`,
+    localStep: (n: number, total: number) => `Yerel Oyun · Adım ${n} / ${total}`,
+    chooseGame: "Oyununu Seç",
+    chooseGameSub: "Herkesin oynamak istediği bir oyun seç",
+    minPlayers: (min: number) => `En az ${min} oyuncu`,
+    playerNames: "Oyuncu İsimleri",
+    playerNamesSub: (title: string, min: number) => `${title} oturumuna katılan oyuncuları yaz (en az ${min}).`,
+    playerPlaceholder: (n: number) => `Oyuncu ${n}`,
+    addPlayer: "+ Oyuncu Ekle",
+    continueBtn: "Devam ->",
+    backBtn: "<- Geri",
+    needAtLeast: (min: number, have: number) => `En az ${min} oyuncu gerekli (şu an ${have})`,
+    duplicateNames: (names: string) => `Aynı isimler: ${names}`,
+    spySetup: "Casus Kurulumu",
+    configure: "Ayarla",
+    customiseSub: (count: number, title: string) => `${count} oyuncu · ${title} ayarları`,
+    startSpy: "Casus Oyununu Başlat",
+    assignRoles: "Rolleri Dağıt",
+    tooManySpies: "Bu oyuncu sayısı için casus sayısı çok fazla.",
+    noWords: "En az bir kelime kategorisi seç veya özel kelime ekle."
+  },
+  ar: {
+    step: (n: number, total: number) => `الإعداد · الخطوة ${n} من ${total}`,
+    localStep: (n: number, total: number) => `اللعب المحلي · الخطوة ${n} من ${total}`,
+    chooseGame: "اختر لعبتك",
+    chooseGameSub: "اختر لعبة يريد الجميع لعبها",
+    minPlayers: (min: number) => `${min} لاعبين على الأقل`,
+    playerNames: "أسماء اللاعبين",
+    playerNamesSub: (title: string, min: number) => `أدخل أسماء اللاعبين في جلسة ${title} (على الأقل ${min}).`,
+    playerPlaceholder: (n: number) => `اللاعب ${n}`,
+    addPlayer: "+ إضافة لاعب",
+    continueBtn: "متابعة ->",
+    backBtn: "<- رجوع",
+    needAtLeast: (min: number, have: number) => `تحتاج ${min} لاعبين على الأقل (لديك ${have})`,
+    duplicateNames: (names: string) => `أسماء مكررة: ${names}`,
+    spySetup: "إعداد الجاسوس",
+    configure: "الإعدادات",
+    customiseSub: (count: number, title: string) => `${count} لاعبين · إعدادات ${title}`,
+    startSpy: "ابدأ لعبة الجاسوس",
+    assignRoles: "توزيع الأدوار",
+    tooManySpies: "عدد الجواسيس كبير جدا لهذا العدد من اللاعبين.",
+    noWords: "اختر فئة كلمات واحدة على الأقل أو أضف كلمات مخصصة."
+  },
+  ku: {
+    step: (n: number, total: number) => `ڕێکخستن · هەنگاوی ${n} لە ${total}`,
+    localStep: (n: number, total: number) => `یاری ناوخۆیی · هەنگاوی ${n} لە ${total}`,
+    chooseGame: "یارییەکەت هەڵبژێرە",
+    chooseGameSub: "یارییەک هەڵبژێرە کە هەمووان دەیانەوێت",
+    minPlayers: (min: number) => `لانی کەم ${min} یاریزان`,
+    playerNames: "ناوی یاریزانەکان",
+    playerNamesSub: (title: string, min: number) => `ناوی یاریزانەکانی ${title} بنووسە (لانی کەم ${min}).`,
+    playerPlaceholder: (n: number) => `یاریزان ${n}`,
+    addPlayer: "+ یاریزان زیاد بکە",
+    continueBtn: "بەردەوامبوون ->",
+    backBtn: "<- گەڕانەوە",
+    needAtLeast: (min: number, have: number) => `لانی کەم ${min} یاریزان پێویستە (ئێستا ${have})`,
+    duplicateNames: (names: string) => `ناوی دووبارە: ${names}`,
+    spySetup: "ڕێکخستنی سیخوڕ",
+    configure: "ڕێکخستن",
+    customiseSub: (count: number, title: string) => `${count} یاریزان · ڕێکخستنی ${title}`,
+    startSpy: "دەستپێکردنی یاری سیخوڕ",
+    assignRoles: "دابەشکردنی ڕۆڵەکان",
+    tooManySpies: "ژمارەی سیخوڕەکان زۆرە بۆ ئەم ژمارە یاریزانە.",
+    noWords: "لانی کەم پۆلێکی وشە هەڵبژێرە یان وشەی تایبەت زیاد بکە."
+  }
+} as const
+
+type SetupText = (typeof SETUP_TEXT)["en"]
+
+function setupText(lang: LangCode): SetupText {
+  return (SETUP_TEXT[lang] ?? SETUP_TEXT.en) as SetupText
+}
+
 /* Shared reveal-screen strings (used by every local game). */
 const REVEAL_TEXT = {
   en: { playerOf: (n: number, total: number) => `Player ${n} of ${total}`, privacy: "Make sure only you can see the screen", tap: "Tap to See Your Role" },
@@ -567,7 +665,7 @@ function renderGamePicker(container: HTMLDivElement, lang: LangCode, render: () 
         }),
         el("div", { class: "lp-game-info" }, [
           el("strong", {}, [game.title[lang]]),
-          el("span", { class: "muted" }, [`Minimum ${game.minPlayers} players`])
+          el("span", { class: "muted" }, [setupText(lang).minPlayers(game.minPlayers)])
         ])
       ]
     )
@@ -582,7 +680,7 @@ function renderGamePicker(container: HTMLDivElement, lang: LangCode, render: () 
 
   container.append(
     renderProgressBar(0, 4),
-    buildSetupHeader("Local Play · Step 1 of 4", "Choose Your Game", "Pick a game everyone wants to play"),
+    buildSetupHeader(setupText(lang).localStep(1, 4), setupText(lang).chooseGame, setupText(lang).chooseGameSub),
     grid
   )
 }
@@ -600,7 +698,7 @@ function renderNameEntry(container: HTMLDivElement, lang: LangCode, render: () =
       const input = el("input", {
         type: "text",
         maxlength: "24",
-        placeholder: `Player ${idx + 1}`,
+        placeholder: setupText(lang).playerPlaceholder(idx + 1),
         autocomplete: "off"
       }) as HTMLInputElement
       input.value = name
@@ -624,14 +722,14 @@ function renderNameEntry(container: HTMLDivElement, lang: LangCode, render: () =
     })
   }
 
-  const addBtn = el("button", { class: "lp-secondary", type: "button" }, ["+ Add Player"])
+  const addBtn = el("button", { class: "lp-secondary", type: "button" }, [setupText(lang).addPlayer])
   addBtn.addEventListener("click", () => {
     void play("click", 0.3)
     list.push("")
     renderList()
   })
 
-  const continueBtn = el("button", { class: "lp-primary", type: "button" }, ["Continue ->"])
+  const continueBtn = el("button", { class: "lp-primary", type: "button" }, [setupText(lang).continueBtn])
   continueBtn.addEventListener("click", () => {
     void play("click")
     const validNames = list.map(n => n.trim()).filter(n => n.length > 0)
@@ -643,11 +741,11 @@ function renderNameEntry(container: HTMLDivElement, lang: LangCode, render: () =
       return false
     })
     if (validNames.length < game.minPlayers) {
-      buildErrorMessage(container, `Need at least ${game.minPlayers} players (you have ${validNames.length})`)
+      buildErrorMessage(container, setupText(lang).needAtLeast(game.minPlayers, validNames.length))
       return
     }
     if (duplicates.length > 0) {
-      buildErrorMessage(container, `Duplicate names: ${duplicates.join(", ")}`)
+      buildErrorMessage(container, setupText(lang).duplicateNames(duplicates.join(", ")))
       return
     }
     state.playerNames = validNames
@@ -655,7 +753,7 @@ function renderNameEntry(container: HTMLDivElement, lang: LangCode, render: () =
     render()
   })
 
-  const backBtn = el("button", { class: "lp-back", type: "button" }, ["<- Back"])
+  const backBtn = el("button", { class: "lp-back", type: "button" }, [setupText(lang).backBtn])
   backBtn.addEventListener("click", () => {
     if (presetGameId) {
       clearLocalState()
@@ -673,9 +771,9 @@ function renderNameEntry(container: HTMLDivElement, lang: LangCode, render: () =
     renderProgressBar(presetGameId ? 0 : 1, totalSteps),
     presetGameId ? buildSelectedGameSummary(game, lang) : el("div", { class: "lp-selected-empty" }),
     buildSetupHeader(
-      `Setup · Step ${stepNum} of ${totalSteps}`,
-      "Player Names",
-      `Enter the players joining this ${game.title[lang]} session (min ${game.minPlayers}).`
+      setupText(lang).step(stepNum, totalSteps),
+      setupText(lang).playerNames,
+      setupText(lang).playerNamesSub(game.title[lang], game.minPlayers)
     ),
     el("div", { class: "lp-name-list" }),
     el("div", { class: "lp-actions" }, [addBtn]),
@@ -741,7 +839,7 @@ function renderSettings(container: HTMLDivElement, lang: LangCode, render: () =>
     settingsEl.appendChild(row)
   }
 
-  const assignBtn = el("button", { class: "lp-primary", type: "button" }, [isSpyGame(game) ? "Start Spy Game" : "Assign Roles"])
+  const assignBtn = el("button", { class: "lp-primary", type: "button" }, [isSpyGame(game) ? setupText(lang).startSpy : setupText(lang).assignRoles])
   assignBtn.addEventListener("click", () => {
     void play("transition")
     try {
@@ -750,13 +848,13 @@ function renderSettings(container: HTMLDivElement, lang: LangCode, render: () =>
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to assign roles"
       if (msg === "NO_FILLER_ROLE") buildErrorMessage(container, "Game configuration is broken (no filler role).")
-      else if (msg === "TOO_MANY_SPECIAL_ROLES") buildErrorMessage(container, "Too many spies for this player count.")
-      else if (msg === "NO_SPY_WORDS") buildErrorMessage(container, "Choose at least one word category or add custom words.")
+      else if (msg === "TOO_MANY_SPECIAL_ROLES") buildErrorMessage(container, setupText(lang).tooManySpies)
+      else if (msg === "NO_SPY_WORDS") buildErrorMessage(container, setupText(lang).noWords)
       else buildErrorMessage(container, msg)
     }
   })
 
-  const backBtn = el("button", { class: "lp-back", type: "button" }, ["<- Back"])
+  const backBtn = el("button", { class: "lp-back", type: "button" }, [setupText(lang).backBtn])
   backBtn.addEventListener("click", () => {
     state.step = "names"
     render()
@@ -768,9 +866,9 @@ function renderSettings(container: HTMLDivElement, lang: LangCode, render: () =>
     renderProgressBar(presetGameId ? 1 : 2, totalSteps),
     presetGameId ? buildSelectedGameSummary(game, lang) : el("div", { class: "lp-selected-empty" }),
     buildSetupHeader(
-      `Setup · Step ${stepNum} of ${totalSteps}`,
-      isSpyGame(game) ? "Spy Setup" : "Configure",
-      `${state.playerNames.length} players · customise ${game.title[lang]}`
+      setupText(lang).step(stepNum, totalSteps),
+      isSpyGame(game) ? setupText(lang).spySetup : setupText(lang).configure,
+      setupText(lang).customiseSub(state.playerNames.length, game.title[lang])
     ),
     settingsEl,
     el("div", { class: "lp-error" }, []),
@@ -1269,7 +1367,7 @@ function renderFootballSettings(container: HTMLDivElement, lang: LangCode, rende
     }
   })
 
-  const backBtn = el("button", { class: "lp-back", type: "button" }, ["<- Back"])
+  const backBtn = el("button", { class: "lp-back", type: "button" }, [setupText(lang).backBtn])
   backBtn.addEventListener("click", () => {
     if (presetGameId) {
       clearLocalState()
@@ -1579,7 +1677,7 @@ function renderWhoAmISetup(container: HTMLDivElement, lang: LangCode, render: ()
     render()
   })
 
-  const backBtn = el("button", { class: "lp-back", type: "button" }, ["<- Back"])
+  const backBtn = el("button", { class: "lp-back", type: "button" }, [setupText(lang).backBtn])
   backBtn.addEventListener("click", () => {
     if (presetGameId) {
       const game = findGame(presetGameId)

@@ -3054,36 +3054,212 @@ body[data-perf="low"] *::after {
   right: var(--s-4);
 }
 
-.reveal-terminal {
-  width: min(520px, 90vw);
-  padding: var(--s-5);
+/* ─── SPY REVEAL: CLASSIFIED DOSSIER CARD ───────────────────────── */
+
+.reveal-dossier {
+  position: relative;
+  width: min(560px, 92vw);
+  overflow: hidden;
   font-family: var(--font-mono);
-  background: rgba(12, 17, 26, 0.95);
-  border: 1px solid var(--theme-glow);
-  border-radius: 12px;
-  box-shadow: 0 0 48px var(--theme-glow);
-  color: var(--theme-glow);
-  line-height: 1.8;
+  background:
+    linear-gradient(160deg, rgba(16, 24, 34, 0.98), rgba(9, 14, 22, 0.98));
+  border: 1px solid color-mix(in srgb, var(--theme-glow) 65%, transparent);
+  border-radius: 14px;
+  box-shadow:
+    0 0 60px color-mix(in srgb, var(--theme-glow) 35%, transparent),
+    inset 0 0 40px rgba(0, 0, 0, 0.55);
 }
 
-.reveal-terminal .line {
+.reveal-dossier::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0 3px,
+    rgba(255, 255, 255, 0.018) 3px 4px
+  );
+}
+
+.dossier-scanline {
+  position: absolute;
+  left: 0; right: 0; top: -30%;
+  height: 30%;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in srgb, var(--theme-glow) 10%, transparent),
+    transparent
+  );
+  animation: dossier-scan 3.2s linear infinite;
+}
+
+@keyframes dossier-scan {
+  from { transform: translateY(0); }
+  to   { transform: translateY(500%); }
+}
+
+.dossier-topbar {
   display: flex;
-  gap: var(--s-2);
-  font-size: var(--type-base);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px dashed color-mix(in srgb, var(--theme-glow) 40%, transparent);
+  color: var(--theme-glow);
+  font-size: var(--type-xs, 11px);
+  letter-spacing: 0.14em;
 }
 
-.reveal-terminal .line::before { content: ">"; opacity: 0.6; }
+.dossier-brand { font-weight: 700; }
 
-.reveal-terminal .typewriter {
+.dossier-status .typewriter {
   display: inline-block;
   border-right: 2px solid var(--theme-glow);
   white-space: pre;
   animation: caret 1s steps(2) infinite;
 }
 
-.reveal-terminal .typewriter.done { animation: none; border-right-color: transparent; }
+.dossier-status .typewriter.done { animation: none; border-right-color: transparent; }
 
 @keyframes caret { 50% { border-right-color: transparent; } }
+
+.dossier-stamp {
+  position: absolute;
+  top: 52px;
+  right: 18px;
+  padding: 6px 14px;
+  border: 3px solid #ff4d5a;
+  border-radius: 6px;
+  color: #ff4d5a;
+  font-weight: 800;
+  font-size: var(--type-sm);
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  transform: rotate(-8deg) scale(2.2);
+  opacity: 0;
+  box-shadow: 0 0 24px rgba(255, 77, 90, 0.35), inset 0 0 12px rgba(255, 77, 90, 0.2);
+  mix-blend-mode: screen;
+}
+
+.dossier-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-5) var(--s-5) var(--s-4);
+}
+
+.dossier-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+}
+
+.dossier-label {
+  display: block;
+  color: var(--text-muted);
+  font-size: var(--type-xs, 11px);
+  letter-spacing: 0.22em;
+}
+
+.dossier-value {
+  color: var(--text-primary);
+  font-size: var(--type-lg);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.dossier-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  padding: var(--s-4);
+  border: 1px solid color-mix(in srgb, var(--theme-glow) 35%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--theme-glow) 7%, transparent);
+  opacity: 0;
+}
+
+.dossier-identity-icon { font-size: 44px; line-height: 1; }
+
+.dossier-identity-name {
+  margin: 2px 0 0;
+  color: var(--theme-glow);
+  font-size: var(--type-2xl);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: 0 0 24px var(--theme-glow);
+}
+
+.reveal-dossier.is-spy .dossier-identity {
+  border-color: rgba(255, 77, 90, 0.5);
+  background: rgba(255, 77, 90, 0.07);
+}
+
+.reveal-dossier.is-spy .dossier-identity-name {
+  color: #ff5a66;
+  text-shadow: 0 0 24px rgba(255, 90, 102, 0.8);
+}
+
+.dossier-identity.glitch-in { animation: dossier-glitch 320ms steps(6) both; }
+
+@keyframes dossier-glitch {
+  0%   { transform: translateX(-6px) skewX(-8deg); filter: hue-rotate(40deg); }
+  40%  { transform: translateX(4px) skewX(5deg); }
+  70%  { transform: translateX(-2px) skewX(-2deg); }
+  100% { transform: translateX(0) skewX(0); filter: none; }
+}
+
+.dossier-desc {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--type-base);
+  line-height: 1.65;
+  opacity: 0;
+}
+
+.dossier-redactions {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.dossier-redactions .redact {
+  height: 10px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.dossier-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border-top: 1px dashed color-mix(in srgb, var(--theme-glow) 40%, transparent);
+  color: var(--text-muted);
+  font-size: var(--type-xs, 11px);
+  letter-spacing: 0.18em;
+}
+
+.dossier-barcode {
+  width: 120px;
+  height: 16px;
+  background: repeating-linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.55) 0 2px,
+    transparent 2px 5px,
+    rgba(255, 255, 255, 0.35) 5px 6px,
+    transparent 6px 10px
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dossier-scanline { animation: none; opacity: 0; }
+  .dossier-identity.glitch-in { animation: none; }
+}
 
 /* ─── CHARACTER FRAME (cinematic poster) ────────────────────────── */
 

@@ -120,9 +120,25 @@ function buildFlipOverlay(role: RoleAssignedPayload["roleData"], lang: LangCode)
   return overlay
 }
 
+interface DossierText {
+  accessing: string
+  agent: string
+  identity: string
+  classified: string
+  gotIt: string
+}
+
+const DOSSIER_TEXT: Record<LangCode, DossierText> = {
+  en: { accessing: "ACCESSING DOSSIER…", agent: "AGENT", identity: "IDENTITY", classified: "CLASSIFIED", gotIt: "Got it" },
+  tr: { accessing: "DOSYA AÇILIYOR…", agent: "AJAN", identity: "KİMLİK", classified: "ÇOK GİZLİ", gotIt: "Anladım" },
+  ar: { accessing: "جاري فتح الملف…", agent: "العميل", identity: "الهوية", classified: "سري للغاية", gotIt: "فهمت" },
+  ku: { accessing: "کردنەوەی دۆسیە…", agent: "ئاژان", identity: "ناسنامە", classified: "زۆر نهێنی", gotIt: "تێگەیشتم" }
+}
+
 async function showSpyReveal(opts: RevealOptions): Promise<void> {
-  const role = opts.payload.roleData
-  const overlay = buildSpyOverlay()
+  const dt = DOSSIER_TEXT[opts.lang] ?? DOSSIER_TEXT.en
+  const isSpy = opts.payload.role === "spy"
+  const overlay = buildSpyOverlay(opts, dt, isSpy)
   document.body.appendChild(overlay)
 
   const closeBtn = overlay.querySelector<HTMLButtonElement>(".reveal-close")!
@@ -144,27 +160,21 @@ async function showSpyReveal(opts: RevealOptions): Promise<void> {
 
     requestAnimationFrame(() => overlay.classList.add("visible"))
 
+    const status = overlay.querySelector<HTMLElement>(".dossier-status .typewriter")!
+    const stamp = overlay.querySelector<HTMLElement>(".dossier-stamp")!
+    const identity = overlay.querySelector<HTMLElement>(".dossier-identity")!
+    const desc = overlay.querySelector<HTMLElement>(".dossier-desc")!
+
     if (prefersReducedMotion()) {
-      const terminal = overlay.querySelector<HTMLElement>(".reveal-terminal")!
-      const lineA = terminal.querySelector<HTMLElement>(".line-a .typewriter")!
-      const lineB = terminal.querySelector<HTMLElement>(".line-b .typewriter")!
-      const lineC = terminal.querySelector<HTMLElement>(".line-c")!
-      lineA.textContent = "DECRYPTING…"
-      lineA.classList.add("done")
-      lineB.textContent = `IDENTITY: ${role.name[opts.lang].toUpperCase()}`
-      lineB.classList.add("done")
-      lineC.style.opacity = "1"
-      lineC.textContent = role.desc[opts.lang]
+      status.textContent = dt.accessing
+      status.classList.add("done")
+      stamp.style.opacity = "1"
+      stamp.style.transform = "rotate(-8deg) scale(1)"
+      identity.style.opacity = "1"
+      desc.style.opacity = "1"
       closeBtn.focus()
       return
     }
-
-    const lineA = overlay.querySelector<HTMLElement>(".line-a .typewriter")!
-    const lineB = overlay.querySelector<HTMLElement>(".line-b .typewriter")!
-    const lineC = overlay.querySelector<HTMLElement>(".line-c")!
-
-    const aText = "DECRYPTING…"
-    const bText = `IDENTITY: ${role.name[opts.lang].toUpperCase()}`
 
     const typeOut = async (target: HTMLElement, text: string, msPerChar: number): Promise<void> => {
       for (let i = 0; i <= text.length; i++) {
@@ -175,20 +185,36 @@ async function showSpyReveal(opts: RevealOptions): Promise<void> {
     }
 
     ;(async () => {
-      await new Promise(r => setTimeout(r, 200))
-      await typeOut(lineA, aText, 80)
-      await new Promise(r => setTimeout(r, 400))
-      overlay.querySelector<HTMLElement>(".line-b")!.style.opacity = "1"
-      await typeOut(lineB, bText, 80)
-      await new Promise(r => setTimeout(r, 200))
-      lineC.textContent = role.desc[opts.lang]
-      animate(lineC, [{ opacity: 0 }, { opacity: 1 }], { duration: 300 })
+      await new Promise(r => setTimeout(r, 150))
+      await typeOut(status, dt.accessing, 35)
+      await new Promise(r => setTimeout(r, 250))
+      void play("reveal-burst", 0.5)
+      stamp.style.opacity = "1"
+      animate(stamp, [
+        { opacity: 0, transform: "rotate(-8deg) scale(2.2)" },
+        { opacity: 1, transform: "rotate(-8deg) scale(0.95)" },
+        { opacity: 1, transform: "rotate(-8deg) scale(1)" }
+      ], { duration: 320, easing: REVEAL_EASING, fill: "forwards" })
+      await new Promise(r => setTimeout(r, 350))
+      identity.style.opacity = "1"
+      identity.classList.add("glitch-in")
+      await new Promise(r => setTimeout(r, 320))
+      desc.style.opacity = "1"
+      animate(desc, [
+        { opacity: 0, transform: "translateY(8px)" },
+        { opacity: 1, transform: "translateY(0)" }
+      ], { duration: 280 })
       closeBtn.focus()
     })()
   })
 }
 
-function buildSpyOverlay(): HTMLDivElement {
+function buildSpyOverlay(
+  opts: RevealOptions,
+  dt: DossierText,
+  isSpy: boolean
+): HTMLDivElement {
+  const role = opts.payload.roleData
   const overlay = el("div", {
     class: "reveal-overlay",
     role: "dialog",
@@ -197,14 +223,40 @@ function buildSpyOverlay(): HTMLDivElement {
     tabindex: "-1"
   }) as HTMLDivElement
 
-  const terminal = el("div", { class: "reveal-terminal" }, [
-    el("div", { class: "line line-a" }, [el("span", { class: "typewriter" }, [])]),
-    el("div", { class: "line line-b", style: "opacity: 0" }, [el("span", { class: "typewriter" }, [])]),
-    el("p", { class: "line-c", style: "opacity: 0; margin-top: 16px" }, [])
+  const dossier = el("div", { class: `reveal-dossier${isSpy ? " is-spy" : ""}` }, [
+    el("div", { class: "dossier-scanline", "aria-hidden": "true" }),
+    el("header", { class: "dossier-topbar" }, [
+      el("span", { class: "dossier-brand" }, ["◉ YALLA INTEL"]),
+      el("span", { class: "dossier-status" }, [el("span", { class: "typewriter" }, [])])
+    ]),
+    el("div", { class: "dossier-stamp", "aria-hidden": "true" }, [dt.classified]),
+    el("div", { class: "dossier-body" }, [
+      el("div", { class: "dossier-row" }, [
+        el("span", { class: "dossier-label" }, [dt.agent]),
+        el("span", { class: "dossier-value" }, [opts.payload.name])
+      ]),
+      el("div", { class: "dossier-identity" }, [
+        el("span", { class: "dossier-identity-icon", "aria-hidden": "true" }, [role.icon]),
+        el("div", {}, [
+          el("span", { class: "dossier-label" }, [dt.identity]),
+          el("h3", { class: "dossier-identity-name" }, [role.name[opts.lang]])
+        ])
+      ]),
+      el("p", { class: "dossier-desc" }, [role.desc[opts.lang]]),
+      el("div", { class: "dossier-redactions", "aria-hidden": "true" }, [
+        el("span", { class: "redact", style: "width: 82%" }),
+        el("span", { class: "redact", style: "width: 58%" }),
+        el("span", { class: "redact", style: "width: 37%" })
+      ])
+    ]),
+    el("footer", { class: "dossier-footer", "aria-hidden": "true" }, [
+      el("span", { class: "dossier-barcode" }),
+      el("span", { class: "dossier-code" }, [`#${opts.payload.code}-${Math.floor(Math.random() * 900 + 100)}`])
+    ])
   ])
 
-  const closeBtn = el("button", { class: "btn btn-secondary reveal-close" }, ["Got it"])
+  const closeBtn = el("button", { class: "btn btn-secondary reveal-close" }, [dt.gotIt])
 
-  overlay.append(terminal, closeBtn)
+  overlay.append(dossier, closeBtn)
   return overlay
 }
