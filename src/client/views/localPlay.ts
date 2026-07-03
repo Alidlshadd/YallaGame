@@ -455,6 +455,125 @@ function setupText(lang: LangCode): SetupText {
   return (SETUP_TEXT[lang] ?? SETUP_TEXT.en) as SetupText
 }
 
+/* Football local-play strings. */
+const FOOTBALL_TEXT = {
+  en: {
+    cardHeader: "Football Card",
+    noTime: "NO TIME",
+    timeUp: (n: string) => `Time is up. The card was ${n}.`,
+    noHints: "No hints used",
+    genericCard: "Football Player Card",
+    playersCard: (n: string) => `${n}'s card`,
+    showHint: "Show Hint",
+    hintShown: (n: number) => `Hint ${n} shown.`,
+    solvedTick: "Solved ✓",
+    markSolved: "Mark as Solved",
+    markedSolved: (n: string) => `${n} marked as solved.`,
+    cardWord: "Card",
+    newCard: "New Card",
+    finishGame: "Finish Game",
+    nextPlayer: "Next Player",
+    finalScore: "Final Score",
+    scoreLine: (s: number, total: number, title: string) => `${s} of ${total} players guessed correctly in ${title}.`,
+    newCards: "New Cards",
+    positions: { goalkeeper: "Goalkeeper", defender: "Defender", midfielder: "Midfielder", forward: "Forward" },
+    difficulties: { easy: "Easy", medium: "Medium", hard: "Hard" }
+  },
+  tr: {
+    cardHeader: "Futbolcu Kartı",
+    noTime: "SÜRESİZ",
+    timeUp: (n: string) => `Süre doldu. Kart: ${n}.`,
+    noHints: "İpucu kullanılmadı",
+    genericCard: "Futbolcu Kartı",
+    playersCard: (n: string) => `${n} kartı`,
+    showHint: "İpucu Göster",
+    hintShown: (n: number) => `${n}. ipucu gösterildi.`,
+    solvedTick: "Bilindi ✓",
+    markSolved: "Bilindi İşaretle",
+    markedSolved: (n: string) => `${n} bilindi olarak işaretlendi.`,
+    cardWord: "Kart",
+    newCard: "Yeni Kart",
+    finishGame: "Oyunu Bitir",
+    nextPlayer: "Sıradaki Oyuncu",
+    finalScore: "Final Skoru",
+    scoreLine: (s: number, total: number, title: string) => `${title} oyununda ${total} oyuncudan ${s} tanesi doğru bildi.`,
+    newCards: "Yeni Kartlar",
+    positions: { goalkeeper: "Kaleci", defender: "Defans", midfielder: "Orta Saha", forward: "Forvet" },
+    difficulties: { easy: "Kolay", medium: "Orta", hard: "Zor" }
+  },
+  ar: {
+    cardHeader: "بطاقة اللاعب",
+    noTime: "بلا وقت",
+    timeUp: (n: string) => `انتهى الوقت. كانت البطاقة ${n}.`,
+    noHints: "لم تستخدم تلميحات",
+    genericCard: "بطاقة لاعب كرة القدم",
+    playersCard: (n: string) => `بطاقة ${n}`,
+    showHint: "أظهر تلميحا",
+    hintShown: (n: number) => `تم عرض التلميح ${n}.`,
+    solvedTick: "تم الحل ✓",
+    markSolved: "وضع علامة تم الحل",
+    markedSolved: (n: string) => `تم وضع علامة الحل لـ ${n}.`,
+    cardWord: "البطاقة",
+    newCard: "بطاقة جديدة",
+    finishGame: "إنهاء اللعبة",
+    nextPlayer: "اللاعب التالي",
+    finalScore: "النتيجة النهائية",
+    scoreLine: (s: number, total: number, title: string) => `${s} من ${total} لاعبين خمنوا بشكل صحيح في ${title}.`,
+    newCards: "بطاقات جديدة",
+    positions: { goalkeeper: "حارس مرمى", defender: "مدافع", midfielder: "لاعب وسط", forward: "مهاجم" },
+    difficulties: { easy: "سهل", medium: "متوسط", hard: "صعب" }
+  },
+  ku: {
+    cardHeader: "کارتی یاریزان",
+    noTime: "بێ کات",
+    timeUp: (n: string) => `کات تەواو بوو. کارتەکە ${n} بوو.`,
+    noHints: "هیچ ئاماژەیەک بەکارنەهاتووە",
+    genericCard: "کارتی یاریزانی فووتباڵ",
+    playersCard: (n: string) => `کارتی ${n}`,
+    showHint: "ئاماژە پیشان بدە",
+    hintShown: (n: number) => `ئاماژەی ${n} پیشان درا.`,
+    solvedTick: "دۆزرایەوە ✓",
+    markSolved: "وەک دۆزراوە نیشان بکە",
+    markedSolved: (n: string) => `${n} وەک دۆزراوە نیشان کرا.`,
+    cardWord: "کارت",
+    newCard: "کارتی نوێ",
+    finishGame: "کۆتایی یاری",
+    nextPlayer: "یاریزانی داهاتوو",
+    finalScore: "ئەنجامی کۆتایی",
+    scoreLine: (s: number, total: number, title: string) => `${s} لە ${total} یاریزان بە دروستی دۆزیانەوە لە ${title}.`,
+    newCards: "کارتی نوێ",
+    positions: { goalkeeper: "گۆڵپارێز", defender: "بەرگریکار", midfielder: "ناوەڕاست", forward: "هێرشبەر" },
+    difficulties: { easy: "ئاسان", medium: "مامناوەند", hard: "قورس" }
+  }
+} as const
+
+interface FootballText {
+  cardHeader: string
+  noTime: string
+  timeUp: (n: string) => string
+  noHints: string
+  genericCard: string
+  playersCard: (n: string) => string
+  showHint: string
+  hintShown: (n: number) => string
+  solvedTick: string
+  markSolved: string
+  markedSolved: (n: string) => string
+  cardWord: string
+  newCard: string
+  finishGame: string
+  nextPlayer: string
+  finalScore: string
+  scoreLine: (s: number, total: number, title: string) => string
+  newCards: string
+  positions: Record<FootballPlayerCard["position"], string>
+  difficulties: Record<FootballDifficulty, string>
+}
+
+function footballText(lang: LangCode): FootballText {
+  return (FOOTBALL_TEXT[lang] ?? FOOTBALL_TEXT.en) as FootballText
+}
+
 /* Shared reveal-screen strings (used by every local game). */
 const REVEAL_TEXT = {
   en: { playerOf: (n: number, total: number) => `Player ${n} of ${total}`, privacy: "Make sure only you can see the screen", tap: "Tap to See Your Role" },
@@ -601,7 +720,7 @@ export const localPlayView = {
       else if (state.step === "whoCountdown" && game) renderWhoAmICountdown(container, lang, render, id => { activeTimer = id })
       else if (state.step === "whoRound" && game) renderWhoAmIRound(container, lang, render, id => { activeTimer = id })
       else if (state.step === "whoTimeUp" && game) renderWhoAmITimeUp(container, lang, render)
-      else if (state.step === "footballTurn" && game) renderFootballTurn(container, render, id => { activeTimer = id })
+      else if (state.step === "footballTurn" && game) renderFootballTurn(container, lang, render, id => { activeTimer = id })
       else if (state.step === "footballSummary" && game) renderFootballSummary(container, lang, render, game)
       else {
         state.step = "game"
@@ -1432,7 +1551,8 @@ function advanceFootballTurn(render: () => void): void {
   render()
 }
 
-function renderFootballTurn(container: HTMLDivElement, render: () => void, setTimer: (id: number) => void): void {
+function renderFootballTurn(container: HTMLDivElement, lang: LangCode, render: () => void, setTimer: (id: number) => void): void {
+  const ft = footballText(lang)
   const current = state.footballAssignments[state.footballCurrentIndex]
   if (!current) {
     state.step = "footballSummary"
@@ -1444,7 +1564,7 @@ function renderFootballTurn(container: HTMLDivElement, render: () => void, setTi
     state.roundEndsAt = Date.now() + state.footballRoundSeconds * 1000
   }
 
-  const timer = el("div", { class: "lp-timer lp-football-timer" }, [state.footballRoundSeconds === 0 ? "NO TIME" : "00"])
+  const timer = el("div", { class: "lp-timer lp-football-timer" }, [state.footballRoundSeconds === 0 ? ft.noTime : "00"])
   if (state.footballRoundSeconds > 0) {
     const updateTimer = () => {
       const remainingMs = (state.roundEndsAt ?? Date.now()) - Date.now()
@@ -1452,7 +1572,7 @@ function renderFootballTurn(container: HTMLDivElement, render: () => void, setTi
       timer.textContent = String(remaining)
       timer.classList.toggle("danger", remaining <= 5 && remaining > 0)
       if (remainingMs <= 0 && !current.solved) {
-        state.footballMessage = `Time is up. The card was ${current.card.name}.`
+        state.footballMessage = ft.timeUp(current.card.name)
         if (state.playerNames.length === 0) {
           current.solved = true
           state.roundEndsAt = null
@@ -1469,42 +1589,44 @@ function renderFootballTurn(container: HTMLDivElement, render: () => void, setTi
   const hints = current.card.hints.slice(0, current.hintsUsed)
   const hintList = el("div", { class: "lp-football-hints" })
   if (hints.length === 0) {
-    hintList.appendChild(el("span", { class: "lp-football-hint muted" }, ["No hints used"]))
+    hintList.appendChild(el("span", { class: "lp-football-hint muted" }, [ft.noHints]))
   } else {
     for (const hint of hints) hintList.appendChild(el("span", { class: "lp-football-hint" }, [hint]))
   }
 
   const card = el("div", { class: "lp-football-card" }, [
-    el("p", { class: "lp-who-meta" }, [`${footballLeagueLabel(current.card.leagueCategory)} - ${current.card.position} - ${current.card.difficulty}`]),
-    el("p", { class: "lp-who-identity-label" }, [state.playerNames.length === 0 ? "Football Player Card" : `${current.name}'s card`]),
+    el("p", { class: "lp-who-meta" }, [
+      `${footballLeagueLabel(current.card.leagueCategory)} · ${ft.positions[current.card.position]} · ${ft.difficulties[current.card.difficulty]}`
+    ]),
+    el("p", { class: "lp-who-identity-label" }, [state.playerNames.length === 0 ? ft.genericCard : ft.playersCard(current.name)]),
     el("h1", { class: "lp-who-word lp-football-player-name" }, [current.card.name]),
     hintList
   ])
 
-  const hintBtn = el("button", { class: "lp-secondary", type: "button" }, ["Show Hint"])
+  const hintBtn = el("button", { class: "lp-secondary", type: "button" }, [ft.showHint])
   const maxHints = state.footballHintsEnabled ? state.footballMaxHints : 0
   hintBtn.toggleAttribute("disabled", !state.footballHintsEnabled || current.hintsUsed >= maxHints)
   hintBtn.addEventListener("click", () => {
     if (!state.footballHintsEnabled || current.hintsUsed >= maxHints) return
     current.hintsUsed += 1
-    state.footballMessage = `Hint ${current.hintsUsed} shown.`
+    state.footballMessage = ft.hintShown(current.hintsUsed)
     render()
   })
 
-  const solvedBtn = el("button", { class: "lp-primary", type: "button" }, [current.solved ? "Solved ✓" : "Mark as Solved"])
+  const solvedBtn = el("button", { class: "lp-primary", type: "button" }, [current.solved ? ft.solvedTick : ft.markSolved])
   solvedBtn.addEventListener("click", () => {
     void play("click")
     current.solved = !current.solved
     state.roundEndsAt = null
     state.footballMessage = current.solved
-      ? `${state.playerNames.length === 0 ? "Card" : current.name} marked as solved.`
+      ? ft.markedSolved(state.playerNames.length === 0 ? ft.cardWord : current.name)
       : null
     render()
   })
 
   const nextBtnLabel = state.playerNames.length === 0
-    ? "New Card"
-    : state.footballCurrentIndex + 1 >= state.footballAssignments.length ? "Finish Game" : "Next Player"
+    ? ft.newCard
+    : state.footballCurrentIndex + 1 >= state.footballAssignments.length ? ft.finishGame : ft.nextPlayer
   const nextBtn = el("button", { class: "lp-secondary", type: "button" }, [nextBtnLabel])
   nextBtn.addEventListener("click", () => {
     void play("click")
@@ -1514,27 +1636,28 @@ function renderFootballTurn(container: HTMLDivElement, render: () => void, setTi
   container.append(
     renderProgressBar(1, 3),
     el("p", { class: "lp-sub lp-who-active-cat" }, [
-      state.playerNames.length === 0 ? "Football Card" : `Player ${state.footballCurrentIndex + 1} of ${state.footballAssignments.length}`
+      state.playerNames.length === 0 ? ft.cardHeader : revealText(lang).playerOf(state.footballCurrentIndex + 1, state.footballAssignments.length)
     ]),
     timer,
-    card,
-    el("div", { class: "lp-error" }, [state.footballMessage ?? ""]),
-    el("div", { class: "lp-actions lp-who-actions" }, [hintBtn, solvedBtn, nextBtn])
+    card
   )
+  if (state.footballMessage) container.appendChild(el("p", { class: "lp-info" }, [state.footballMessage]))
+  container.appendChild(el("div", { class: "lp-actions lp-who-actions" }, [hintBtn, solvedBtn, nextBtn]))
 }
 
 function renderFootballSummary(container: HTMLDivElement, lang: LangCode, render: () => void, game: Game): void {
+  const ft = footballText(lang)
   const solved = state.footballAssignments.filter(a => a.solved).length
   const list = el("div", { class: "lp-done-list lp-football-summary" })
   for (const a of state.footballAssignments) {
     list.appendChild(el("div", { class: "lp-done-row" }, [
-      el("span", { class: "lp-done-icon" }, [a.solved ? "OK" : "--"]),
+      el("span", { class: "lp-done-icon" }, [a.solved ? "✅" : "❌"]),
       el("span", { class: "lp-done-name" }, [a.name]),
       el("span", { class: "lp-done-role" }, [a.card.name])
     ]))
   }
 
-  const sameGroupBtn = el("button", { class: "lp-primary", type: "button" }, ["New Cards"])
+  const sameGroupBtn = el("button", { class: "lp-primary", type: "button" }, [ft.newCards])
   sameGroupBtn.addEventListener("click", () => {
     void play("transition")
     try {
@@ -1545,7 +1668,7 @@ function renderFootballSummary(container: HTMLDivElement, lang: LangCode, render
     }
   })
 
-  const settingsBtn = el("button", { class: "lp-secondary", type: "button" }, ["Settings"])
+  const settingsBtn = el("button", { class: "lp-secondary", type: "button" }, [spyText(lang, "settingsLabel")])
   settingsBtn.addEventListener("click", () => {
     state.step = "settings"
     render()
@@ -1561,10 +1684,9 @@ function renderFootballSummary(container: HTMLDivElement, lang: LangCode, render
 
   container.append(
     renderProgressBar(4, 4),
-    el("h2", { class: "lp-title" }, ["Final Score"]),
-    el("p", { class: "lp-sub" }, [`${solved} of ${state.footballAssignments.length} players guessed correctly in ${game.title[lang]}.`]),
+    el("h2", { class: "lp-title" }, [ft.finalScore]),
+    el("p", { class: "lp-sub" }, [ft.scoreLine(solved, state.footballAssignments.length, game.title[lang])]),
     list,
-    el("div", { class: "lp-error" }, []),
     el("div", { class: "lp-actions" }, [homeBtn, settingsBtn, sameGroupBtn])
   )
 }

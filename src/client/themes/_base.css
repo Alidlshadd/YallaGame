@@ -3044,6 +3044,14 @@ body[data-perf="low"] *::after {
   box-shadow: 0 24px 64px -16px var(--theme-glow);
 }
 
+.reveal-player {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-xs, 11px);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
 .reveal-icon  { font-size: 88px; line-height: 1; opacity: 0; transform: translateY(8px); }
 .reveal-name  { font-family: var(--theme-display); font-size: var(--type-2xl); color: var(--theme-glow); margin: 0; opacity: 0; }
 .reveal-desc  { color: var(--text-primary); max-width: 30ch; text-align: center; margin: 0; opacity: 0; line-height: 1.55; }

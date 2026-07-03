@@ -19,8 +19,7 @@ export function showReveal(opts: RevealOptions): Promise<void> {
 }
 
 async function showFlipReveal(opts: RevealOptions): Promise<void> {
-  const role = opts.payload.roleData
-  const overlay = buildFlipOverlay(role, opts.lang)
+  const overlay = buildFlipOverlay(opts)
   document.body.appendChild(overlay)
 
   const closeBtn = overlay.querySelector<HTMLButtonElement>(".reveal-close")!
@@ -97,7 +96,10 @@ async function showFlipReveal(opts: RevealOptions): Promise<void> {
   })
 }
 
-function buildFlipOverlay(role: RoleAssignedPayload["roleData"], lang: LangCode): HTMLDivElement {
+function buildFlipOverlay(opts: RevealOptions): HTMLDivElement {
+  const role = opts.payload.roleData
+  const lang = opts.lang
+  const dt = DOSSIER_TEXT[lang] ?? DOSSIER_TEXT.en
   const overlay = el("div", {
     class: "reveal-overlay",
     role: "dialog",
@@ -108,12 +110,13 @@ function buildFlipOverlay(role: RoleAssignedPayload["roleData"], lang: LangCode)
 
   const burst = el("div", { class: "reveal-burst" })
   const card = el("div", { class: "reveal-card" }, [
+    el("p", { class: "reveal-player" }, [opts.payload.name]),
     el("div", { class: "reveal-icon" }, [role.icon]),
     el("h3", { class: "reveal-name" }, [role.name[lang]]),
     el("p", { class: "reveal-desc" }, [role.desc[lang]])
   ])
 
-  const closeBtn = el("button", { class: "btn btn-secondary reveal-close" }, ["Got it"])
+  const closeBtn = el("button", { class: "btn btn-secondary reveal-close" }, [dt.gotIt])
 
   const stage = el("div", { class: "reveal-stage" }, [burst, card])
   overlay.append(stage, closeBtn)

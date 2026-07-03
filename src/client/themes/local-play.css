@@ -282,6 +282,17 @@
 }
 .lp-error:empty { display: none; }
 
+.lp-info {
+  margin: 0;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--theme-glow, #3fb8af) 35%, transparent);
+  background: color-mix(in srgb, var(--theme-glow, #3fb8af) 10%, transparent);
+  color: var(--text-primary);
+  font-size: var(--type-sm);
+  text-align: center;
+}
+
 /* ─── GAME PICKER ────────────────────────────────────────── */
 
 .lp-game-grid {
