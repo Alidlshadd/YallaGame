@@ -91,6 +91,30 @@ Needs a WebSocket-capable Node.js host: VPS, Fly.io, Render, Railway, DigitalOce
 
 Render/Railway free tiers use ephemeral disk → either mount a persistent volume at the `DB_PATH` directory, or accept that restarts wipe rooms.
 
+### Updating a VPS behind nginx
+
+Always install and rebuild before restarting — a pull that adds a dependency
+kills the process on start, and nginx answers `502 Bad Gateway` because there
+is nothing listening upstream:
+
+```bash
+cd /path/to/YallaGame
+git pull
+npm ci            # not optional: new deps land with new features
+npm run build     # server (tsc) + client (vite)
+pm2 restart yalla-game     # or: systemctl restart yalla-game
+```
+
+When it 502s, the app log says why — nginx only knows the upstream is gone:
+
+```bash
+pm2 logs yalla-game --lines 50      # or: journalctl -u yalla-game -n 50
+curl -i http://127.0.0.1:3000/healthz
+```
+
+`{"ok":true}` from `/healthz` means the app is fine and the problem is in the
+nginx proxy config; no answer at all means the process is down.
+
 ## How to add a new game
 
 1. Add the game data to `src/server/games/catalog.ts` — TypeScript will guide every required field.
