@@ -7,7 +7,6 @@ import { confirmDialog } from "../ui/confirm.js"
 import { watchConnection } from "../services/connection.js"
 import { holdWakeLock } from "../services/wakeLock.js"
 import { vibrate } from "../ui/haptics.js"
-import { play } from "../services/sound.js"
 import { applyTheme, clearTheme } from "../themes/loader.js"
 import { setView, setViewBackHandler } from "../router.js"
 import type { VisibleRoom } from "@shared/types.js"
@@ -79,7 +78,6 @@ export const adminView = {
         kickBtn.addEventListener("click", async () => {
           if (!room) return
           const s = session.load(); if (s?.kind !== "admin") return
-          void play("click")
           // The ✕ sits right next to the player name on a phone, so a misfire
           // used to drop somebody out of the room with no way to undo it.
           const confirmed = await confirmDialog({
@@ -127,7 +125,6 @@ export const adminView = {
 
     const onSave = async () => {
       if (!room) return
-      void play("click")
       const s = session.load()
       if (s?.kind !== "admin") return
       const incoming: Record<string, number | boolean> = {}
@@ -142,7 +139,6 @@ export const adminView = {
 
     const onAssign = async () => {
       if (!room) return
-      void play("click")
       const s = session.load(); if (s?.kind !== "admin") return
       assignBtn.classList.add("curtain-fill")
       window.setTimeout(() => assignBtn.classList.remove("curtain-fill"), 1500)
@@ -156,7 +152,6 @@ export const adminView = {
 
     const onClear = async () => {
       if (!room) return
-      void play("click")
       const s = session.load(); if (s?.kind !== "admin") return
       const r = await emit("admin:clear-roles", { code: room.code, adminSecret: s.adminSecret })
       if (!r.ok) showToast(t("errorGeneric"))
@@ -164,14 +159,12 @@ export const adminView = {
 
     const onCopy = async () => {
       if (!room) return
-      void play("click", 0.4)
       try { await navigator.clipboard.writeText(room.code); showToast(t("copied")) }
       catch { /* clipboard may be blocked */ }
     }
 
     const onShare = async () => {
       if (!room) return
-      void play("click", 0.4)
       const url = `${location.origin}/?join=${room.code}`
       if (navigator.share) {
         try { await navigator.share({ title: "Yalla Game", text: t("shareInviteText"), url }); return }
@@ -196,7 +189,6 @@ export const adminView = {
       }).then(confirmed => {
         asking = false
         if (!confirmed) return
-        void play("click")
         session.clear()
         clearTheme()
         void setView("homeView", {}, { mode: "root" })

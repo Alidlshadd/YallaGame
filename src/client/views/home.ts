@@ -49,10 +49,6 @@ export async function loadCatalog(): Promise<void> {
 
 export function getGames(): readonly Game[] { return games }
 
-function playSound(name: "click" | "transition"): void {
-  void import("../services/sound.js").then(({ play }) => play(name))
-}
-
 function routeToGame(gameId: string): void {
   sessionStorage.setItem("role-room:selectedGame", gameId)
   setView("gameInfoView")
@@ -167,7 +163,6 @@ function buildHeroSlide(lang: ReturnType<typeof getLang>, hasGames: boolean): HT
     el("span", {}, [t("createRoom")])
   ])
   createBtn.addEventListener("click", () => {
-    playSound("click")
     if (hasGames) openCreatePicker(lang)
     else showToast(t("catalogUnavailableToast"))
   })
@@ -181,7 +176,6 @@ function buildHeroSlide(lang: ReturnType<typeof getLang>, hasGames: boolean): HT
     el("span", { "data-i18n": "joinRoom" }, [t("joinRoom")])
   ])
   joinBtn.addEventListener("click", () => {
-    playSound("click")
     setView("joinView")
   })
 
@@ -209,7 +203,6 @@ function buildHeroSlide(lang: ReturnType<typeof getLang>, hasGames: boolean): HT
   ])
   localBtn.append(localIcon, localText, offlineTag)
   localBtn.addEventListener("click", () => {
-    playSound("click")
     setView("localPlayView")
   })
 
@@ -303,7 +296,6 @@ function buildBookCover(game: Game, lang: ReturnType<typeof getLang>, idx: numbe
   card.appendChild(frame)
 
   card.addEventListener("click", () => {
-    playSound("transition")
     routeToGame(game.id)
   })
 
@@ -371,7 +363,6 @@ function buildCreatePicker(lang: ReturnType<typeof getLang>, close: () => void):
       ])
     ])
     option.addEventListener("click", () => {
-      playSound("transition")
       close()
       routeToGame(g.id)
     })

@@ -6,7 +6,6 @@ import * as session from "../services/session.js"
 import { applyTheme, clearTheme } from "../themes/loader.js"
 import { showReveal } from "../ui/roleReveal.js"
 import { setView, setViewBackHandler } from "../router.js"
-import { play } from "../services/sound.js"
 import { showToast } from "../ui/toast.js"
 import { confirmDialog } from "../ui/confirm.js"
 import { watchConnection } from "../services/connection.js"
@@ -109,7 +108,6 @@ export const playerRoomView = {
       }).then(confirmed => {
         asking = false
         if (!confirmed) return
-        void play("click")
         session.clear()
         clearTheme()
         void setView("homeView", {}, { mode: "root" })

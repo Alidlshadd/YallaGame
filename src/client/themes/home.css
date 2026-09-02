@@ -1668,7 +1668,6 @@ img.hero-emblem-mark {
   }
   .lang-switch { padding: 2px; gap: 0; }
   .lang-switch button { padding: 5px 9px; font-size: 11px; }
-  .mute-toggle { width: 32px; height: 32px; font-size: 14px; }
 
   /* Top nav becomes secondary on mobile — sits below brand, smaller. */
   .main-nav {

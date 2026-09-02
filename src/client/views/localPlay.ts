@@ -6,7 +6,6 @@ import { goBack, setView, setViewBackHandler } from "../router.js"
 import { confirmDialog } from "../ui/confirm.js"
 import { syncWakeLock } from "../services/wakeLock.js"
 import { vibrate } from "../ui/haptics.js"
-import { play } from "../services/sound.js"
 import { applyTheme, clearTheme } from "../themes/loader.js"
 import { showReveal } from "../ui/roleReveal.js"
 import { getGames } from "./home.js"
@@ -901,7 +900,6 @@ export const localPlayView = {
         return false
       }
       if (target.resetsRound) { askReset(target.step); return true }
-      void play("click", 0.3)
       clearTimer()
       rewindStateTo(target.step)
       render()
@@ -958,7 +956,6 @@ function renderGamePicker(container: HTMLDivElement, lang: LangCode, render: () 
       ]
     )
     card.addEventListener("click", () => {
-      void play("click")
       const nextStep = initialStepForGame(game)
       state = { ...freshState(), gameId: game.id, settings: { ...game.defaultSettings }, step: nextStep }
       render()
@@ -1012,14 +1009,12 @@ function renderNameEntry(container: HTMLDivElement, lang: LangCode, render: () =
 
   const addBtn = el("button", { class: "lp-secondary", type: "button" }, [setupText(lang).addPlayer])
   addBtn.addEventListener("click", () => {
-    void play("click", 0.3)
     list.push("")
     renderList()
   })
 
   const continueBtn = el("button", { class: "lp-primary", type: "button" }, [setupText(lang).continueBtn])
   continueBtn.addEventListener("click", () => {
-    void play("click")
     const validNames = list.map(n => n.trim()).filter(n => n.length > 0)
     const seen = new Set<string>()
     const duplicates = validNames.filter(n => {
@@ -1129,7 +1124,6 @@ function renderSettings(container: HTMLDivElement, lang: LangCode, render: () =>
 
   const assignBtn = el("button", { class: "lp-primary", type: "button" }, [isSpyGame(game) ? setupText(lang).startSpy : setupText(lang).assignRoles])
   assignBtn.addEventListener("click", () => {
-    void play("transition")
     try {
       prepareRound(game, lang)
       render()
@@ -1222,7 +1216,6 @@ function renderReveal(container: HTMLDivElement, lang: LangCode, render: () => v
 
   const revealBtn = el("button", { class: "lp-primary lp-reveal-cta", type: "button" }, [rt.tap])
   revealBtn.addEventListener("click", async () => {
-    void play("transition")
     const roleData = game.roles.find(r => r.id === player.roleId)
     if (!roleData) {
       buildErrorMessage(container, t("errorGeneric"))
@@ -1257,7 +1250,6 @@ function renderAdminReview(container: HTMLDivElement, lang: LangCode, render: ()
     localReviewText(lang, "adminButton")
   ])
   continueBtn.addEventListener("click", () => {
-    void play("click")
     state.step = "done"
     render()
   })
@@ -1298,7 +1290,6 @@ function renderSpyStarter(container: HTMLDivElement, lang: LangCode, render: () 
     spyText(lang, "startDiscussion")
   ])
   startBtn.addEventListener("click", () => {
-    void play("transition")
     // The round clock starts only when discussion actually begins.
     state.roundEndsAt = Date.now() + settingNumber("roundMinutes", 5) * 60_000
     state.step = "discussion"
@@ -1425,7 +1416,6 @@ function renderSpyResult(container: HTMLDivElement, lang: LangCode, render: () =
 
   const sameGroupBtn = el("button", { class: "lp-primary", type: "button" }, [spyText(lang, "newGameSame")])
   sameGroupBtn.addEventListener("click", () => {
-    void play("click")
     try {
       prepareRound(game, lang)
       render()
@@ -1442,7 +1432,6 @@ function renderSpyResult(container: HTMLDivElement, lang: LangCode, render: () =
 
   const homeBtn = el("button", { class: "lp-back", type: "button" }, [spyText(lang, "backHome")])
   homeBtn.addEventListener("click", () => {
-    void play("click")
     goHomeFromLocalPlay()
   })
 
@@ -1473,14 +1462,12 @@ function renderDone(container: HTMLDivElement, lang: LangCode, render: () => voi
 
   const restartBtn = el("button", { class: "lp-primary", type: "button" }, [localReviewText(lang, "newGame")])
   restartBtn.addEventListener("click", () => {
-    void play("click")
     clearLocalState()
     render()
   })
 
   const homeBtn = el("button", { class: "lp-back", type: "button" }, [localReviewText(lang, "doneBack")])
   homeBtn.addEventListener("click", () => {
-    void play("click")
     goHomeFromLocalPlay()
   })
 
@@ -1510,7 +1497,6 @@ function footballOptionButton(
     "aria-pressed": selected ? "true" : "false"
   }, [label]) as HTMLButtonElement
   btn.addEventListener("click", () => {
-    void play("click", 0.3)
     onClick()
   })
   return btn
@@ -1637,7 +1623,6 @@ function renderFootballSettings(container: HTMLDivElement, lang: LangCode, rende
 
   const startBtn = el("button", { class: "lp-primary", type: "button" }, ["Start Football Guess"])
   startBtn.addEventListener("click", () => {
-    void play("transition")
     try {
       prepareFootballRound()
       render()
@@ -1783,7 +1768,6 @@ function renderFootballTurn(container: HTMLDivElement, lang: LangCode, render: (
 
   const solvedBtn = el("button", { class: "lp-primary", type: "button" }, [current.solved ? ft.solvedTick : ft.markSolved])
   solvedBtn.addEventListener("click", () => {
-    void play("click")
     current.solved = !current.solved
     state.roundEndsAt = null
     state.footballMessage = current.solved
@@ -1797,7 +1781,6 @@ function renderFootballTurn(container: HTMLDivElement, lang: LangCode, render: (
     : state.footballCurrentIndex + 1 >= state.footballAssignments.length ? ft.finishGame : ft.nextPlayer
   const nextBtn = el("button", { class: "lp-secondary", type: "button" }, [nextBtnLabel])
   nextBtn.addEventListener("click", () => {
-    void play("click")
     advanceFootballTurn(render)
   })
 
@@ -1827,7 +1810,6 @@ function renderFootballSummary(container: HTMLDivElement, lang: LangCode, render
 
   const sameGroupBtn = el("button", { class: "lp-primary", type: "button" }, [ft.newCards])
   sameGroupBtn.addEventListener("click", () => {
-    void play("transition")
     try {
       prepareFootballRound()
       render()
@@ -1844,7 +1826,6 @@ function renderFootballSummary(container: HTMLDivElement, lang: LangCode, render
 
   const homeBtn = el("button", { class: "lp-back", type: "button" }, [localReviewText(lang, "doneBack")])
   homeBtn.addEventListener("click", () => {
-    void play("click")
     goHomeFromLocalPlay()
   })
 
@@ -1902,7 +1883,6 @@ function renderWhoAmISetup(container: HTMLDivElement, lang: LangCode, render: ()
       ]
     )
     card.addEventListener("click", () => {
-      void play("click", 0.3)
       state.whoCategoryKey = opt.key
       for (const c of grid.querySelectorAll<HTMLElement>(".lp-who-cat")) {
         const active = c.dataset.key === opt.key
@@ -1942,7 +1922,6 @@ function renderWhoAmISetup(container: HTMLDivElement, lang: LangCode, render: ()
       class: preset === seconds ? "lp-who-preset selected" : "lp-who-preset"
     }, [`${preset}s`])
     btn.addEventListener("click", () => {
-      void play("click", 0.3)
       state.settings.roundSeconds = preset
       secondsInput.value = String(preset)
       secondsValue.textContent = `${preset} ${t("whoAmISeconds")}`
@@ -1957,7 +1936,6 @@ function renderWhoAmISetup(container: HTMLDivElement, lang: LangCode, render: ()
 
   const startBtn = el("button", { class: "lp-primary lp-who-start", type: "button" }, [t("whoAmIStartRound")])
   startBtn.addEventListener("click", () => {
-    void play("transition")
     state.whoCurrentWord = null
     state.whoCurrentWordCategory = null
     state.whoRecentWords = []
@@ -2047,8 +2025,9 @@ function renderWhoAmICountdown(
     numberEl.classList.remove("anim")
     void numberEl.offsetWidth
     numberEl.classList.add("anim")
-    if (idx < sequence.length - 1) void play("click", 0.25)
-    else void play("transition")
+    // The countdown used to tick with a sound; a short buzz carries better on
+    // a phone that is being passed around a noisy table.
+    vibrate(idx < sequence.length - 1 ? "tap" : "reveal")
     idx += 1
   }
 
@@ -2106,7 +2085,6 @@ function renderWhoAmIRound(
 
   const nextBtn = el("button", { class: "lp-secondary", type: "button" }, [t("whoAmINewWord")])
   nextBtn.addEventListener("click", () => {
-    void play("click")
     try {
       pickNextWhoAmIWord(lang)
       render()
@@ -2117,14 +2095,12 @@ function renderWhoAmIRound(
 
   const endBtn = el("button", { class: "lp-primary", type: "button" }, [t("whoAmIEndRound")])
   endBtn.addEventListener("click", () => {
-    void play("click")
     state.step = "whoTimeUp"
     render()
   })
 
   const changeBtn = el("button", { class: "lp-back", type: "button" }, [t("whoAmIChangeCategory")])
   changeBtn.addEventListener("click", () => {
-    void play("click", 0.3)
     state.roundEndsAt = null
     state.whoCurrentWord = null
     state.whoCurrentWordCategory = null
@@ -2152,7 +2128,6 @@ function renderWhoAmITimeUp(container: HTMLDivElement, lang: LangCode, render: (
 
   const playAgainBtn = el("button", { class: "lp-primary", type: "button" }, [t("whoAmIRestart")])
   playAgainBtn.addEventListener("click", () => {
-    void play("transition")
     state.whoCurrentWord = null
     state.whoCurrentWordCategory = null
     state.step = "whoCountdown"
@@ -2161,7 +2136,6 @@ function renderWhoAmITimeUp(container: HTMLDivElement, lang: LangCode, render: (
 
   const setupBtn = el("button", { class: "lp-secondary", type: "button" }, [t("whoAmIBackToSetup")])
   setupBtn.addEventListener("click", () => {
-    void play("click")
     state.whoCurrentWord = null
     state.whoCurrentWordCategory = null
     state.step = "whoSetup"
@@ -2170,7 +2144,6 @@ function renderWhoAmITimeUp(container: HTMLDivElement, lang: LangCode, render: (
 
   const homeBtn = el("button", { class: "lp-back", type: "button" }, [localReviewText(lang, "doneBack")])
   homeBtn.addEventListener("click", () => {
-    void play("click")
     goHomeFromLocalPlay()
   })
 

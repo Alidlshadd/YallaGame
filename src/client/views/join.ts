@@ -4,7 +4,6 @@ import { goBack, setView } from "../router.js"
 import { emit } from "../services/socket.js"
 import * as session from "../services/session.js"
 import { applyTheme, clearTheme } from "../themes/loader.js"
-import { play } from "../services/sound.js"
 import type { PlayerJoinData } from "@shared/events.js"
 import type { ErrorCode } from "@shared/types.js"
 import type { Translations } from "../i18n/en.js"
@@ -36,7 +35,6 @@ export const joinView = {
     }
 
     const onCodeInput = () => {
-      void play("click", 0.3)
       code.value = code.value.toUpperCase()
       if (code.value.length === 5) code.classList.add("locked")
       else code.classList.remove("locked")
@@ -44,7 +42,6 @@ export const joinView = {
     code.addEventListener("input", onCodeInput)
 
     const onJoin = async () => {
-      void play("click")
       const c = code.value.trim().toUpperCase()
       const n = name.value.trim()
       if (!c || !n) {
@@ -63,7 +60,6 @@ export const joinView = {
       const data = r.data as PlayerJoinData
       session.save({ kind: "player", code: c, playerId: data.player.id, name: data.player.name })
       await applyTheme(data.room.game.theme)
-      void play("transition")
       await setView("playerRoomView", { initial: data })
     }
 

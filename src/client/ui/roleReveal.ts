@@ -1,7 +1,6 @@
 import { el } from "./dom.js"
 import { dismissLayer, pushLayer, type LayerHandle } from "../services/navigation.js"
 import { animate, prefersReducedMotion, orchestrate, REVEAL_EASING } from "./motion.js"
-import { play } from "../services/sound.js"
 import { vibrate } from "./haptics.js"
 import { currentTheme } from "../themes/loader.js"
 import type { RoleAssignedPayload } from "@shared/events.js"
@@ -75,14 +74,12 @@ async function showFlipReveal(opts: RevealOptions): Promise<void> {
 
     cancel = orchestrate([
       { at: 400, do: () => {
-          void play("reveal-flip", 0.6)
           animate(card, [
             { transform: "rotateY(-180deg)" },
             { transform: "rotateY(0deg)" }
           ], { duration: 400, easing: REVEAL_EASING })
         } },
       { at: 800, do: () => {
-          void play("reveal-burst", 0.5)
           animate(burst, [
             { opacity: 0, transform: "scale(0.6)" },
             { opacity: 0.8, transform: "scale(1.6)" },
@@ -207,7 +204,6 @@ async function showSpyReveal(opts: RevealOptions): Promise<void> {
       await new Promise(r => setTimeout(r, 150))
       await typeOut(status, dt.accessing, 35)
       await new Promise(r => setTimeout(r, 250))
-      void play("reveal-burst", 0.5)
       stamp.style.opacity = "1"
       animate(stamp, [
         { opacity: 0, transform: "rotate(-8deg) scale(2.2)" },

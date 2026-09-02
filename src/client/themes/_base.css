@@ -261,22 +261,6 @@ body {
   background: rgba(255, 255, 255, 0.05);
 }
 
-.mute-toggle {
-  width: 36px;
-  height: 36px;
-  border-radius: 999px;
-  background: var(--theme-surface);
-  backdrop-filter: var(--surface-blur);
-  -webkit-backdrop-filter: var(--surface-blur);
-  border: 1px solid var(--border-faint);
-  display: grid;
-  place-items: center;
-  font-size: var(--type-base);
-  color: var(--text-muted);
-  transition: color var(--motion-ui-duration) var(--motion-ui-easing);
-}
-
-.mute-toggle:hover { color: var(--text-primary); }
 
 /* ─── TOP MAIN NAV ──────────────────────────────────────────── */
 

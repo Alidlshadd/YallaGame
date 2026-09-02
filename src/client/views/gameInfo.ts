@@ -9,7 +9,6 @@ import * as session from "../services/session.js"
 import { showToast } from "../ui/toast.js"
 import { getGames } from "./home.js"
 import { applyTheme, clearTheme } from "../themes/loader.js"
-import { play } from "../services/sound.js"
 import { worldCoverPath } from "../data/assets.js"
 import { getWorldDetail } from "../data/worldDetails.js"
 import type { CategoryDifficulty } from "../data/worldDetails.js"
@@ -64,10 +63,6 @@ const STEP_ICONS = ["I", "II", "III", "IV"] as const
 const STEP_SYMBOLS = ["⬡", "▢", "◈", "▶"] as const   // small premium symbol per step
 const STEP_TITLE_KEYS = ["step1Title", "step2Title", "step3Title", "step4Title"] as const
 type StepTitleKey = typeof STEP_TITLE_KEYS[number]
-
-function playSound(name: "click" | "transition"): void {
-  void play(name)
-}
 
 /* Premium theme icon for the hero eyebrow. SVG bat for the vampire world,
    clean Unicode geometric symbols for the rest — never emoji. */
@@ -163,7 +158,6 @@ function buildHero(
     el("span", {}, [t("joinRoom")])
   ])
   joinBtn.addEventListener("click", () => {
-    playSound("click")
     void setView("joinView")
   })
 
@@ -175,7 +169,6 @@ function buildHero(
     el("span", {}, [t("localPlay")])
   ])
   localBtn.addEventListener("click", () => {
-    playSound("click")
     void setView("localPlayView", { gameId: game.id })
   })
 
@@ -572,7 +565,6 @@ function buildBottomCTA(
     el("span", {}, [t("joinRoom")])
   ])
   joinBtn.addEventListener("click", () => {
-    playSound("click")
     void setView("joinView")
   })
 
@@ -617,13 +609,11 @@ export const gameInfoView = {
     const detail = getWorldDetail(game.id)
 
     const onCreate = async () => {
-      playSound("click")
       const r = await emit("admin:create-room", { gameId: game.id })
       if (!r.ok) { showToast(t("errorGeneric")); return }
       const data = r.data as CreateRoomData
       session.save({ kind: "admin", code: data.code, adminSecret: data.adminSecret })
       await applyTheme(game.theme)
-      playSound("transition")
       void setView("adminView", { initial: data.room })
     }
 

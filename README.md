@@ -19,7 +19,7 @@ Each game opens its own cinematic stage:
 - **🕴️ Classic Mafia** — noir bar, cigarette smoke, amber spotlight, art deco accents
 - **🕶️ Spy Game** — tactical CRT display, scan lines, decrypt-style role reveal
 
-The role reveal is a 1.6-second cinematic moment — card flip with glow burst for Vampire/Mafia, terminal typewriter decrypt for Spy. Optional UI sound effects (default muted). Respects `prefers-reduced-motion`.
+The role reveal is a 1.6-second cinematic moment — card flip with glow burst for Vampire/Mafia, terminal typewriter decrypt for Spy. The game is silent by design; feedback comes from motion and a short vibration on the phone. Respects `prefers-reduced-motion`.
 
 ## On a phone
 

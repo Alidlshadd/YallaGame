@@ -65,12 +65,6 @@ async function bootstrap() {
     })
   })
 
-  // Mute toggle wiring removed — the platform doesn't ship background
-  // music yet, so the button was confusing. services/sound.ts stays
-  // intact (still used for click/transition SFX) and the saved
-  // localStorage("role-room:muted") preference is preserved for when
-  // the toggle is re-added alongside music.
-
   // Copyright footer — keep the year in sync with the user's clock so
   // the line auto-rolls over each January without a deploy. The string
   // tail ("All rights reserved.") is data-i18n driven via applyAll(),
