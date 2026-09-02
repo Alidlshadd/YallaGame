@@ -2,7 +2,8 @@ import type { Game, LangCode, Role } from "@shared/types.js"
 import type { RoleAssignedPayload } from "@shared/events.js"
 import { $, el, clear } from "../ui/dom.js"
 import { getLang, t } from "../services/i18n.js"
-import { setView } from "../router.js"
+import { goBack, setView, setViewBackHandler } from "../router.js"
+import { confirmDialog } from "../ui/confirm.js"
 import { play } from "../services/sound.js"
 import { applyTheme, clearTheme } from "../themes/loader.js"
 import { showReveal } from "../ui/roleReveal.js"
@@ -154,7 +155,10 @@ function saveState(): void {
 function loadState(): void {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY)
-    if (raw) state = { ...freshState(), ...JSON.parse(raw) }
+    // No stored round means a fresh start: without this reset the module kept
+    // the previous round in memory and re-entering Local Play dropped the user
+    // back into the middle of a game they had already left.
+    state = raw ? { ...freshState(), ...JSON.parse(raw) } : freshState()
   } catch { state = freshState() }
   migrateCategoryKeys()
 }
@@ -679,6 +683,95 @@ function seedStateForGame(gameId: string): boolean {
   return true
 }
 
+/* ─── Back navigation ─────────────────────────────────────
+   Every screen of the wizard has a defined parent, so the phone's back
+   gesture (and the pill at the top of the view, which routes through the same
+   code) walks the flow backwards one screen at a time instead of throwing the
+   whole session away. Screens that would lose a round in progress ask first.
+*/
+export type BackTarget =
+  | { kind: "step"; step: Step; resetsRound?: boolean }
+  | { kind: "exit"; confirm?: boolean }
+
+/**
+ * Where the back gesture goes from a given screen. Pure so it can be unit
+ * tested: `pickerReachable` is false when Local Play was opened from a world
+ * page, because the game picker is then not part of this flow.
+ */
+export function backTargetForStep(step: Step, game: Game | undefined, pickerReachable: boolean): BackTarget {
+  switch (step) {
+    case "game":       return { kind: "exit" }
+    case "names":      return pickerReachable ? { kind: "step", step: "game" } : { kind: "exit" }
+    case "whoSetup":   return pickerReachable ? { kind: "step", step: "game" } : { kind: "exit" }
+    case "settings":
+      if (game && isFootballGame(game)) {
+        return pickerReachable ? { kind: "step", step: "game" } : { kind: "exit" }
+      }
+      return { kind: "step", step: "names" }
+    case "reveal":       return { kind: "step", step: "settings", resetsRound: true }
+    case "adminReview":  return { kind: "exit", confirm: true }
+    case "starter":      return { kind: "exit", confirm: true }
+    case "discussion":   return { kind: "step", step: "starter" }
+    case "vote":         return { kind: "step", step: "discussion" }
+    case "whoCountdown": return { kind: "step", step: "whoSetup" }
+    case "whoRound":     return { kind: "step", step: "whoSetup" }
+    case "whoTimeUp":    return { kind: "step", step: "whoSetup" }
+    case "footballTurn": return { kind: "step", step: "settings", resetsRound: true }
+    case "result":
+    case "done":
+    case "footballSummary":
+    default:             return { kind: "exit" }
+  }
+}
+
+/* Set just before goBack() when an exit has already been decided (a confirmed
+   dialog, or a "Back to Home" button), so the view's back handler steps aside
+   and lets the router pop the view instead of asking the question again. */
+let exitConfirmed = false
+
+/** Leave Local Play through the back stack — lands on whatever opened it. */
+function exitLocalPlay(): void {
+  clearLocalState()
+  clearTheme()
+  exitConfirmed = true
+  goBack()
+}
+
+/** Leave Local Play straight to the home stage, dropping the back stack. */
+function goHomeFromLocalPlay(): void {
+  clearLocalState()
+  clearTheme()
+  void setView("homeView", {}, { mode: "root" })
+}
+
+/* Undo the round state that belongs to the screens being left behind, so the
+   target screen starts clean instead of instantly bouncing forward again (an
+   expired discussion clock, for example, would jump straight back to voting). */
+function rewindStateTo(step: Step): void {
+  state.roundEndsAt = null
+  state.selectedSuspect = null
+  state.lastVoteMessage = null
+  if (step === "settings" || step === "names" || step === "game") {
+    state.assignments = []
+    state.currentRevealIndex = 0
+    state.spyWord = null
+    state.spyHintCategory = null
+    state.starterName = null
+    state.result = null
+    state.footballAssignments = []
+    state.footballCurrentIndex = 0
+    state.footballMessage = null
+  }
+  if (step === "whoSetup") {
+    state.whoCurrentWord = null
+    state.whoCurrentWordCategory = null
+  }
+  if (step === "starter" || step === "discussion") {
+    state.voteAttemptsLeft = Math.max(state.voteAttemptsLeft, 1)
+  }
+  state.step = step
+}
+
 export const localPlayView = {
   id: "localPlayView" as const,
   mount(ctx: { gameId?: string } = {}) {
@@ -726,28 +819,91 @@ export const localPlayView = {
         state.step = "game"
         renderGamePicker(container, lang, render)
       }
+      updateBackLabel()
       saveState()
+    }
+
+    function updateBackLabel(): void {
+      const button = document.getElementById("localPlayBack")
+      if (!button) return
+      const target = backTargetForStep(state.step, findGame(state.gameId), !presetGameId)
+      // The arrow glyph is a CSS ::before, so only the word changes here.
+      button.textContent = target.kind === "exit" ? t("navExit") : t("back")
     }
 
     render()
 
-    const onBack = () => {
+    let asking = false
+
+    const leaveView = (): void => {
       clearTimer()
-      const returnToGameId = presetGameId
-      clearLocalState()
-      if (returnToGameId) {
-        sessionStorage.setItem("role-room:selectedGame", returnToGameId)
-        void setView("gameInfoView")
-      } else {
-        clearTheme()
-        void setView("homeView")
-      }
+      exitLocalPlay()
     }
+
+    const askExit = (): void => {
+      if (asking) return
+      asking = true
+      void confirmDialog({
+        title: "exitGameTitle",
+        body: "exitGameBody",
+        confirmKey: "dialogExit",
+        cancelKey: "dialogStay",
+        danger: true
+      }).then(confirmed => {
+        asking = false
+        if (confirmed) leaveView()
+      })
+    }
+
+    const askReset = (step: Step): void => {
+      if (asking) return
+      asking = true
+      void confirmDialog({
+        title: "resetRoundTitle",
+        body: "resetRoundBody",
+        confirmKey: "dialogRestart",
+        cancelKey: "dialogStay"
+      }).then(confirmed => {
+        asking = false
+        if (!confirmed) return
+        clearTimer()
+        rewindStateTo(step)
+        render()
+      })
+    }
+
+    /* Returns true when the press was handled inside the wizard; false lets the
+       router pop back to whatever opened Local Play (home or the world page). */
+    const handleBack = (): boolean => {
+      if (exitConfirmed) { exitConfirmed = false; return false }
+      if (asking) return true
+      const target = backTargetForStep(state.step, findGame(state.gameId), !presetGameId)
+      if (target.kind === "exit") {
+        if (target.confirm) { askExit(); return true }
+        // Nothing to confirm: tidy up and hand the press back to the router,
+        // which pops to whatever opened Local Play. Calling goBack() here
+        // instead would consume this press and leave a stray layer behind.
+        clearTimer()
+        clearLocalState()
+        clearTheme()
+        return false
+      }
+      if (target.resetsRound) { askReset(target.step); return true }
+      void play("click", 0.3)
+      clearTimer()
+      rewindStateTo(target.step)
+      render()
+      return true
+    }
+    setViewBackHandler(handleBack)
+
+    const onBack = () => { goBack() }
     const back = $<HTMLButtonElement>("#localPlayBack")
     back.addEventListener("click", onBack)
 
     return () => {
       clearTimer()
+      setViewBackHandler(null)
       back.removeEventListener("click", onBack)
     }
   }
@@ -875,9 +1031,9 @@ function renderNameEntry(container: HTMLDivElement, lang: LangCode, render: () =
   const backBtn = el("button", { class: "lp-back", type: "button" }, [setupText(lang).backBtn])
   backBtn.addEventListener("click", () => {
     if (presetGameId) {
-      clearLocalState()
-      sessionStorage.setItem("role-room:selectedGame", presetGameId)
-      void setView("gameInfoView")
+      // Opened from a world page: pop back to it through the same stack the
+      // hardware back button uses, so history depth stays correct.
+      exitLocalPlay()
       return
     }
     state.step = "game"
@@ -1056,7 +1212,7 @@ function renderReveal(container: HTMLDivElement, lang: LangCode, render: () => v
     void play("transition")
     const roleData = game.roles.find(r => r.id === player.roleId)
     if (!roleData) {
-      buildErrorMessage(container, "Role data missing")
+      buildErrorMessage(container, t("errorGeneric"))
       return
     }
     const payload: RoleAssignedPayload = {
@@ -1272,9 +1428,7 @@ function renderSpyResult(container: HTMLDivElement, lang: LangCode, render: () =
   const homeBtn = el("button", { class: "lp-back", type: "button" }, [spyText(lang, "backHome")])
   homeBtn.addEventListener("click", () => {
     void play("click")
-    clearLocalState()
-    clearTheme()
-    setView("homeView")
+    goHomeFromLocalPlay()
   })
 
   container.append(
@@ -1312,9 +1466,7 @@ function renderDone(container: HTMLDivElement, lang: LangCode, render: () => voi
   const homeBtn = el("button", { class: "lp-back", type: "button" }, [localReviewText(lang, "doneBack")])
   homeBtn.addEventListener("click", () => {
     void play("click")
-    clearLocalState()
-    clearTheme()
-    setView("homeView")
+    goHomeFromLocalPlay()
   })
 
   container.append(
@@ -1489,9 +1641,9 @@ function renderFootballSettings(container: HTMLDivElement, lang: LangCode, rende
   const backBtn = el("button", { class: "lp-back", type: "button" }, [setupText(lang).backBtn])
   backBtn.addEventListener("click", () => {
     if (presetGameId) {
-      clearLocalState()
-      sessionStorage.setItem("role-room:selectedGame", presetGameId)
-      void setView("gameInfoView")
+      // Opened from a world page: pop back to it through the same stack the
+      // hardware back button uses, so history depth stays correct.
+      exitLocalPlay()
       return
     }
     state.step = "game"
@@ -1677,9 +1829,7 @@ function renderFootballSummary(container: HTMLDivElement, lang: LangCode, render
   const homeBtn = el("button", { class: "lp-back", type: "button" }, [localReviewText(lang, "doneBack")])
   homeBtn.addEventListener("click", () => {
     void play("click")
-    clearLocalState()
-    clearTheme()
-    setView("homeView")
+    goHomeFromLocalPlay()
   })
 
   container.append(
@@ -1802,12 +1952,7 @@ function renderWhoAmISetup(container: HTMLDivElement, lang: LangCode, render: ()
   const backBtn = el("button", { class: "lp-back", type: "button" }, [setupText(lang).backBtn])
   backBtn.addEventListener("click", () => {
     if (presetGameId) {
-      const game = findGame(presetGameId)
-      const id = presetGameId
-      clearLocalState()
-      sessionStorage.setItem("role-room:selectedGame", id)
-      if (game) void setView("gameInfoView")
-      else void setView("homeView")
+      exitLocalPlay()
       return
     }
     state.step = "game"
@@ -1820,9 +1965,9 @@ function renderWhoAmISetup(container: HTMLDivElement, lang: LangCode, render: ()
   const children: Array<HTMLElement | Node> = [
     renderProgressBar(0, 3),
     buildSetupHeader(
-      "Setup · Step 1 of 3",
+      setupText(lang).step(1, 3),
       t("whoAmIChooseCategory"),
-      `Pick a category. ${t("whoAmIRandomMix")} blends them all.`
+      t("whoAmICategoryHint")
     ),
     grid,
     summary,
@@ -1857,7 +2002,7 @@ function renderWhoAmICountdown(
   if (!state.whoCurrentWord) {
     try { pickNextWhoAmIWord(lang) }
     catch {
-      buildErrorMessage(container, "No words available.")
+      buildErrorMessage(container, t("errorNoWords"))
       state.step = "whoSetup"
       render()
       return
@@ -1949,7 +2094,7 @@ function renderWhoAmIRound(
       pickNextWhoAmIWord(lang)
       render()
     } catch {
-      buildErrorMessage(container, "No words available.")
+      buildErrorMessage(container, t("errorNoWords"))
     }
   })
 
@@ -2009,9 +2154,7 @@ function renderWhoAmITimeUp(container: HTMLDivElement, lang: LangCode, render: (
   const homeBtn = el("button", { class: "lp-back", type: "button" }, [localReviewText(lang, "doneBack")])
   homeBtn.addEventListener("click", () => {
     void play("click")
-    clearLocalState()
-    clearTheme()
-    setView("homeView")
+    goHomeFromLocalPlay()
   })
 
   container.append(

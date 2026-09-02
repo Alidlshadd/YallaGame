@@ -2,6 +2,7 @@ import type { Game } from "@shared/types.js"
 import { $, el, clear } from "../ui/dom.js"
 import { getLang, t } from "../services/i18n.js"
 import { setView } from "../router.js"
+import { dismissLayer, pushLayer, type LayerHandle } from "../services/navigation.js"
 import { showToast } from "../ui/toast.js"
 import { clearTheme } from "../themes/loader.js"
 import { worldCoverPath } from "../data/assets.js"
@@ -362,6 +363,7 @@ function buildCreatePicker(lang: ReturnType<typeof getLang>, close: () => void):
     "aria-modal": "true",
     "aria-labelledby": "createPickerTitle"
   }, [
+    el("button", { class: "modal-close", type: "button", "aria-label": t("close"), title: t("close") }, ["✕"]),
     el("p", { class: "create-picker-eyebrow" }, [t("createRoom")]),
     el("h2", { id: "createPickerTitle", class: "create-picker-title" }, [t("chooseWorldToCreate")]),
     grid,
@@ -369,6 +371,7 @@ function buildCreatePicker(lang: ReturnType<typeof getLang>, close: () => void):
   ])
 
   panel.querySelector<HTMLButtonElement>(".create-picker-cancel")?.addEventListener("click", close)
+  panel.querySelector<HTMLButtonElement>(".modal-close")?.addEventListener("click", close)
   return panel
 }
 
@@ -380,21 +383,28 @@ function openCreatePicker(lang: ReturnType<typeof getLang>): void {
     class: "create-picker-overlay"
   })
 
+  // Registered as a back-stack layer so the phone's back gesture (and Escape,
+  // handled globally by the same stack) closes the picker instead of the page.
+  let handle: LayerHandle | null = null
+  let closed = false
   const close = (): void => {
+    if (closed) return
+    closed = true
+    dismissLayer(handle)
+    overlay.removeAttribute("id")
     overlay.classList.remove("visible")
-    document.removeEventListener("keydown", onKey)
+    overlay.classList.add("closing")
     window.setTimeout(() => overlay.remove(), 300)
     document.querySelector<HTMLButtonElement>(".cta-create")?.focus()
   }
-  const onKey = (e: KeyboardEvent): void => { if (e.key === "Escape") close() }
 
   overlay.addEventListener("click", (e) => { if (e.target === overlay) close() })
-  document.addEventListener("keydown", onKey)
 
   const panel = buildCreatePicker(lang, close)
   overlay.appendChild(panel)
   document.body.appendChild(overlay)
 
+  handle = pushLayer(close, "create-picker")
   requestAnimationFrame(() => {
     overlay.classList.add("visible")
     panel.querySelector<HTMLButtonElement>(".create-picker-option")?.focus()

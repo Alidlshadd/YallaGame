@@ -2,7 +2,7 @@ import { test, expect, type Page } from "@playwright/test"
 
 async function joinAs(page: Page, code: string, name: string): Promise<void> {
   await page.goto("/")
-  await page.click("#showJoinBtn")
+  await page.click(".cta-join")
   await page.fill("#joinCodeInput", code)
   await page.fill("#playerNameInput", name)
   await page.click("#joinBtn")
@@ -13,8 +13,9 @@ test("reconnect: A reloads while B stays — A re-binds, B unaffected, no privac
   const adminCtx = await browser.newContext()
   const admin = await adminCtx.newPage()
   await admin.goto("/")
-  await admin.locator(".game-card").first().click()
-  await admin.click("#createSelectedRoomBtn")
+  await admin.click(".cta-create")
+  await admin.locator(".create-picker-option").first().click()
+  await admin.locator(".gi-hero .gi-cta-primary").click()
   await expect(admin.locator("#roomCodeText")).not.toHaveText("-----")
   const code = await admin.locator("#roomCodeText").innerText()
 

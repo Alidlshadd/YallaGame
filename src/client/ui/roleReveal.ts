@@ -1,4 +1,5 @@
 import { el } from "./dom.js"
+import { dismissLayer, pushLayer, type LayerHandle } from "../services/navigation.js"
 import { animate, prefersReducedMotion, orchestrate, REVEAL_EASING } from "./motion.js"
 import { play } from "../services/sound.js"
 import { currentTheme } from "../themes/loader.js"
@@ -29,7 +30,13 @@ async function showFlipReveal(opts: RevealOptions): Promise<void> {
     // eslint-disable-next-line prefer-const
     let cancel: (() => void) | undefined
 
+    let handle: LayerHandle | null = null
+    let closed = false
+
     const cleanup = (): void => {
+      if (closed) return
+      closed = true
+      dismissLayer(handle)
       cancel?.()
       animate(overlay, [{ opacity: 1 }, { opacity: 0 }], { duration: 200, fill: "forwards" })
         .finished.then(() => {
@@ -41,8 +48,9 @@ async function showFlipReveal(opts: RevealOptions): Promise<void> {
     }
 
     closeBtn.addEventListener("click", cleanup)
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") cleanup() }
-    overlay.addEventListener("keydown", onKey)
+    // The card is a back-stack layer, so a back gesture closes the card rather
+    // than the screen behind it. Escape reaches the same stack globally.
+    handle = pushLayer(cleanup, "role-reveal")
 
     requestAnimationFrame(() => overlay.classList.add("visible"))
 
@@ -148,7 +156,13 @@ async function showSpyReveal(opts: RevealOptions): Promise<void> {
   const previouslyFocused = document.activeElement as HTMLElement | null
 
   return new Promise<void>(resolve => {
+    let handle: LayerHandle | null = null
+    let closed = false
+
     const cleanup = (): void => {
+      if (closed) return
+      closed = true
+      dismissLayer(handle)
       animate(overlay, [{ opacity: 1 }, { opacity: 0 }], { duration: 200, fill: "forwards" })
         .finished.then(() => {
           overlay.remove()
@@ -158,8 +172,7 @@ async function showSpyReveal(opts: RevealOptions): Promise<void> {
         })
     }
     closeBtn.addEventListener("click", cleanup)
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") cleanup() }
-    overlay.addEventListener("keydown", onKey)
+    handle = pushLayer(cleanup, "role-reveal")
 
     requestAnimationFrame(() => overlay.classList.add("visible"))
 

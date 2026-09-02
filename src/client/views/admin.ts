@@ -3,9 +3,10 @@ import { getLang, t } from "../services/i18n.js"
 import { socket, emit } from "../services/socket.js"
 import * as session from "../services/session.js"
 import { showToast } from "../ui/toast.js"
+import { confirmDialog } from "../ui/confirm.js"
 import { play } from "../services/sound.js"
 import { applyTheme, clearTheme } from "../themes/loader.js"
-import { setView } from "../router.js"
+import { setView, setViewBackHandler } from "../router.js"
 import type { VisibleRoom } from "@shared/types.js"
 
 export const adminView = {
@@ -158,13 +159,29 @@ export const adminView = {
       catch { showToast(url) }
     }
 
-    const onLeave = () => {
-      if (!confirm("Leave this room? The room will be abandoned.")) return
-      void play("click")
-      session.clear()
-      clearTheme()
-      setView("homeView")
+    // Leaving is destructive (the room is abandoned), so both the button and
+    // the phone's back gesture route through the same localized confirmation.
+    let asking = false
+    const requestLeave = (): void => {
+      if (asking) return
+      asking = true
+      void confirmDialog({
+        title: "closeRoomTitle",
+        body: "closeRoomBody",
+        confirmKey: "dialogLeave",
+        cancelKey: "dialogStay",
+        danger: true
+      }).then(confirmed => {
+        asking = false
+        if (!confirmed) return
+        void play("click")
+        session.clear()
+        clearTheme()
+        void setView("homeView", {}, { mode: "root" })
+      })
     }
+    const onLeave = () => requestLeave()
+    setViewBackHandler(() => { requestLeave(); return true })
 
     const saveBtn   = $<HTMLButtonElement>("#saveSettingsBtn")
     const clearBtn  = $<HTMLButtonElement>("#clearRolesBtn")
@@ -179,6 +196,7 @@ export const adminView = {
     leaveBtn.addEventListener("click", onLeave)
 
     return () => {
+      setViewBackHandler(null)
       socket.off("admin:room-updated", onUpdated)
       saveBtn.removeEventListener("click", onSave)
       assignBtn.removeEventListener("click", onAssign)

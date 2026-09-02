@@ -2,7 +2,8 @@ import type { Game, Role } from "@shared/types.js"
 import { $, el, clear } from "../ui/dom.js"
 import { buildThemeFx } from "../ui/character.js"
 import { getLang, t } from "../services/i18n.js"
-import { setView } from "../router.js"
+import { goBack, setView } from "../router.js"
+import { dismissLayer, pushLayer, type LayerHandle } from "../services/navigation.js"
 import { emit } from "../services/socket.js"
 import * as session from "../services/session.js"
 import { showToast } from "../ui/toast.js"
@@ -459,14 +460,20 @@ function openCategorySetup(
     class: "gi-setup-overlay"
   })
 
+  // The modal is a back-stack layer: the phone's back gesture closes it
+  // instead of leaving the page. Escape is handled globally by the same stack.
+  let handle: LayerHandle | null = null
+  let closed = false
   const close = (): void => {
+    if (closed) return
+    closed = true
+    dismissLayer(handle)
+    overlay.removeAttribute("id")
     overlay.classList.remove("visible")
-    document.removeEventListener("keydown", onKey)
+    overlay.classList.add("closing")
     window.setTimeout(() => overlay.remove(), 300)
   }
-  const onKey = (e: KeyboardEvent): void => { if (e.key === "Escape") close() }
   overlay.addEventListener("click", (e) => { if (e.target === overlay) close() })
-  document.addEventListener("keydown", onKey)
 
   const groups = el("div", { class: "gi-setup-groups" })
   const byKey = new Map(cats.map(c => [c.key, c]))
@@ -510,12 +517,21 @@ function openCategorySetup(
   const cancelBtn = el("button", { class: "gi-cta gi-cta-ghost", type: "button" }, [t("cancel")])
   cancelBtn.addEventListener("click", close)
 
+  const closeBtn = el("button", {
+    class: "modal-close",
+    type: "button",
+    "aria-label": t("close"),
+    title: t("close")
+  }, ["✕"])
+  closeBtn.addEventListener("click", close)
+
   const panel = el("div", {
     class: "gi-setup-panel",
     role: "dialog",
     "aria-modal": "true",
     "aria-labelledby": "gi-setup-title"
   }, [
+    closeBtn,
     el("header", { class: "gi-setup-header" }, [
       el("p", { class: "gi-section-eyebrow" }, [
         el("span", { class: "gi-ornament" }, ["❖"]),
@@ -530,6 +546,7 @@ function openCategorySetup(
   overlay.appendChild(panel)
   document.body.appendChild(overlay)
 
+  handle = pushLayer(close, "category-setup")
   requestAnimationFrame(() => overlay.classList.add("visible"))
 }
 
@@ -620,7 +637,7 @@ export const gameInfoView = {
     ])
     back.addEventListener("click", () => {
       clearTheme()
-      void setView("homeView")
+      goBack()
     })
 
     // Wrap the three middle sections so a single cinematic wallpaper sits behind

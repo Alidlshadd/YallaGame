@@ -5,9 +5,10 @@ import { socket } from "../services/socket.js"
 import * as session from "../services/session.js"
 import { applyTheme, clearTheme } from "../themes/loader.js"
 import { showReveal } from "../ui/roleReveal.js"
-import { setView } from "../router.js"
+import { setView, setViewBackHandler } from "../router.js"
 import { play } from "../services/sound.js"
 import { showToast } from "../ui/toast.js"
+import { confirmDialog } from "../ui/confirm.js"
 import type { PlayerJoinData, RoleAssignedPayload } from "@shared/events.js"
 
 export const playerRoomView = {
@@ -76,20 +77,36 @@ export const playerRoomView = {
       session.clear()
       clearTheme()
       showToast(t("kickedFromRoom"))
-      void setView("homeView")
+      void setView("homeView", {}, { mode: "root" })
     }
 
     socket.on("player:role-assigned", onAssigned)
     socket.on("player:role-cleared",  onCleared)
     socket.on("player:kicked",        onKicked)
 
-    const onLeave = () => {
-      if (!confirm("Leave this room?")) return
-      void play("click")
-      session.clear()
-      clearTheme()
-      setView("homeView")
+    // Both the Leave button and the phone's back gesture ask the same
+    // localized question before dropping the player out of the room.
+    let asking = false
+    const requestLeave = (): void => {
+      if (asking) return
+      asking = true
+      void confirmDialog({
+        title: "leaveRoomTitle",
+        body: "leaveRoomBody",
+        confirmKey: "dialogLeave",
+        cancelKey: "dialogStay",
+        danger: true
+      }).then(confirmed => {
+        asking = false
+        if (!confirmed) return
+        void play("click")
+        session.clear()
+        clearTheme()
+        void setView("homeView", {}, { mode: "root" })
+      })
     }
+    const onLeave = () => requestLeave()
+    setViewBackHandler(() => { requestLeave(); return true })
     const leaveBtn = $<HTMLButtonElement>("#playerLeaveBtn")
     leaveBtn.addEventListener("click", onLeave)
 
@@ -97,6 +114,7 @@ export const playerRoomView = {
     renderSettled()
 
     return () => {
+      setViewBackHandler(null)
       socket.off("player:role-assigned", onAssigned)
       socket.off("player:role-cleared",  onCleared)
       socket.off("player:kicked",        onKicked)

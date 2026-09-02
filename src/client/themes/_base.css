@@ -3460,11 +3460,190 @@ body[data-perf="low"] *::after {
 }
 
 
-/* ─── Leave / Back button (admin + player room) ─────────────────── */
+/* ─── Back / Leave controls ──────────────────────────────────────
+   One prominent, thumb-sized pill on every screen that has somewhere to go
+   back to. These used to be muted ghost text that players on phones simply
+   did not find, which left a reload as the only way out of a screen. They
+   stick to the top of the view so they stay reachable while scrolling. */
 
-.leave-btn {
+.view .leave-btn,
+.view .backHome,
+.local-play #localPlayBack {
+  position: sticky;
+  top: clamp(72px, 9vh, 104px);
+  z-index: 20;
   align-self: flex-start;
-  margin-bottom: var(--s-3);
+  margin-bottom: var(--s-4);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 44px;
+  padding: 10px 22px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--theme-glow, #f3d77a);
+  background: color-mix(in srgb, var(--theme-accent, #d4af37) 14%, rgba(8, 6, 14, 0.78));
+  border: 1px solid color-mix(in srgb, var(--theme-accent, #d4af37) 60%, transparent);
+  box-shadow: 0 10px 26px -14px rgba(0, 0, 0, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: transform var(--motion-snappy), border-color var(--motion-snappy), background var(--motion-snappy);
+}
+
+/* The arrow is drawn by CSS: applyAll() rewrites these labels from the
+   dictionary on every language switch, which would wipe a text arrow. */
+.view .leave-btn::before,
+.view .backHome::before,
+.local-play #localPlayBack::before {
+  content: "←";
+  font-size: 15px;
+  line-height: 1;
+}
+[dir="rtl"] .view .leave-btn::before,
+[dir="rtl"] .view .backHome::before,
+[dir="rtl"] .local-play #localPlayBack::before { content: "→"; }
+
+.view .leave-btn:hover,
+.view .backHome:hover,
+.local-play #localPlayBack:hover {
+  transform: translateX(-3px);
+  color: var(--theme-glow, #f3d77a);
+  background: color-mix(in srgb, var(--theme-accent, #d4af37) 26%, rgba(8, 6, 14, 0.8));
+  border-color: var(--theme-accent, #d4af37);
+}
+
+[dir="rtl"] .view .leave-btn:hover,
+[dir="rtl"] .view .backHome:hover,
+[dir="rtl"] .local-play #localPlayBack:hover { transform: translateX(3px); }
+
+/* ─── Modal close button (corner ✕) ─────────────────────────────── */
+
+.modal-close {
+  position: absolute;
+  top: 12px;
+  inset-inline-end: 12px;
+  z-index: 5;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  line-height: 1;
+  border-radius: 999px;
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-faint);
+  transition: background var(--motion-snappy), border-color var(--motion-snappy), transform var(--motion-snappy);
+}
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: color-mix(in srgb, var(--theme-accent, #d4af37) 55%, transparent);
+}
+.modal-close:active { transform: scale(0.94); }
+
+/* The gameInfo world page is long: keep its back pill on screen while the
+   player scrolls instead of leaving it stranded at the very top. */
+.gi-back { position: fixed; }
+
+
+/* ─── Confirm dialog (localized replacement for window.confirm) ──── */
+
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-overlay) + 20);
+  background: rgba(2, 2, 6, 0.66);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: grid;
+  place-items: center;
+  padding: var(--s-5);
+  opacity: 0;
+  transition: opacity var(--motion-snappy) ease-out;
+}
+.confirm-overlay.visible { opacity: 1; }
+/* While fading out an overlay must not swallow the next tap. */
+.confirm-overlay.closing,
+.create-picker-overlay.closing,
+.gi-setup-overlay.closing { pointer-events: none; }
+
+.confirm-panel {
+  width: min(420px, 100%);
+  background: linear-gradient(180deg, rgba(20, 16, 28, 0.97) 0%, rgba(8, 6, 14, 0.97) 100%);
+  border: 1px solid var(--border-faint);
+  border-radius: 16px;
+  padding: var(--s-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  text-align: center;
+  box-shadow: 0 32px 80px -16px rgba(0, 0, 0, 0.8);
+  transform: translateY(10px) scale(0.98);
+  opacity: 0;
+  transition:
+    transform var(--motion-flow) var(--ease-out-expo),
+    opacity var(--motion-flow) ease-out;
+}
+.confirm-overlay.visible .confirm-panel {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+.confirm-title {
+  margin: 0;
+  font-size: clamp(18px, 2.6vw, 22px);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.confirm-body {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-sm);
+  line-height: 1.55;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: var(--s-3);
+  margin-top: var(--s-2);
+}
+
+.confirm-btn {
+  flex: 1 1 0;
+  min-height: 48px;
+  padding: 12px 16px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: var(--type-sm);
+  border: 1px solid var(--border-faint);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+  transition: background var(--motion-snappy), border-color var(--motion-snappy), transform var(--motion-snappy);
+}
+.confirm-btn:hover { background: rgba(255, 255, 255, 0.09); }
+.confirm-btn:active { transform: scale(0.98); }
+
+.confirm-cancel {
+  background: transparent;
   color: var(--text-muted);
 }
-.leave-btn:hover { color: var(--text-primary); }
+.confirm-cancel:hover { color: var(--text-primary); }
+
+.confirm-ok {
+  font-weight: 700;
+  color: var(--theme-glow, #f3d77a);
+  border-color: color-mix(in srgb, var(--theme-accent, #d4af37) 70%, transparent);
+  background: color-mix(in srgb, var(--theme-accent, #d4af37) 30%, transparent);
+}
+.confirm-ok:hover {
+  background: color-mix(in srgb, var(--theme-accent, #d4af37) 42%, transparent);
+}
+.confirm-ok.danger {
+  border-color: rgba(224, 76, 76, 0.55);
+  background: rgba(224, 76, 76, 0.18);
+}

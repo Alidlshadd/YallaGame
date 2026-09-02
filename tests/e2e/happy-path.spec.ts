@@ -13,7 +13,7 @@ function attachFrameCapture(page: Page): CapturedFrame[] {
 
 async function joinAs(page: Page, code: string, name: string): Promise<void> {
   await page.goto("/")
-  await page.click("#showJoinBtn")
+  await page.click(".cta-join")
   await page.fill("#joinCodeInput", code)
   await page.fill("#playerNameInput", name)
   await page.click("#joinBtn")
@@ -26,8 +26,9 @@ test("happy path: 4 players, role visibility, wire-level privacy", async ({ brow
   attachFrameCapture(adminPage)
 
   await adminPage.goto("/")
-  await adminPage.locator(".game-card").first().click()
-  await adminPage.click("#createSelectedRoomBtn")
+  await adminPage.click(".cta-create")
+  await adminPage.locator(".create-picker-option").first().click()
+  await adminPage.locator(".gi-hero .gi-cta-primary").click()
   await expect(adminPage.locator("#roomCodeText")).not.toHaveText("-----")
   const code = await adminPage.locator("#roomCodeText").innerText()
 

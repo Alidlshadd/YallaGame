@@ -1,6 +1,7 @@
 import { setLang, applyAll } from "./services/i18n.js"
 import * as session from "./services/session.js"
 import { refreshCurrentView, register, registerLazy, setView } from "./router.js"
+import { initNavigation } from "./services/navigation.js"
 import { homeView, loadCatalog } from "./views/home.js"
 import { applyTheme, clearTheme } from "./themes/loader.js"
 import { ensureAtmosphere, applyPerformanceProfile } from "./ui/atmosphere.js"
@@ -11,6 +12,9 @@ import type { LangCode } from "@shared/types.js"
 import type { AdminRoomData, PlayerJoinData } from "@shared/events.js"
 
 async function bootstrap() {
+  // Must run before the first setView so the base history entry is labelled and
+  // the hardware/gesture back button is wired up from the very first screen.
+  initNavigation()
   ensureAtmosphere()
   applyPerformanceProfile()
   initLazyImageFade()
@@ -44,7 +48,9 @@ async function bootstrap() {
       const target = btn.dataset.nav
       if (target === "home" || target === "worlds" || target === "features" || target === "how") {
         if (document.querySelector<HTMLElement>("section.view.active-view")?.id !== "homeView") {
-          await setView("homeView")
+          // Top-nav "home" is a reset, not a step forward: drop the back stack
+          // instead of stacking home on top of whatever view was open.
+          await setView("homeView", {}, { mode: "root" })
         }
         const sel =
           target === "home"     ? ".hero-slide"
@@ -93,9 +99,9 @@ async function bootstrap() {
   // stale session in this browser.
   const joinParam = new URLSearchParams(location.search).get("join")?.trim().toUpperCase() ?? ""
   if (/^[A-Z2-9]{5}$/.test(joinParam)) {
-    history.replaceState(null, "", location.pathname)
+    history.replaceState(history.state, "", location.pathname)
     clearTheme()
-    await setView("joinView", { code: joinParam })
+    await setView("joinView", { code: joinParam }, { mode: "root" })
     return
   }
   if (existing?.kind === "admin") {
@@ -105,7 +111,7 @@ async function bootstrap() {
     if (r.ok) {
       const data = r.data as AdminRoomData
       await applyTheme(data.room.game.theme)
-      await setView("adminView", { initial: data.room })
+      await setView("adminView", { initial: data.room }, { mode: "root" })
       return
     }
     session.clear()
@@ -117,14 +123,14 @@ async function bootstrap() {
     if (r.ok) {
       const data = r.data as PlayerJoinData
       await applyTheme(data.room.game.theme)
-      await setView("playerRoomView", { initial: data })
+      await setView("playerRoomView", { initial: data }, { mode: "root" })
       return
     }
     session.clear()
   }
 
   clearTheme()
-  await setView("homeView")
+  await setView("homeView", {}, { mode: "root" })
   await catalogPromise
   const active = document.querySelector<HTMLElement>("section.view.active-view")
   if (active?.id === "homeView") await refreshCurrentView()

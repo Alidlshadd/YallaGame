@@ -1,6 +1,6 @@
 import { $ } from "../ui/dom.js"
 import { t } from "../services/i18n.js"
-import { setView } from "../router.js"
+import { goBack, setView } from "../router.js"
 import { emit } from "../services/socket.js"
 import * as session from "../services/session.js"
 import { applyTheme, clearTheme } from "../themes/loader.js"
@@ -69,7 +69,9 @@ export const joinView = {
 
     const onBack = () => {
       clearTheme()
-      void setView("homeView")
+      // goBack() walks the same stack as the phone's back gesture, so the
+      // in-page button and the hardware button can never disagree.
+      goBack()
     }
 
     const btn = $<HTMLButtonElement>("#joinBtn")
