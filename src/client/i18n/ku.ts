@@ -165,6 +165,14 @@ const ku: Translations = {
   errorNoWords: "هیچ وشەیەک لەم کاتێگۆرییەدا نییە.",
   close: "داخستن",
   leaveRoom: "ژوور جێبهێڵە",
+  updateReady: "وەشانێکی نوێ ئامادەیە. نوێی بکەرەوە.",
+  connectionLost: "پەیوەندی پچڕا. هەوڵی گەڕانەوە…",
+  connectionBack: "پەیوەندی گەڕایەوە.",
+  offline: "دەرهێڵ",
+  connecting: "پەیوەندی دەکات…",
+  kickPlayerTitle: "ئەم یاریزانە دەربکرێت؟",
+  kickPlayerBody: "دەتوانێت بە کۆدی ژوورەکە بگەڕێتەوە.",
+  yourNamePlaceholder: "ناوت",
   copyrightRights: "هەموو مافەکان پارێزراون."
 }
 

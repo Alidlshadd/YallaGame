@@ -13,13 +13,34 @@ import { worldCoverPath } from "../data/assets.js"
 let games: readonly Game[] = []
 let catalogLoadFailed = false
 
+/* The catalog is deploy-time data, not live room state, so the last copy is
+   kept on the device. That is what makes Local Play work with no signal at
+   all: the games, roles and settings are all the offline flow needs. */
+const CATALOG_CACHE_KEY = "role-room:catalog"
+
+function readCachedCatalog(): readonly Game[] | null {
+  try {
+    const raw = localStorage.getItem(CATALOG_CACHE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) && parsed.length > 0 ? (parsed as Game[]) : null
+  } catch { return null }
+}
+
 export async function loadCatalog(): Promise<void> {
   try {
     const res = await fetch("/api/games")
     if (!res.ok) throw new Error(`Game catalog request failed: ${res.status}`)
     games = await res.json()
     catalogLoadFailed = false
+    try { localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(games)) } catch { /* quota */ }
   } catch (error) {
+    const cached = readCachedCatalog()
+    if (cached) {
+      games = cached
+      catalogLoadFailed = false
+      return
+    }
     console.error("Unable to load game catalog", error)
     games = []
     catalogLoadFailed = true

@@ -4,8 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Yalla Game</title>
+  <meta name="description" content="Hidden-role party games for a room full of phones - or one phone passed around." />
   <link rel="icon" type="image/png" href="/assets/logo/yalla-game-mark.png" />
-  <link rel="apple-touch-icon" href="/assets/logo/yalla-game-mark.png" />
+  <link rel="apple-touch-icon" href="/assets/logo/icon-192.png" />
+  <!-- Installable on a phone home screen: standalone window, dark chrome. -->
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#0b0813" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Yalla Game" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Cinzel:wght@500;700&family=Playfair+Display:wght@700&family=Space+Mono:wght@700&family=Noto+Sans+Arabic:wght@400;600;700&display=swap" />
@@ -65,11 +73,11 @@
         <h2 class="display" data-i18n="joinTitle">Enter the Room</h2>
         <label class="field">
           <span data-i18n="roomCode">Room Code</span>
-          <input id="joinCodeInput" class="code-input" type="text" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCDE" />
+          <input id="joinCodeInput" class="code-input" type="text" maxlength="5" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" enterkeyhint="next" placeholder="ABCDE" />
         </label>
         <label class="field">
           <span data-i18n="yourName">Your Name</span>
-          <input id="playerNameInput" type="text" maxlength="24" placeholder="..." />
+          <input id="playerNameInput" type="text" maxlength="24" autocomplete="nickname" enterkeyhint="go" data-i18n-placeholder="yourNamePlaceholder" placeholder="Your name" />
         </label>
         <button id="joinBtn" class="btn btn-primary full">
           <span data-i18n="enterRoom">Enter Room</span>
@@ -161,6 +169,9 @@
       <span data-i18n="copyrightRights">All rights reserved.</span>
     </p>
   </footer>
+
+  <!-- Live socket state for the room screens; hidden until the link drops. -->
+  <div id="connBanner" class="conn-banner" role="status" aria-live="polite"></div>
 
   <div id="toast" class="toast hidden" role="status"></div>
 

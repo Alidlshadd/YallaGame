@@ -2,6 +2,7 @@ import { setLang, applyAll } from "./services/i18n.js"
 import * as session from "./services/session.js"
 import { refreshCurrentView, register, registerLazy, setView } from "./router.js"
 import { initNavigation } from "./services/navigation.js"
+import { prefetchOfflineBundles, registerServiceWorker } from "./services/pwa.js"
 import { homeView, loadCatalog } from "./views/home.js"
 import { applyTheme, clearTheme } from "./themes/loader.js"
 import { ensureAtmosphere, applyPerformanceProfile } from "./ui/atmosphere.js"
@@ -15,6 +16,7 @@ async function bootstrap() {
   // Must run before the first setView so the base history entry is labelled and
   // the hardware/gesture back button is wired up from the very first screen.
   initNavigation()
+  registerServiceWorker()
   ensureAtmosphere()
   applyPerformanceProfile()
   initLazyImageFade()
@@ -131,6 +133,7 @@ async function bootstrap() {
 
   clearTheme()
   await setView("homeView", {}, { mode: "root" })
+  prefetchOfflineBundles()
   await catalogPromise
   const active = document.querySelector<HTMLElement>("section.view.active-view")
   if (active?.id === "homeView") await refreshCurrentView()

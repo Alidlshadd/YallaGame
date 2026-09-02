@@ -4,6 +4,8 @@ import { $, el, clear } from "../ui/dom.js"
 import { getLang, t } from "../services/i18n.js"
 import { goBack, setView, setViewBackHandler } from "../router.js"
 import { confirmDialog } from "../ui/confirm.js"
+import { syncWakeLock } from "../services/wakeLock.js"
+import { vibrate } from "../ui/haptics.js"
 import { play } from "../services/sound.js"
 import { applyTheme, clearTheme } from "../themes/loader.js"
 import { showReveal } from "../ui/roleReveal.js"
@@ -724,6 +726,13 @@ export function backTargetForStep(step: Step, game: Game | undefined, pickerReac
   }
 }
 
+/* Screens where a round is actually running: nobody taps the glass for
+   minutes at a time, so the phone must not fall asleep. */
+const IN_PLAY_STEPS: ReadonlySet<Step> = new Set<Step>([
+  "reveal", "adminReview", "starter", "discussion", "vote",
+  "whoCountdown", "whoRound", "footballTurn"
+])
+
 /* Set just before goBack() when an exit has already been decided (a confirmed
    dialog, or a "Back to Home" button), so the view's back handler steps aside
    and lets the router pop the view instead of asking the question again. */
@@ -784,6 +793,8 @@ export const localPlayView = {
       if (seedStateForGame(ctx.gameId)) presetGameId = ctx.gameId
     }
 
+    let wakeLock: (() => void) | null = null
+
     function clearTimer(): void {
       if (activeTimer !== undefined) {
         window.clearInterval(activeTimer)
@@ -820,6 +831,7 @@ export const localPlayView = {
         renderGamePicker(container, lang, render)
       }
       updateBackLabel()
+      wakeLock = syncWakeLock(IN_PLAY_STEPS.has(state.step), wakeLock)
       saveState()
     }
 
@@ -903,6 +915,7 @@ export const localPlayView = {
 
     return () => {
       clearTimer()
+      wakeLock = syncWakeLock(false, wakeLock)
       setViewBackHandler(null)
       back.removeEventListener("click", onBack)
     }
@@ -1322,6 +1335,7 @@ function renderDiscussion(container: HTMLDivElement, lang: LangCode, render: () 
     timer.textContent = formatTime(remaining)
     timer.classList.toggle("urgent", remaining > 0 && remaining <= 30_000)
     if (remaining <= 0) {
+      vibrate("end")
       state.step = "vote"
       render()
     }
@@ -1378,6 +1392,7 @@ function renderVote(container: HTMLDivElement, lang: LangCode, render: () => voi
         state.result = "spies"
         state.step = "result"
       } else {
+        vibrate("warn")
         state.lastVoteMessage = `${spyText(lang, "wrongGuess")}: ${state.voteAttemptsLeft}`
         state.selectedSuspect = null
       }
@@ -1724,6 +1739,7 @@ function renderFootballTurn(container: HTMLDivElement, lang: LangCode, render: (
       timer.textContent = String(remaining)
       timer.classList.toggle("danger", remaining <= 5 && remaining > 0)
       if (remainingMs <= 0 && !current.solved) {
+        vibrate("end")
         state.footballMessage = ft.timeUp(current.card.name)
         if (state.playerNames.length === 0) {
           current.solved = true
@@ -2072,6 +2088,7 @@ function renderWhoAmIRound(
     timer.textContent = String(remaining)
     timer.classList.toggle("danger", remaining <= 5 && remaining > 0)
     if (remainingMs <= 0) {
+      vibrate("end")
       state.step = "whoTimeUp"
       render()
     }

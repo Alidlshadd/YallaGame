@@ -4,6 +4,9 @@ import { socket, emit } from "../services/socket.js"
 import * as session from "../services/session.js"
 import { showToast } from "../ui/toast.js"
 import { confirmDialog } from "../ui/confirm.js"
+import { watchConnection } from "../services/connection.js"
+import { holdWakeLock } from "../services/wakeLock.js"
+import { vibrate } from "../ui/haptics.js"
 import { play } from "../services/sound.js"
 import { applyTheme, clearTheme } from "../themes/loader.js"
 import { setView, setViewBackHandler } from "../router.js"
@@ -77,6 +80,16 @@ export const adminView = {
           if (!room) return
           const s = session.load(); if (s?.kind !== "admin") return
           void play("click")
+          // The ✕ sits right next to the player name on a phone, so a misfire
+          // used to drop somebody out of the room with no way to undo it.
+          const confirmed = await confirmDialog({
+            title: "kickPlayerTitle",
+            body: "kickPlayerBody",
+            confirmKey: "kick",
+            cancelKey: "cancel",
+            danger: true
+          })
+          if (!confirmed || !room) return
           const r = await emit("admin:kick-player", { code: room.code, adminSecret: s.adminSecret, playerId: p.id })
           if (!r.ok) showToast(t("errorGeneric"))
         })
@@ -98,8 +111,17 @@ export const adminView = {
 
     function renderAll() { renderHeader(); renderSettings(); renderPlayers() }
 
-    const onUpdated = (next: VisibleRoom) => { room = next; renderAll() }
+    const onUpdated = (next: VisibleRoom) => {
+      const dealt = !room?.assigned && next.assigned
+      room = next
+      renderAll()
+      if (dealt) vibrate("reveal")
+    }
     socket.on("admin:room-updated", onUpdated)
+
+    // The host watches the player list fill up without touching the screen.
+    const releaseWakeLock = holdWakeLock()
+    const stopWatchingConnection = watchConnection()
 
     if (room) renderAll()
 
@@ -197,6 +219,8 @@ export const adminView = {
 
     return () => {
       setViewBackHandler(null)
+      releaseWakeLock()
+      stopWatchingConnection()
       socket.off("admin:room-updated", onUpdated)
       saveBtn.removeEventListener("click", onSave)
       assignBtn.removeEventListener("click", onAssign)

@@ -9,6 +9,9 @@ import { setView, setViewBackHandler } from "../router.js"
 import { play } from "../services/sound.js"
 import { showToast } from "../ui/toast.js"
 import { confirmDialog } from "../ui/confirm.js"
+import { watchConnection } from "../services/connection.js"
+import { holdWakeLock } from "../services/wakeLock.js"
+import { vibrate } from "../ui/haptics.js"
 import type { PlayerJoinData, RoleAssignedPayload } from "@shared/events.js"
 
 export const playerRoomView = {
@@ -64,6 +67,8 @@ export const playerRoomView = {
       myRole = payload.role
       myRoleData = payload.roleData
       renderSettled()
+      // The phone is usually face down on the table when the host deals.
+      vibrate("reveal")
       await showReveal({ payload, lang })
     }
 
@@ -79,6 +84,11 @@ export const playerRoomView = {
       showToast(t("kickedFromRoom"))
       void setView("homeView", {}, { mode: "root" })
     }
+
+    // Players sit and wait for the host, so the screen must not sleep, and a
+    // dropped socket has to be visible rather than silently swallowed.
+    const releaseWakeLock = holdWakeLock()
+    const stopWatchingConnection = watchConnection()
 
     socket.on("player:role-assigned", onAssigned)
     socket.on("player:role-cleared",  onCleared)
@@ -115,6 +125,8 @@ export const playerRoomView = {
 
     return () => {
       setViewBackHandler(null)
+      releaseWakeLock()
+      stopWatchingConnection()
       socket.off("player:role-assigned", onAssigned)
       socket.off("player:role-cleared",  onCleared)
       socket.off("player:kicked",        onKicked)

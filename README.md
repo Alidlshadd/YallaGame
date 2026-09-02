@@ -4,7 +4,8 @@ Room-code platform for multiple hidden-role games. Admin creates a room, players
 
 ## Main Features
 
-- 3 games included: Vampire Village, Classic Mafia, Spy Game.
+- 5 games included: Vampire Village, Classic Mafia, Spy Game, Who Am I, Football Player Guess.
+- Two ways to play: **rooms** (everyone on their own phone) and **Local Play** (one phone passed around, no server needed).
 - Admin sees all players and all roles. Each player sees only their own.
 - 4 languages: Kurdish Sorani, Arabic, English, Turkish (with RTL for ku/ar).
 - Reconnect-safe: page refresh keeps the player bound to their slot.
@@ -19,6 +20,27 @@ Each game opens its own cinematic stage:
 - **🕶️ Spy Game** — tactical CRT display, scan lines, decrypt-style role reveal
 
 The role reveal is a 1.6-second cinematic moment — card flip with glow burst for Vampire/Mafia, terminal typewriter decrypt for Spy. Optional UI sound effects (default muted). Respects `prefers-reduced-motion`.
+
+## On a phone
+
+The app is built for phones first, and every one of these is covered by tests
+in `tests/e2e/`:
+
+- **Back button** — the hardware/gesture back and every in-page back control
+  walk the same stack (`src/client/services/navigation.ts`). Back closes a
+  modal, steps one screen back through the Local Play wizard, and asks before
+  it abandons a room. Nothing is a dead end that needs a reload.
+- **Install to the home screen** — `public/manifest.webmanifest` plus a service
+  worker (`public/sw.js`), so the game opens in a standalone window with no
+  browser chrome.
+- **Works with no signal** — the worker precaches the build (it reads the
+  hashed file names out of `asset-manifest.json`) and the game catalog is kept
+  on the device, so Local Play runs in airplane mode after one online visit.
+  Rooms always need the network and are never served from cache.
+- **Screen stays awake** during a round, and the phone buzzes on a role reveal
+  or a timer running out.
+- **Connection is honest** — a dropped socket shows a banner instead of a
+  static "Online" label.
 
 ## Run (dev)
 
@@ -82,18 +104,21 @@ Every game must include one role with `filler: true` — that role fills any rem
 ## Testing
 
 ```bash
-npm test               # Vitest unit tests (domain + store)
+npm test               # Vitest unit tests (domain, store, navigation, views)
 npm test -- --coverage # with coverage report
 npm run test:e2e       # Playwright (boots build + start, then runs)
 ```
 
-E2E tests assert role privacy at the WebSocket frame level — not just the rendered DOM.
+E2E tests assert role privacy at the WebSocket frame level — not just the
+rendered DOM — and cover the phone paths: back navigation through every flow,
+the offline cold start, and installability.
 
 ## Files
 
 - `src/server/` — bootstrap, config, logger, socket handlers, domain, store
 - `src/client/` — views, services (socket/session/i18n), router, UI helpers
 - `src/shared/` — types and event contracts used by both sides
+- `public/manifest.webmanifest`, `public/sw.js` — installable app + offline shell
 - `public/styles.css` — design (served as Vite publicDir)
 - `index.html` — entry HTML (Vite root)
 - `tests/unit/` — Vitest unit tests

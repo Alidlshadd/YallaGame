@@ -31,4 +31,10 @@ export function applyAll(): void {
     const key = el.dataset.i18n as keyof Translations | undefined
     if (key && key in DICTIONARIES[current]) el.textContent = DICTIONARIES[current][key]
   }
+  // Placeholders need the same treatment; a hard-coded "..." told a player
+  // nothing about what to type, in any language.
+  for (const el of document.querySelectorAll<HTMLElement>("[data-i18n-placeholder]")) {
+    const key = el.dataset.i18nPlaceholder as keyof Translations | undefined
+    if (key && key in DICTIONARIES[current]) el.setAttribute("placeholder", DICTIONARIES[current][key])
+  }
 }

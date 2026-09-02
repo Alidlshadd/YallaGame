@@ -165,6 +165,14 @@ const tr: Translations = {
   errorNoWords: "Bu kategoride kelime yok.",
   close: "Kapat",
   leaveRoom: "Odadan Ayrıl",
+  updateReady: "Yeni sürüm hazır. Yenileyerek güncelle.",
+  connectionLost: "Bağlantı koptu. Yeniden bağlanılıyor…",
+  connectionBack: "Bağlantı geri geldi.",
+  offline: "Çevrimdışı",
+  connecting: "Bağlanıyor…",
+  kickPlayerTitle: "Bu oyuncu çıkarılsın mı?",
+  kickPlayerBody: "Oda koduyla tekrar katılabilir.",
+  yourNamePlaceholder: "Adın",
   copyrightRights: "Tüm hakları saklıdır."
 }
 

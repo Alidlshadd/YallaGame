@@ -10,7 +10,11 @@ export default defineConfig({
   build: {
     outDir: "dist/client",
     emptyOutDir: true,
-    sourcemap: true
+    sourcemap: true,
+    // The service worker reads this to precache every content-hashed chunk,
+    // including the lazily imported views. Named without the leading dot of
+    // Vite's default path because express.static refuses to serve dotfiles.
+    manifest: "asset-manifest.json"
   },
   resolve: {
     alias: {

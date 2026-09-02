@@ -163,6 +163,14 @@ const en = {
   errorNoWords: "No words available in this category.",
   close: "Close",
   leaveRoom: "Leave Room",
+  updateReady: "A new version is ready. Refresh to update.",
+  connectionLost: "Connection lost. Reconnecting…",
+  connectionBack: "Back online.",
+  offline: "Offline",
+  connecting: "Connecting…",
+  kickPlayerTitle: "Remove this player?",
+  kickPlayerBody: "They can join again with the room code.",
+  yourNamePlaceholder: "Your name",
   copyrightRights: "All rights reserved."
 }
 

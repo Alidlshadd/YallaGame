@@ -228,8 +228,8 @@ body {
 .hud {
   position: fixed;
   z-index: var(--z-hud);
-  top: var(--s-4);
-  right: var(--s-4);
+  top: calc(var(--s-4) + env(safe-area-inset-top));
+  right: calc(var(--s-4) + env(safe-area-inset-right));
   display: flex;
   gap: var(--s-2);
   align-items: center;
@@ -340,8 +340,8 @@ body {
 .brand {
   position: fixed;
   z-index: var(--z-hud);
-  top: var(--s-4);
-  left: var(--s-4);
+  top: calc(var(--s-4) + env(safe-area-inset-top));
+  left: calc(var(--s-4) + env(safe-area-inset-left));
   display: flex;
   align-items: center;
   gap: var(--s-2);
@@ -455,6 +455,10 @@ body {
   border-color: rgba(180, 50, 60, 0.4);
   color: #ff8080;
 }
+
+/* Safari on iOS zooms the page in when a focused field is under 16px, which
+   throws the layout off centre mid-game. Keep every field at the floor. */
+input, select, textarea { font-size: max(16px, 1em); }
 
 /* ─── FOCUS ─────────────────────────────────────────────────────── */
 
@@ -806,7 +810,7 @@ body[data-perf="low"] *::after {
 /* Back button */
 .gi-back {
   position: absolute;
-  top: clamp(96px, 9vh, 120px);
+  top: calc(clamp(96px, 9vh, 120px) + env(safe-area-inset-top));
   left: clamp(var(--s-4), 4vw, var(--s-6));
   z-index: 10;
   display: inline-flex;
@@ -2991,6 +2995,55 @@ body[data-perf="low"] *::after {
   box-shadow: 0 0 8px rgba(74, 222, 128, 0.6);
 }
 
+/* Disconnected: the dot goes amber and pulses instead of quietly lying. */
+.conn-indicator.off { color: #f0b429; }
+.conn-indicator.off .dot {
+  background: #f0b429;
+  box-shadow: 0 0 8px rgba(240, 180, 41, 0.6);
+  animation: conn-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes conn-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.25; }
+}
+
+/* ─── Connection banner (room screens) ──────────────────────────── */
+
+.conn-banner {
+  position: fixed;
+  z-index: calc(var(--z-overlay) + 10);
+  left: 50%;
+  bottom: calc(var(--s-5) + env(safe-area-inset-bottom));
+  transform: translate(-50%, 12px);
+  max-width: min(90vw, 420px);
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: var(--type-sm);
+  font-weight: 600;
+  text-align: center;
+  color: #f5d98a;
+  background: rgba(48, 34, 8, 0.92);
+  border: 1px solid rgba(240, 180, 41, 0.45);
+  box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.9);
+  backdrop-filter: var(--surface-blur);
+  -webkit-backdrop-filter: var(--surface-blur);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--motion-snappy) ease-out, transform var(--motion-snappy) ease-out;
+}
+
+.conn-banner.visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.conn-banner.ok {
+  color: #b8f5c8;
+  background: rgba(10, 46, 24, 0.92);
+  border-color: rgba(74, 222, 128, 0.45);
+}
+
 /* ─── ROLE REVEAL OVERLAY ──────────────────────────────────────── */
 
 .reveal-overlay {
@@ -3470,7 +3523,7 @@ body[data-perf="low"] *::after {
 .view .backHome,
 .local-play #localPlayBack {
   position: sticky;
-  top: clamp(72px, 9vh, 104px);
+  top: calc(clamp(72px, 9vh, 104px) + env(safe-area-inset-top));
   z-index: 20;
   align-self: flex-start;
   margin-bottom: var(--s-4);

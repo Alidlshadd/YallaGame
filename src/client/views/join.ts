@@ -74,6 +74,17 @@ export const joinView = {
       goBack()
     }
 
+    // On a phone the keyboard's Go key is the natural way to submit; without
+    // this it just closed the keyboard and left the player staring at the form.
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Enter") return
+      e.preventDefault()
+      if (e.target === code && code.value.trim().length === 5) { name.focus(); return }
+      void onJoin()
+    }
+    code.addEventListener("keydown", onKey)
+    name.addEventListener("keydown", onKey)
+
     const btn = $<HTMLButtonElement>("#joinBtn")
     const backs = document.querySelectorAll<HTMLButtonElement>(".backHome")
     btn.addEventListener("click", onJoin)
@@ -81,6 +92,8 @@ export const joinView = {
 
     return () => {
       code.removeEventListener("input", onCodeInput)
+      code.removeEventListener("keydown", onKey)
+      name.removeEventListener("keydown", onKey)
       btn.removeEventListener("click", onJoin)
       backs.forEach(b => b.removeEventListener("click", onBack))
     }

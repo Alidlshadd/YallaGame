@@ -165,6 +165,14 @@ const ar: Translations = {
   errorNoWords: "لا توجد كلمات في هذه الفئة.",
   close: "إغلاق",
   leaveRoom: "مغادرة الغرفة",
+  updateReady: "يتوفر إصدار جديد. حدّث الصفحة.",
+  connectionLost: "انقطع الاتصال. جارٍ إعادة الاتصال…",
+  connectionBack: "عاد الاتصال.",
+  offline: "غير متصل",
+  connecting: "جارٍ الاتصال…",
+  kickPlayerTitle: "إخراج هذا اللاعب؟",
+  kickPlayerBody: "يمكنه الانضمام مجددًا برمز الغرفة.",
+  yourNamePlaceholder: "اسمك",
   copyrightRights: "جميع الحقوق محفوظة."
 }
 

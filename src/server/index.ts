@@ -1,4 +1,5 @@
 import express from "express"
+import compression from "compression"
 import http from "node:http"
 import { Server } from "socket.io"
 import helmet from "helmet"
@@ -34,7 +35,40 @@ function makeStore(): RoomStore {
 
 async function main() {
   const app = express()
-  app.use(helmet({ contentSecurityPolicy: false }))
+
+  // Phones on mobile data pay for every byte: the main bundle is ~170 kB raw
+  // and ~60 kB gzipped.
+  app.use(compression())
+
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        // The views set style attributes (per-world backdrops) and Vite
+        // injects a style element, so inline styles have to stay allowed.
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", "data:", "blob:"],
+        mediaSrc: ["'self'"],
+        // Same origin over http(s) and the websocket the room runs on.
+        connectSrc: ["'self'", "ws:", "wss:"],
+        workerSrc: ["'self'"],
+        manifestSrc: ["'self'"],
+        frameAncestors: ["'none'"],
+        objectSrc: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+        // Helmet adds this by default, which would rewrite every request to
+        // https - fatal for a host running the room over plain http on the
+        // living-room wifi.
+        upgradeInsecureRequests: null
+      }
+    },
+    // The app is served over plain http on a LAN during local play evenings;
+    // HSTS there would pin a certificate the host does not have.
+    hsts: config.NODE_ENV === "production" && Boolean(config.ALLOWED_ORIGIN)
+  }))
 
   const store = makeStore()
 
@@ -47,7 +81,18 @@ async function main() {
 
   const staticDir = path.resolve(__dirname, "../../dist/client")
   const legacyDir = path.resolve(__dirname, "../../public")
-  app.use(express.static(existsSync(staticDir) ? staticDir : legacyDir))
+  app.use(express.static(existsSync(staticDir) ? staticDir : legacyDir, {
+    setHeaders(res, filePath) {
+      // Build output carries a content hash, so it can be kept forever.
+      if (filePath.includes(`${path.sep}assets${path.sep}`)) {
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable")
+        return
+      }
+      // Everything else (the shell, the worker, the icons) must be revalidated
+      // or a phone would keep running last week's build.
+      res.setHeader("Cache-Control", "no-cache")
+    }
+  }))
 
   const server = http.createServer(app)
   const io = new Server<ClientToServerEvents, ServerToClientEvents, never, SocketData>(server, {

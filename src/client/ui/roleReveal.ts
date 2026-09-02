@@ -2,6 +2,7 @@ import { el } from "./dom.js"
 import { dismissLayer, pushLayer, type LayerHandle } from "../services/navigation.js"
 import { animate, prefersReducedMotion, orchestrate, REVEAL_EASING } from "./motion.js"
 import { play } from "../services/sound.js"
+import { vibrate } from "./haptics.js"
 import { currentTheme } from "../themes/loader.js"
 import type { RoleAssignedPayload } from "@shared/events.js"
 import type { LangCode } from "@shared/types.js"
@@ -52,6 +53,7 @@ async function showFlipReveal(opts: RevealOptions): Promise<void> {
     // than the screen behind it. Escape reaches the same stack globally.
     handle = pushLayer(cleanup, "role-reveal")
 
+    vibrate("reveal")
     requestAnimationFrame(() => overlay.classList.add("visible"))
 
     if (prefersReducedMotion()) {
@@ -174,6 +176,7 @@ async function showSpyReveal(opts: RevealOptions): Promise<void> {
     closeBtn.addEventListener("click", cleanup)
     handle = pushLayer(cleanup, "role-reveal")
 
+    vibrate("reveal")
     requestAnimationFrame(() => overlay.classList.add("visible"))
 
     const status = overlay.querySelector<HTMLElement>(".dossier-status .typewriter")!
