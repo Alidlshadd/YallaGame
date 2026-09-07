@@ -619,6 +619,7 @@ export const gameInfoView = {
         gameId: game.id,
         hostName: setup.hostName,
         hostCharacter: setup.hostCharacter,
+        hostAccessory: setup.hostAccessory,
         isPublic: setup.isPublic,
         requireApproval: setup.requireApproval
       })

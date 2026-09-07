@@ -224,6 +224,12 @@ const ar: Translations = {
   errorPickCharacter: "اختر شخصية أولاً.",
   errorCharacterTaken: "أخذ أحدهم هذه الشخصية للتو. اختر غيرها.",
   hostCharacterLabel: "شخصيتك",
+  avatarCharacters: "الشخصيات",
+  avatarAccessories: "الإكسسوارات",
+  avatarMakeItYours: "عبّر عن أسلوبك",
+  avatarRandom: "فاجئني",
+  avatarNoAccessory: "بدون إكسسوار",
+  avatarCustomize: "خصّص صورتك",
   copyrightRights: "جميع الحقوق محفوظة."
 }
 

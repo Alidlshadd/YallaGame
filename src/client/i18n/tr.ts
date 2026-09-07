@@ -227,6 +227,12 @@ const tr: Translations = {
   errorPickCharacter: "Önce bir karakter seç.",
   errorCharacterTaken: "O karakteri az önce başkası aldı. Başka birini seç.",
   hostCharacterLabel: "Karakterin",
+  avatarCharacters: "Karakterler",
+  avatarAccessories: "Aksesuarlar",
+  avatarMakeItYours: "Tarzını yansıt",
+  avatarRandom: "Şaşırt beni",
+  avatarNoAccessory: "Aksesuar yok",
+  avatarCustomize: "Avatarını özelleştir",
   copyrightRights: "Tüm hakları saklıdır."
 }
 

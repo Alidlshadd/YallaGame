@@ -3,22 +3,20 @@ import type { LocalizedText } from "./types.js"
 export interface CharacterDef {
   id: string
   name: LocalizedText
+  /** Position in the approved portrait atlas. Absent on retired characters. */
+  portrait?: number
 }
 
 /**
  * The cast a player picks from when they join a room.
  *
- * Deliberately animals and nothing else. Every online game here is a
- * hidden-role game, so an avatar that looks like a role — a vampire, a
- * detective, a doctor — would read as a tell across the table. These carry
- * personality without claiming anything about the person holding them.
+ * The original animal ids remain valid for existing saved seats. The new
+ * selectable cast uses the owner's approved human and fantasy portraits.
  *
  * The id is the contract: it is what the server stores, what travels over the
- * wire, and the filename of the artwork under `public/assets/characters/`.
- * Adding one means adding the image; removing one orphans anybody who had it,
- * so retire an id rather than reusing it.
+ * wire. Retire ids instead of reusing them for different identities.
  */
-export const CHARACTERS: CharacterDef[] = [
+const LEGACY_CHARACTERS: CharacterDef[] = [
   { id: "owl",     name: { en: "Owl",     tr: "Baykuş",   ar: "بومة",    ku: "کوندە" } },
   { id: "fox",     name: { en: "Fox",     tr: "Tilki",    ar: "ثعلب",    ku: "ڕێوی" } },
   { id: "raven",   name: { en: "Raven",   tr: "Kuzgun",   ar: "غراب",    ku: "قەلەڕەش" } },
@@ -33,12 +31,38 @@ export const CHARACTERS: CharacterDef[] = [
   { id: "lion",    name: { en: "Lion",    tr: "Aslan",    ar: "أسد",     ku: "شێر" } }
 ]
 
-export const CHARACTER_IDS: readonly string[] = CHARACTERS.map(c => c.id)
+/** Original ids remain readable for saved rooms; new picks use the approved cast. */
+export const CHARACTERS: CharacterDef[] = [
+  ["ace", "Ace", "As", "آس", "ئاس"],
+  ["ruby", "Ruby", "Yakut", "ياقوت", "یاقووت"],
+  ["pebble", "Pebble", "Çakıl", "حصاة", "بەردۆک"],
+  ["gizmo", "Gizmo", "Gizmo", "غيزمو", "گیزمۆ"],
+  ["silver", "Silver", "Gümüş", "فضة", "زیو"],
+  ["fuzz", "Fuzz", "Pofuduk", "منفوش", "پەشمووک"],
+  ["wisp", "Wisp", "Hayalet", "طيف", "خێو"],
+  ["nova", "Nova", "Nova", "نوفا", "نۆڤا"],
+  ["bolt", "Bolt", "Cıvata", "بولت", "بۆڵت"],
+  ["splash", "Splash", "Şıpır", "رذاذ", "پرژە"],
+  ["rusty", "Rusty", "Bakır", "نحاسي", "مسین"],
+  ["luna", "Luna", "Luna", "لونا", "لوونا"],
+  ["ember", "Ember", "Köz", "جمرة", "پشکۆ"],
+  ["blinky", "Blinky", "Tekgöz", "غمزة", "چاوک"],
+  ["cosmo", "Cosmo", "Kozmo", "كوزمو", "کۆزمۆ"],
+  ["jade", "Jade", "Yeşim", "يشم", "یەشم"],
+  ["pixie", "Pixie", "Peri", "جنية", "پەری"],
+  ["mochi", "Mochi", "Mantar", "فطر", "قارچک"],
+  ["onyx", "Onyx", "Oniks", "عقيق", "عەقیق"],
+  ["milo", "Milo", "Milo", "ميلو", "میلۆ"]
+].map(([id, en, tr, ar, ku], portrait) => ({
+  id: id!, name: { en: en!, tr: tr!, ar: ar!, ku: ku! }, portrait
+}))
+
+export const CHARACTER_IDS: readonly string[] = [...CHARACTERS, ...LEGACY_CHARACTERS].map(c => c.id)
 
 export function isCharacterId(value: string): boolean {
   return CHARACTER_IDS.includes(value)
 }
 
 export function findCharacter(id: string): CharacterDef | undefined {
-  return CHARACTERS.find(c => c.id === id)
+  return CHARACTERS.find(c => c.id === id) ?? LEGACY_CHARACTERS.find(c => c.id === id)
 }

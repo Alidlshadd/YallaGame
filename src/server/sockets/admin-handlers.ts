@@ -5,7 +5,7 @@ import type { RoomStore } from "../store/store.js"
 import type { GameResolver } from "../domain/visibility.js"
 import { bind } from "./bind.js"
 import { projectRoomFor, summarizeRoom, takenCharacters } from "../domain/visibility.js"
-import { isCharacterId } from "@shared/characters.js"
+import { isCharacterId } from "../../shared/characters.js"
 import { normalizeSettings } from "../domain/settings.js"
 import { buildRolePool, assignRolesToConnected } from "../domain/roles.js"
 import { makeRoomCode, makeSecret } from "../domain/codes.js"
@@ -60,7 +60,7 @@ async function announceApprovals(deps: AdminDeps, room: Room, playerIds: string[
     deps.io.to(`pending:${room.code}:${id}`).emit("player:join-approved", {
       status: "joined",
       room: projectRoomFor(room, { kind: "player", playerId: id }, deps.resolveGame),
-      player: { id: player.id, name: player.name, role: player.role, roleData, character: player.character }
+      player: { id: player.id, name: player.name, role: player.role, roleData, character: player.character, accessory: player.accessory ?? "" }
     })
     deps.io.in(`pending:${room.code}:${id}`).socketsLeave(`pending:${room.code}:${id}`)
   }
@@ -75,7 +75,7 @@ async function generateUniqueCode(store: RoomStore): Promise<string> {
 }
 
 export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): void {
-  bind(socket, "admin:create-room", CreateRoomPayload, async ({ gameId, hostName, hostCharacter, isPublic, requireApproval }) => {
+  bind(socket, "admin:create-room", CreateRoomPayload, async ({ gameId, hostName, hostCharacter, hostAccessory, isPublic, requireApproval }) => {
     const game = deps.resolveGame(gameId)
     if (!game) throw new Error("UNKNOWN_GAME")
     if (!isCharacterId(hostCharacter)) throw new Error("UNKNOWN_CHARACTER")
@@ -91,7 +91,7 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
     const now = Date.now()
     // The host plays too, so they take the first seat rather than sitting
     // outside the game: their name is what the room browser shows as "created by".
-    const host: Player = { id: makeSecret(), name: hostName, role: null, connected: true, character: hostCharacter }
+    const host: Player = { id: makeSecret(), name: hostName, role: null, connected: true, character: hostCharacter, accessory: hostAccessory ?? "" }
     const room: Room = {
       code: finalCode, gameId: game.id, adminSecret,
       assigned: false,
@@ -208,7 +208,7 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
           ...room.pending.map(r => {
             const free = r.character && !claimed.has(r.character)
             if (free) claimed.add(r.character)
-            return { id: r.id, name: r.name, role: null, connected: true, character: free ? r.character : "" }
+            return { id: r.id, name: r.name, role: null, connected: true, character: free ? r.character : "", accessory: r.accessory ?? "" }
           })
         ]
         next.pending = []
@@ -238,7 +238,7 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
       const stillFree = !takenCharacters({ ...room, pending: [] }).includes(request.character)
       const seat = {
         id: request.id, name: request.name, role: null, connected: true,
-        character: stillFree ? request.character : ""
+        character: stillFree ? request.character : "", accessory: request.accessory ?? ""
       }
       return { ...room, players: [...room.players, seat], pending: room.pending.filter(r => r.id !== requestId) }
     })

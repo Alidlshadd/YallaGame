@@ -7,6 +7,7 @@ import { getLang } from "../services/i18n.js"
 export interface HostSetup {
   hostName: string
   hostCharacter: string
+  hostAccessory: string
   isPublic: boolean
   requireApproval: boolean
 }
@@ -98,6 +99,7 @@ export function hostSetupDialog(): Promise<HostSetup | null> {
       const setup: HostSetup = {
         hostName,
         hostCharacter: picker.value(),
+        hostAccessory: picker.accessory(),
         isPublic: publicInput.checked,
         requireApproval: approvalInput.checked
       }

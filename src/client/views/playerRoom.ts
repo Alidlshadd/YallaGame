@@ -33,7 +33,7 @@ export const playerRoomView = {
       gameNameEl.textContent = ctx.initial.room.game.title[lang]
       clear(welcomeEl)
       welcomeEl.append(
-        buildAvatar(ctx.initial.player.character, ctx.initial.player.name, lang, { size: 40, lazy: false }),
+        buildAvatar(ctx.initial.player.character, ctx.initial.player.name, lang, { size: 40, lazy: false, accessory: ctx.initial.player.accessory }),
         el("span", {}, [ctx.initial.player.name])
       )
     }

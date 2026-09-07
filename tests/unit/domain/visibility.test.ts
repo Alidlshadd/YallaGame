@@ -32,6 +32,14 @@ const games = new Map([[game.id, game]])
 const resolveGame = (id: string) => games.get(id)!
 
 describe("projectRoomFor", () => {
+  it("shares cosmetics without sharing other players' roles and defaults old saves", () => {
+    const dressed = { ...room, players: room.players.map((p, i) => i === 0 ? { ...p, accessory: "crown" } : p) }
+    const player = projectRoomFor(dressed, { kind: "player", playerId: "p2" }, resolveGame)
+    expect(player.players[0]).toMatchObject({ accessory: "crown", role: null })
+    expect(player.players[1]?.accessory).toBe("")
+    const admin = projectRoomFor(dressed, { kind: "admin", adminSecret: "admin-secret" }, resolveGame)
+    expect(admin.players[0]).toMatchObject({ accessory: "crown", role: "vampire" })
+  })
   it("admin viewer sees every player's role", () => {
     const v: Viewer = { kind: "admin", adminSecret: "admin-secret" }
     const out = projectRoomFor(room, v, resolveGame)

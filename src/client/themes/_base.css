@@ -3,6 +3,8 @@
    Per-game theme files override the --theme-* variables.
    ───────────────────────────────────────────────────────────────── */
 
+@import "./avatars.css";
+
 :root {
   /* Base canvas */
   --bg-void: #0a0a12;

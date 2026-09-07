@@ -224,6 +224,12 @@ const ku: Translations = {
   errorPickCharacter: "سەرەتا کەسایەتییەک هەڵبژێرە.",
   errorCharacterTaken: "کەسێک ئێستا ئەو کەسایەتییەی برد. یەکێکی تر هەڵبژێرە.",
   hostCharacterLabel: "کەسایەتییەکەت",
+  avatarCharacters: "کەسایەتییەکان",
+  avatarAccessories: "ئاکسسوارات",
+  avatarMakeItYours: "شێوازی خۆت نیشان بدە",
+  avatarRandom: "سەرسامم بکە",
+  avatarNoAccessory: "بێ ئاکسسوارات",
+  avatarCustomize: "ئەڤەتارەکەت جوان بکە",
   copyrightRights: "هەموو مافەکان پارێزراون."
 }
 

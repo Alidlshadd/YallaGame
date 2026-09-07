@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { isAccessoryId } from "../../shared/accessories.js"
 
 export const RoomCode = z.string().regex(/^[A-Z2-9]{5}$/, "invalid room code")
 
@@ -7,11 +8,13 @@ export const PlayerName = z.string().trim().min(1).max(24)
 
 /** Shape only; whether the id is real is checked against the catalogue. */
 export const CharacterId = z.string().trim().min(1).max(32)
+export const AccessoryId = z.string().max(32).refine(isAccessoryId, "unknown accessory")
 
 export const CreateRoomPayload    = z.object({
   gameId: z.string().min(1).max(64),
   hostName: PlayerName,
   hostCharacter: CharacterId,
+  hostAccessory: AccessoryId.optional(),
   isPublic: z.boolean(),
   requireApproval: z.boolean()
 })
@@ -33,6 +36,7 @@ export const JoinPayload          = z.object({
   name: PlayerName,
   // Optional so a rebinding player keeps the character they already hold.
   character: CharacterId.optional(),
+  accessory: AccessoryId.optional(),
   playerId: z.string().min(1).max(64).optional()
 })
 export const PeekRoomPayload      = z.object({ code: RoomCode })

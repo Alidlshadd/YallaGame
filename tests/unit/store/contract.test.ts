@@ -102,6 +102,19 @@ for (const { name, make } of factories) {
       expect(listed[0]?.pending).toEqual([{ id: "req1", name: "Ada", requestedAt: 42, character: "owl" }])
     })
 
+    it("persists both seated and queued avatar accessories", async () => {
+      await store.create({
+        ...mkRoom("STYLE", 100),
+        players: [{ id: "host", name: "Host", role: null, connected: true, character: "ace", accessory: "crown" }],
+        pending: [{ id: "req", name: "Ada", requestedAt: 101, character: "wisp", accessory: "heart-glasses" }]
+      })
+      const saved = await store.get("STYLE")
+      expect(saved?.players[0]).toMatchObject({ character: "ace", accessory: "crown" })
+      expect(saved?.pending[0]).toMatchObject({ character: "wisp", accessory: "heart-glasses" })
+      await store.update("STYLE", room => ({ ...room, players: room.players.map(p => ({ ...p, accessory: "" })) }))
+      expect((await store.get("STYLE"))?.players[0]?.accessory).toBe("")
+    })
+
     it("countActiveRooms reflects create/delete", async () => {
       expect(await store.countActiveRooms()).toBe(0)
       await store.create(mkRoom("F1111"))

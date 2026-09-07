@@ -17,7 +17,7 @@ export interface CreateRoomOptions {
  * every spec needs the same four clicks.
  */
 export async function createRoom(page: Page, opts: CreateRoomOptions = {}): Promise<string> {
-  const { hostName = "Host", hostCharacter = "owl", isPublic = false, requireApproval = false } = opts
+  const { hostName = "Host", hostCharacter = "ace", isPublic = false, requireApproval = false } = opts
 
   await page.goto("/")
   await page.click(".cta-create")
@@ -45,7 +45,7 @@ export async function openDoorstep(page: Page, code: string): Promise<void> {
 }
 
 /** Walk the doorstep: name, character, submit. */
-export async function submitJoin(page: Page, code: string, name: string, character = "fox"): Promise<void> {
+export async function submitJoin(page: Page, code: string, name: string, character = "ruby"): Promise<void> {
   await openDoorstep(page, code)
   await page.fill("#joinSetupName", name)
   await page.locator(`#joinSetupCharacters .char-tile[data-character="${character}"]`).click()
@@ -53,7 +53,7 @@ export async function submitJoin(page: Page, code: string, name: string, charact
 }
 
 /** Join a room that seats players immediately, and wait until they are in. */
-export async function joinAs(page: Page, code: string, name: string, character = "fox"): Promise<void> {
+export async function joinAs(page: Page, code: string, name: string, character = "ruby"): Promise<void> {
   await submitJoin(page, code, name, character)
   await expect(page.locator("#playerWelcome")).toContainText(name)
 }

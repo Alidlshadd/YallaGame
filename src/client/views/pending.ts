@@ -20,7 +20,7 @@ import type { JoinedData } from "@shared/events.js"
  */
 export const pendingView = {
   id: "pendingView" as const,
-  mount(ctx: { requestId?: string; code?: string; name?: string; character?: string; theme?: string }) {
+  mount(ctx: { requestId?: string; code?: string; name?: string; character?: string; accessory?: string; theme?: string }) {
     const codeEl = $<HTMLElement>("#pendingRoomCode")
     const cancelBtn = $<HTMLButtonElement>("#cancelRequestBtn")
     const avatarSlot = $<HTMLElement>("#pendingAvatar")
@@ -33,7 +33,7 @@ export const pendingView = {
 
     clear(avatarSlot)
     if (ctx.character) {
-      avatarSlot.appendChild(buildAvatar(ctx.character, ctx.name ?? "", getLang(), { size: 72, lazy: false }))
+      avatarSlot.appendChild(buildAvatar(ctx.character, ctx.name ?? "", getLang(), { size: 72, lazy: false, accessory: ctx.accessory }))
     }
 
     // The player is staring at a screen that only changes when somebody else

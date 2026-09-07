@@ -1,71 +1,57 @@
 import { el } from "./dom.js"
 import { findCharacter } from "@shared/characters.js"
+import { findAccessory } from "@shared/accessories.js"
+import { buildAccessory } from "./accessory.js"
 import type { LangCode } from "@shared/types.js"
 
-/** Artwork lives under public/assets/characters/<id>.webp. */
 export function characterImagePath(id: string): string {
-  return `/assets/characters/${id}.webp`
+  return findCharacter(id)?.portrait !== undefined ? "/assets/characters/avatar-atlas.png" : `/assets/characters/${id}.webp`
 }
+export function characterName(id: string, lang: LangCode): string { return findCharacter(id)?.name[lang] ?? "" }
+export interface AvatarOptions { size?: number; class?: string; lazy?: boolean; accessory?: string | undefined }
 
-export function characterName(id: string, lang: LangCode): string {
-  return findCharacter(id)?.name[lang] ?? ""
-}
+// Eyes x/y, forehead y and face width, as percentages of each portrait viewport.
+const ANCHORS = [
+  [53,53,20,62],[53,53,19,60],[50,57,23,73],[53,50,21,70],[52,53,20,62],
+  [50,53,22,75],[54,57,25,66],[54,52,20,60],[51,55,22,70],[53,53,22,70],
+  [52,53,22,60],[51,53,20,60],[53,57,23,72],[50,54,23,70],[53,51,20,65],
+  [52,54,21,62],[53,55,22,61],[51,66,24,66],[51,55,23,65],[52,53,20,63]
+]
 
-export interface AvatarOptions {
-  /** Rendered pixel size; also the intrinsic size given to the tag. */
-  size?: number
-  /** Extra class on the wrapper, for per-context sizing. */
-  class?: string
-  lazy?: boolean
-}
-
-/**
- * A player's face. Falls back to the first letter of their name when they have
- * no character — seats taken before characters existed, and anyone the host
- * admitted after their pick was claimed by somebody faster.
- */
-export function buildAvatar(
-  character: string,
-  playerName: string,
-  lang: LangCode,
-  opts: AvatarOptions = {}
-): HTMLElement {
-  const size = opts.size ?? 32
+export function buildAvatar(character: string, playerName: string, lang: LangCode, opts: AvatarOptions = {}): HTMLElement {
+  const def = findCharacter(character)
+  const accessory = findAccessory(opts.accessory ?? "")
   const wrap = el("span", {
     class: `avatar${opts.class ? ` ${opts.class}` : ""}`,
-    style: `--avatar-size:${size}px`
+    style: `--avatar-size:${opts.size ?? 32}px`, role: "img",
+    "aria-label": [def?.name[lang] ?? playerName, accessory?.name[lang]].filter(Boolean).join(" · "),
+    "data-avatar": character, "data-accessory": accessory?.id ?? ""
   })
-
-  const def = findCharacter(character)
-  if (!def) {
+  const face = el("span", { class: "avatar-face", "aria-hidden": "true" })
+  wrap.append(face)
+  const fallback = () => {
+    face.replaceChildren(el("span", { class: "avatar-monogram" }, [[...playerName.trim()][0]?.toUpperCase() ?? "?"]))
     wrap.classList.add("avatar--monogram")
-    wrap.append(el("span", { class: "avatar-monogram", "aria-hidden": "true" }, [initialOf(playerName)]))
-    return wrap
   }
-
-  const img = el("img", {
-    src: characterImagePath(def.id),
-    alt: def.name[lang],
-    width: String(size),
-    height: String(size),
-    decoding: "async",
-    ...(opts.lazy === false ? {} : { loading: "lazy" })
-  }) as HTMLImageElement
-
-  // The art is dropped in separately from the code. Until a file exists — or
-  // if one fails to load on a flaky connection — show the monogram rather than
-  // a broken-image glyph.
-  img.addEventListener("error", () => {
-    wrap.classList.add("avatar--monogram")
-    img.remove()
-    wrap.append(el("span", { class: "avatar-monogram", "aria-hidden": "true" }, [initialOf(playerName)]))
-  }, { once: true })
-
-  wrap.appendChild(img)
+  if (!def) { fallback(); return wrap }
+  const img = el("img", { src: characterImagePath(def.id), alt: "", decoding: "async", ...(opts.lazy === false ? {} : { loading: "lazy" }) })
+  if (def.portrait !== undefined) {
+    // Viewports preserve the approved bitmap faces, with a single cached request.
+    const x = [10,216,418,620,815][def.portrait % 5]!
+    const y = [194,486,783,1086][Math.floor(def.portrait / 5)]!
+    img.classList.add("avatar-atlas")
+    img.style.cssText = `width:${1024/204*100}%;height:${1536/264*100}%;left:${-x/204*100}%;top:${-y/264*100}%`
+    const [eyeX, eyeY, headY, width] = ANCHORS[def.portrait]!
+    wrap.style.setProperty("--face-x", `${eyeX}%`)
+    wrap.style.setProperty("--eye-y", `${eyeY}%`)
+    wrap.style.setProperty("--head-y", `${headY}%`)
+    wrap.style.setProperty("--face-width", `${width}%`)
+  }
+  img.addEventListener("error", fallback, { once: true })
+  face.append(img)
+  if (accessory) {
+    const overlay = buildAccessory(accessory.id)
+    if (overlay) { overlay.classList.add(`accessory-anchor--${accessory.anchor}`); wrap.append(overlay) }
+  }
   return wrap
-}
-
-function initialOf(name: string): string {
-  const trimmed = name.trim()
-  return trimmed ? [...trimmed][0]!.toUpperCase() : "?"
 }

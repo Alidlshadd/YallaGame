@@ -93,13 +93,14 @@ export const joinSetupView = {
       if (joining) return
       const playerName = nameInput.value.trim()
       const character = picker.value()
+      const accessory = picker.accessory()
       if (!playerName) { showError("errorNameRequired"); nameInput.focus(); return }
       if (!character)  { showError("errorPickCharacter"); return }
 
       joining = true
       submitBtn.disabled = true
       msg.classList.add("hidden")
-      const r = await emit("player:join", { code, name: playerName, character })
+      const r = await emit("player:join", { code, name: playerName, character, accessory })
       joining = false
       syncSubmit()
 
@@ -116,7 +117,7 @@ export const joinSetupView = {
         await applyTheme(data.theme)
         await setView("pendingView", {
           requestId: data.requestId, code: data.code, theme: data.theme,
-          name: playerName, character
+          name: playerName, character, accessory
         })
         return
       }

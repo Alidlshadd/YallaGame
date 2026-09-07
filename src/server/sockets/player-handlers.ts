@@ -5,7 +5,7 @@ import type { RoomStore } from "../store/store.js"
 import type { GameResolver } from "../domain/visibility.js"
 import { bind } from "./bind.js"
 import { projectRoomFor, takenCharacters } from "../domain/visibility.js"
-import { isCharacterId } from "@shared/characters.js"
+import { isCharacterId } from "../../shared/characters.js"
 import { makeSecret } from "../domain/codes.js"
 import { fillerRoleId } from "../domain/roles.js"
 import { JoinPayload, CancelRequestPayload } from "./schemas.js"
@@ -23,7 +23,7 @@ export interface PlayerDeps {
 }
 
 export function registerPlayerHandlers(socket: TypedSocket, deps: PlayerDeps): void {
-  bind(socket, "player:join", JoinPayload, async ({ code, name, character, playerId }) => {
+  bind(socket, "player:join", JoinPayload, async ({ code, name, character, accessory, playerId }) => {
     if (character !== undefined && !isCharacterId(character)) throw new Error("UNKNOWN_CHARACTER")
     let bound: Player | null = null
     let queued: PendingJoin | null = null
@@ -55,7 +55,7 @@ export function registerPlayerHandlers(socket: TypedSocket, deps: PlayerDeps): v
         // already had unless they explicitly picked a different free one.
         const wanted = character && character !== collision.character
           && !takenCharacters(room).includes(character) ? character : collision.character
-        bound = { ...collision, connected: true, role: roleFor(collision.role), character: wanted }
+        bound = { ...collision, connected: true, role: roleFor(collision.role), character: wanted, accessory: accessory ?? collision.accessory ?? "" }
         return { ...room, players: room.players.map(p => p.id === collision.id ? bound! : p) }
       }
       // A name already waiting in the queue is just as taken as one in a seat.
@@ -66,13 +66,13 @@ export function registerPlayerHandlers(socket: TypedSocket, deps: PlayerDeps): v
       if (character && takenCharacters(room).includes(character)) throw new Error("CHARACTER_TAKEN")
 
       if (room.requireApproval) {
-        const request: PendingJoin = { id: makeSecret(), name, requestedAt: Date.now(), character: character ?? "" }
+        const request: PendingJoin = { id: makeSecret(), name, requestedAt: Date.now(), character: character ?? "", accessory: accessory ?? "" }
         queued = request
         return { ...room, pending: [...room.pending, request] }
       }
 
       if (room.players.length >= deps.config.MAX_PLAYERS_PER_ROOM) throw new Error("ROOM_FULL")
-      const fresh: Player = { id: makeSecret(), name, role: roleFor(null), connected: true, character: character ?? "" }
+      const fresh: Player = { id: makeSecret(), name, role: roleFor(null), connected: true, character: character ?? "", accessory: accessory ?? "" }
       bound = fresh
       return { ...room, players: [...room.players, fresh] }
     })
@@ -118,7 +118,7 @@ export function registerPlayerHandlers(socket: TypedSocket, deps: PlayerDeps): v
     const myProjection = projectRoomFor(updated, { kind: "player", playerId: me.id }, deps.resolveGame)
     return {
       status: "joined" as const, room: myProjection,
-      player: { id: me.id, name: me.name, role: me.role, roleData, character: me.character }
+      player: { id: me.id, name: me.name, role: me.role, roleData, character: me.character, accessory: me.accessory ?? "" }
     }
   })
 

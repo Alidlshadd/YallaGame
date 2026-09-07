@@ -225,6 +225,12 @@ const en = {
   errorPickCharacter: "Pick a character first.",
   errorCharacterTaken: "Somebody just took that character. Pick another.",
   hostCharacterLabel: "Your character",
+  avatarCharacters: "Characters",
+  avatarAccessories: "Accessories",
+  avatarMakeItYours: "Make it yours",
+  avatarRandom: "Surprise me",
+  avatarNoAccessory: "No accessory",
+  avatarCustomize: "Customize your avatar",
   copyrightRights: "All rights reserved."
 }
 

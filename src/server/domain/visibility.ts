@@ -19,7 +19,7 @@ export function projectRoomFor(room: Room, viewer: Viewer, resolveGame: GameReso
     return {
       ...shared,
       players: room.players.map(p => ({
-        id: p.id, name: p.name, connected: p.connected, role: p.role, character: p.character
+        id: p.id, name: p.name, connected: p.connected, role: p.role, character: p.character, accessory: p.accessory ?? ""
       })),
       // Only the host decides who gets in, so only the host sees the queue.
       pending: room.pending.map(r => ({ ...r }))
@@ -34,7 +34,7 @@ export function projectRoomFor(room: Room, viewer: Viewer, resolveGame: GameReso
     players: room.players.map(p => ({
       id: p.id, name: p.name, connected: p.connected,
       role: p.id === viewer.playerId ? p.role : null,
-      character: p.character
+      character: p.character, accessory: p.accessory ?? ""
     })),
     pending: []
   }

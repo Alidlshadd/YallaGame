@@ -51,6 +51,7 @@ export interface Player {
   connected: boolean
   /** A character id from `shared/characters.ts`; "" for seats taken before characters existed. */
   character: string
+  accessory?: string | undefined
 }
 
 /**
@@ -63,6 +64,7 @@ export interface PendingJoin {
   name: string
   requestedAt: number
   character: string
+  accessory?: string | undefined
 }
 
 export interface Room {
@@ -93,6 +95,7 @@ export interface VisiblePlayer {
   connected: boolean
   role: RoleId | null
   character: string
+  accessory?: string | undefined
 }
 
 export interface VisibleRoom {
@@ -132,6 +135,7 @@ export interface SelfPlayer {
   role: RoleId | null
   roleData: Role | null
   character: string
+  accessory?: string | undefined
 }
 
 export type ErrorCode =
