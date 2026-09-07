@@ -6,9 +6,9 @@ test("reconnect: A reloads while B stays — A re-binds, B unaffected, no privac
   const admin = await adminCtx.newPage()
   const code = await createRoom(admin)
 
-  const ctxA = await browser.newContext(); const pageA = await ctxA.newPage(); await joinAs(pageA, code, "Ada", "fox")
-  const ctxB = await browser.newContext(); const pageB = await ctxB.newPage(); await joinAs(pageB, code, "Bea", "raven")
-  const ctxC = await browser.newContext(); const pageC = await ctxC.newPage(); await joinAs(pageC, code, "Cem", "wolf")
+  const ctxA = await browser.newContext(); const pageA = await ctxA.newPage(); await joinAs(pageA, code, "Ada", "ruby")
+  const ctxB = await browser.newContext(); const pageB = await ctxB.newPage(); await joinAs(pageB, code, "Bea", "pebble")
+  const ctxC = await browser.newContext(); const pageC = await ctxC.newPage(); await joinAs(pageC, code, "Cem", "gizmo")
 
   await admin.click("#assignRolesBtn")
   await expect(admin.locator("#rolesStatus")).toHaveText("✓")
