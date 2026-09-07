@@ -11,11 +11,11 @@ import { confirmDialog } from "../ui/confirm.js"
 import { watchConnection } from "../services/connection.js"
 import { holdWakeLock } from "../services/wakeLock.js"
 import { vibrate } from "../ui/haptics.js"
-import type { PlayerJoinData, RoleAssignedPayload } from "@shared/events.js"
+import type { JoinedData, RoleAssignedPayload } from "@shared/events.js"
 
 export const playerRoomView = {
   id: "playerRoomView" as const,
-  mount(ctx: { initial?: PlayerJoinData }) {
+  mount(ctx: { initial?: JoinedData }) {
     const gameNameEl = $<HTMLElement>("#playerGameName")
     const welcomeEl  = $<HTMLElement>("#playerWelcome")
     const statusEl   = $<HTMLElement>("#playerStatus")

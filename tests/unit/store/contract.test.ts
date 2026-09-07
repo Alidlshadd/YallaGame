@@ -7,7 +7,8 @@ import { SqliteStore } from "@server/store/sqlite-store.js"
 function mkRoom(code: string, createdAt = Date.now()): Room {
   return {
     code, gameId: "g", adminSecret: "a", assigned: false,
-    settings: {}, players: [], createdAt, updatedAt: createdAt
+    settings: {}, players: [], createdAt, updatedAt: createdAt,
+    hostPlayerId: "h", isPublic: false, requireApproval: false, pending: []
   }
 }
 
@@ -73,6 +74,32 @@ for (const { name, make } of factories) {
       expect(await store.get("OLD11")).toBeNull()
       expect(await store.get("OLD22")).toBeNull()
       expect(await store.get("NEW33")).not.toBeNull()
+    })
+
+    it("listPublic returns only public rooms, newest first", async () => {
+      await store.create({ ...mkRoom("PUB11", 100), isPublic: true })
+      await store.create({ ...mkRoom("PRIV1", 200), isPublic: false })
+      await store.create({ ...mkRoom("PUB22", 300), isPublic: true })
+      const listed = await store.listPublic(10)
+      expect(listed.map(r => r.code)).toEqual(["PUB22", "PUB11"])
+    })
+
+    it("listPublic honours the limit", async () => {
+      await store.create({ ...mkRoom("PUB33", 100), isPublic: true })
+      await store.create({ ...mkRoom("PUB44", 200), isPublic: true })
+      expect((await store.listPublic(1)).map(r => r.code)).toEqual(["PUB44"])
+    })
+
+    it("listPublic round-trips the approval flag and the pending queue", async () => {
+      await store.create({
+        ...mkRoom("PUB55", 100),
+        isPublic: true, requireApproval: true,
+        pending: [{ id: "req1", name: "Ada", requestedAt: 42 }]
+      })
+      const listed = await store.listPublic(10)
+      expect(listed).toHaveLength(1)
+      expect(listed[0]?.requireApproval).toBe(true)
+      expect(listed[0]?.pending).toEqual([{ id: "req1", name: "Ada", requestedAt: 42 }])
     })
 
     it("countActiveRooms reflects create/delete", async () => {

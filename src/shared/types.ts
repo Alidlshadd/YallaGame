@@ -51,6 +51,17 @@ export interface Player {
   connected: boolean
 }
 
+/**
+ * Somebody who asked to join a room whose host has approval turned on. They
+ * hold no seat and no role until the host accepts; rejecting or disconnecting
+ * drops the entry.
+ */
+export interface PendingJoin {
+  id: string
+  name: string
+  requestedAt: number
+}
+
 export interface Room {
   code: string
   gameId: GameId
@@ -60,6 +71,13 @@ export interface Room {
   players: Player[]
   createdAt: number
   updatedAt: number
+  /** The host plays too: this is their entry in `players`. */
+  hostPlayerId: string
+  /** Listed in the public room browser. Private rooms are code-only. */
+  isPublic: boolean
+  /** When on, `player:join` parks newcomers in `pending` for the host to accept. */
+  requireApproval: boolean
+  pending: PendingJoin[]
 }
 
 export type Viewer =
@@ -80,6 +98,26 @@ export interface VisibleRoom {
   assigned: boolean
   settings: Settings
   players: VisiblePlayer[]
+  hostPlayerId: string
+  isPublic: boolean
+  requireApproval: boolean
+  /** Only ever populated for the host; players receive an empty list. */
+  pending: PendingJoin[]
+}
+
+/** One row of the public room browser. Deliberately thin: no secrets, no roles. */
+export interface RoomSummary {
+  code: string
+  gameId: GameId
+  gameTitle: LocalizedText
+  gameIcon: string
+  theme: string
+  hostName: string
+  playerCount: number
+  requireApproval: boolean
+  /** Roles are out — the game is already running. */
+  assigned: boolean
+  createdAt: number
 }
 
 export interface SelfPlayer {
@@ -102,6 +140,9 @@ export type ErrorCode =
   | "AUTHZ_MISMATCH"
   | "NO_FILLER_ROLE"
   | "UNKNOWN_GAME"
+  | "REQUEST_NOT_FOUND"
+  | "JOIN_REJECTED"
+  | "ROOM_FULL"
 
 export interface SocketData {
   roomCode?: string
@@ -109,4 +150,6 @@ export interface SocketData {
   adminSecret?: string
   adminRoomCount?: number
   rateBag?: Map<string, number>
+  /** Set while this socket is waiting on the host's decision. */
+  pendingRequestId?: string
 }

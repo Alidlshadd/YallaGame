@@ -9,6 +9,8 @@ import { holdWakeLock } from "../services/wakeLock.js"
 import { vibrate } from "../ui/haptics.js"
 import { applyTheme, clearTheme } from "../themes/loader.js"
 import { setView, setViewBackHandler } from "../router.js"
+import { showReveal } from "../ui/roleReveal.js"
+import type { RoleAssignedPayload } from "@shared/events.js"
 import type { VisibleRoom } from "@shared/types.js"
 
 export const adminView = {
@@ -28,6 +30,11 @@ export const adminView = {
     const settingsEl = $<HTMLDivElement>("#dynamicSettings")
     const listEl     = $<HTMLDivElement>("#adminPlayersList")
     const assignBtn  = $<HTMLButtonElement>("#assignRolesBtn")
+    const requestsPanel = $<HTMLDivElement>("#joinRequestsPanel")
+    const requestsList  = $<HTMLDivElement>("#joinRequestsList")
+    const requestsCount = $<HTMLElement>("#requestsCount")
+    const publicToggle   = $<HTMLInputElement>("#roomPublicToggle")
+    const approvalToggle = $<HTMLInputElement>("#roomApprovalToggle")
 
     function renderSettings() {
       if (!room) return
@@ -72,9 +79,13 @@ export const adminView = {
         return role ? `${role.icon} ${role.name[lang]}` : id
       }
       for (const p of room.players) {
+        const isHost = p.id === room.hostPlayerId
         const kickBtn = el("button", {
           class: "kick-btn", type: "button", title: t("kick"), "aria-label": `${t("kick")} ${p.name}`
         }, ["✕"])
+        // The host holds their own seat; removing it would leave a room with
+        // nobody able to deal or close it, so the server refuses too.
+        if (isHost) kickBtn.hidden = true
         kickBtn.addEventListener("click", async () => {
           if (!room) return
           const s = session.load(); if (s?.kind !== "admin") return
@@ -91,13 +102,56 @@ export const adminView = {
           const r = await emit("admin:kick-player", { code: room.code, adminSecret: s.adminSecret, playerId: p.id })
           if (!r.ok) showToast(t("errorGeneric"))
         })
-        const row = el("div", { class: `player-row ${p.connected ? "" : "off"}` }, [
-          el("span", { class: "player-name" }, [p.name]),
+        const nameCell = el("span", { class: "player-name" }, [p.name])
+        if (isHost) nameCell.appendChild(el("span", { class: "player-badge" }, [t("hostBadge")]))
+        const row = el("div", { class: `player-row ${p.connected ? "" : "off"}${isHost ? " is-host" : ""}` }, [
+          nameCell,
           el("span", { class: "player-role" }, [roleName(p.role)]),
           kickBtn
         ])
         listEl.appendChild(row)
       }
+    }
+
+    function renderRequests() {
+      if (!room) return
+      // The panel only makes sense while approval is on; with it off there is
+      // no queue and an empty box would just be noise.
+      requestsPanel.hidden = !room.requireApproval
+      clear(requestsList)
+      requestsCount.textContent = String(room.pending.length)
+      if (room.pending.length === 0) {
+        requestsList.classList.add("empty")
+        requestsList.appendChild(el("p", { class: "requests-empty" }, [t("noJoinRequests")]))
+        return
+      }
+      requestsList.classList.remove("empty")
+      for (const request of room.pending) {
+        const decide = async (event: "admin:approve-join" | "admin:reject-join") => {
+          if (!room) return
+          const s = session.load(); if (s?.kind !== "admin") return
+          const r = await emit(event, { code: room.code, adminSecret: s.adminSecret, requestId: request.id })
+          if (!r.ok) {
+            showToast(r.error === "REQUEST_NOT_FOUND" ? t("errorRequestGone")
+                    : r.error === "ROOM_FULL"         ? t("errorRoomFull")
+                    : t("errorGeneric"))
+          }
+        }
+        const approveBtn = el("button", { class: "btn btn-primary request-btn", type: "button" }, [t("approve")])
+        const rejectBtn  = el("button", { class: "btn btn-ghost request-btn", type: "button" }, [t("reject")])
+        approveBtn.addEventListener("click", () => void decide("admin:approve-join"))
+        rejectBtn.addEventListener("click",  () => void decide("admin:reject-join"))
+        requestsList.appendChild(el("div", { class: "request-row" }, [
+          el("span", { class: "request-name" }, [request.name]),
+          el("div", { class: "request-actions" }, [rejectBtn, approveBtn])
+        ]))
+      }
+    }
+
+    function renderPrivacy() {
+      if (!room) return
+      publicToggle.checked = room.isPublic
+      approvalToggle.checked = room.requireApproval
     }
 
     function renderHeader() {
@@ -107,7 +161,7 @@ export const adminView = {
       gameSelEl.textContent  = room.game.title[lang]
     }
 
-    function renderAll() { renderHeader(); renderSettings(); renderPlayers() }
+    function renderAll() { renderHeader(); renderSettings(); renderPlayers(); renderRequests(); renderPrivacy() }
 
     const onUpdated = (next: VisibleRoom) => {
       const dealt = !room?.assigned && next.assigned
@@ -116,6 +170,24 @@ export const adminView = {
       if (dealt) vibrate("reveal")
     }
     socket.on("admin:room-updated", onUpdated)
+
+    // The host holds a seat like everyone else, so they get the same flip-card
+    // reveal on their own screen rather than reading their role off the list.
+    const onRoleAssigned = async (payload: RoleAssignedPayload) => {
+      vibrate("reveal")
+      await showReveal({ payload, lang })
+    }
+    socket.on("player:role-assigned", onRoleAssigned)
+
+    // The host's room can also disappear from underneath them — a second tab
+    // closing it, or the server sweeping it away.
+    const onRoomClosed = () => {
+      session.clear()
+      clearTheme()
+      showToast(t("roomClosedByHost"))
+      void setView("homeView", {}, { mode: "root" })
+    }
+    socket.on("room:closed", onRoomClosed)
 
     // The host watches the player list fill up without touching the screen.
     const releaseWakeLock = holdWakeLock()
@@ -157,6 +229,19 @@ export const adminView = {
       if (!r.ok) showToast(t("errorGeneric"))
     }
 
+    const onPrivacyChange = async () => {
+      if (!room) return
+      const s = session.load(); if (s?.kind !== "admin") return
+      const r = await emit("admin:update-room", {
+        code: room.code, adminSecret: s.adminSecret,
+        isPublic: publicToggle.checked,
+        requireApproval: approvalToggle.checked
+      })
+      // Snap the switches back to the server's answer rather than leaving them
+      // showing a state the room never entered.
+      if (!r.ok) { showToast(t("errorGeneric")); renderPrivacy() }
+    }
+
     const onCopy = async () => {
       if (!room) return
       try { await navigator.clipboard.writeText(room.code); showToast(t("copied")) }
@@ -186,9 +271,16 @@ export const adminView = {
         confirmKey: "dialogLeave",
         cancelKey: "dialogStay",
         danger: true
-      }).then(confirmed => {
+      }).then(async confirmed => {
         asking = false
         if (!confirmed) return
+        const s = session.load()
+        // Actually delete the room instead of walking away from it: an
+        // abandoned room used to linger in the store for hours, and it would
+        // now also sit in the public browser luring people into a dead code.
+        if (s?.kind === "admin" && room) {
+          await emit("admin:close-room", { code: room.code, adminSecret: s.adminSecret })
+        }
         session.clear()
         clearTheme()
         void setView("homeView", {}, { mode: "root" })
@@ -202,6 +294,11 @@ export const adminView = {
     const copyBtn   = $<HTMLButtonElement>("#copyCodeBtn")
     const shareBtn  = $<HTMLButtonElement>("#shareLinkBtn")
     const leaveBtn  = $<HTMLButtonElement>("#adminLeaveBtn")
+    // Named, because these two live in the static shell markup: an anonymous
+    // handler would stack up another copy on every re-mount.
+    const onToggle = () => void onPrivacyChange()
+    publicToggle.addEventListener("change", onToggle)
+    approvalToggle.addEventListener("change", onToggle)
     saveBtn.addEventListener("click", onSave)
     assignBtn.addEventListener("click", onAssign)
     clearBtn.addEventListener("click", onClear)
@@ -214,6 +311,10 @@ export const adminView = {
       releaseWakeLock()
       stopWatchingConnection()
       socket.off("admin:room-updated", onUpdated)
+      socket.off("player:role-assigned", onRoleAssigned)
+      socket.off("room:closed", onRoomClosed)
+      publicToggle.removeEventListener("change", onToggle)
+      approvalToggle.removeEventListener("change", onToggle)
       saveBtn.removeEventListener("click", onSave)
       assignBtn.removeEventListener("click", onAssign)
       clearBtn.removeEventListener("click", onClear)

@@ -47,5 +47,13 @@ export class MemoryStore implements RoomStore {
     return this.rooms.size
   }
 
+  async listPublic(limit: number): Promise<Room[]> {
+    return [...this.rooms.values()]
+      .filter(r => r.isPublic)
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, limit)
+      .map(r => structuredClone(r))
+  }
+
   async close(): Promise<void> { /* nothing to close */ }
 }

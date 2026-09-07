@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test"
+import { createRoom } from "./helpers.js"
 
 /**
  * The phone back button. Players kept getting stranded on screens that had no
@@ -54,11 +55,7 @@ test("local play walks back one setup step at a time", async ({ page }) => {
 })
 
 test("a room asks before a back press abandons it", async ({ page }) => {
-  await page.goto("/")
-  await page.click(".cta-create")
-  await page.locator(".create-picker-option").first().click()
-  await page.locator(".gi-hero .gi-cta-primary").click()
-  await expect(page.locator("#roomCodeText")).not.toHaveText("-----")
+  await createRoom(page)
 
   await page.goBack()
   await expect(page.locator("#confirmOverlay")).toBeVisible()
@@ -77,12 +74,7 @@ test("a room asks before a back press abandons it", async ({ page }) => {
 test("a player is asked before a back press drops them out of a room", async ({ browser }) => {
   const adminCtx = await browser.newContext()
   const admin = await adminCtx.newPage()
-  await admin.goto("/")
-  await admin.click(".cta-create")
-  await admin.locator(".create-picker-option").first().click()
-  await admin.locator(".gi-hero .gi-cta-primary").click()
-  await expect(admin.locator("#roomCodeText")).not.toHaveText("-----")
-  const code = await admin.locator("#roomCodeText").innerText()
+  const code = await createRoom(admin)
 
   const playerCtx = await browser.newContext()
   const player = await playerCtx.newPage()

@@ -7,6 +7,8 @@ export interface RoomStore {
   delete(code: string): Promise<void>
   deleteOlderThan(cutoffMs: number): Promise<number>
   countActiveRooms(): Promise<number>
+  /** Rooms flagged public, newest first, for the room browser. */
+  listPublic(limit: number): Promise<Room[]>
   close(): Promise<void>
 }
 

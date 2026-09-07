@@ -64,23 +64,50 @@
     </section>
 
     <!-- ─── JOIN ──────────────────────────────────────────── -->
-    <section id="joinView" class="view join">
+    <section id="joinView" class="view lobby">
       <button class="btn btn-ghost backHome" type="button" data-i18n="back">Back</button>
-      <div class="join-card">
+
+      <header class="lobby-header">
         <p class="eyebrow" data-i18n="player">Player</p>
-        <h2 class="display" data-i18n="joinTitle">Enter the Room</h2>
-        <label class="field">
-          <span data-i18n="roomCode">Room Code</span>
-          <input id="joinCodeInput" class="code-input" type="text" maxlength="5" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" enterkeyhint="next" placeholder="ABCDE" />
-        </label>
-        <label class="field">
+        <h2 class="display" data-i18n="browseRooms">Active Rooms</h2>
+        <p class="muted" data-i18n="browseRoomsSubtitle">Join an open room, or type a code.</p>
+      </header>
+
+      <div class="lobby-bar">
+        <label class="field lobby-field">
           <span data-i18n="yourName">Your Name</span>
-          <input id="playerNameInput" type="text" maxlength="24" autocomplete="nickname" enterkeyhint="go" data-i18n-placeholder="yourNamePlaceholder" placeholder="Your name" />
+          <input id="playerNameInput" type="text" maxlength="24" autocomplete="nickname" enterkeyhint="next" data-i18n-placeholder="yourNamePlaceholder" placeholder="Your name" />
         </label>
-        <button id="joinBtn" class="btn btn-primary full">
-          <span data-i18n="enterRoom">Enter Room</span>
+        <label class="field lobby-field">
+          <span data-i18n="enterRoomId">Enter Room ID</span>
+          <div class="lobby-code-row">
+            <input id="joinCodeInput" class="code-input" type="text" maxlength="5" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" enterkeyhint="go" placeholder="ABCDE" />
+            <button id="joinBtn" class="btn btn-secondary" type="button" data-i18n="enterCode">Enter</button>
+          </div>
+        </label>
+      </div>
+
+      <div id="joinMessage" class="message hidden" role="alert"></div>
+
+      <div id="lobbyList" class="lobby-list" aria-live="polite" aria-busy="true"></div>
+
+      <div class="lobby-actions">
+        <button id="refreshRoomsBtn" class="btn btn-ghost" type="button">
+          <span class="lobby-refresh-icon" aria-hidden="true">&#8635;</span>
+          <span data-i18n="refresh">Refresh</span>
         </button>
-        <div id="joinMessage" class="message hidden" role="alert"></div>
+        <button id="lobbyCreateBtn" class="btn btn-primary" type="button" data-i18n="createRoom">Create Room</button>
+      </div>
+    </section>
+
+    <!-- ─── WAITING FOR THE HOST TO ACCEPT ───────────────── -->
+    <section id="pendingView" class="view pending">
+      <div class="pending-card">
+        <div class="pending-spinner" aria-hidden="true"></div>
+        <p class="eyebrow" id="pendingRoomCode">…</p>
+        <h2 class="display" data-i18n="waitingApprovalTitle">Waiting for the host</h2>
+        <p class="muted" data-i18n="waitingApprovalBody">The host has to let you in. Keep this screen open.</p>
+        <button id="cancelRequestBtn" class="btn btn-ghost" type="button" data-i18n="cancelRequest">Cancel request</button>
       </div>
     </section>
 
@@ -127,6 +154,31 @@
         <span class="eyebrow" data-i18n="roomCode">Room Code</span>
         <strong id="roomCodeText" class="code-display">-----</strong>
         <small class="muted" data-i18n="shareCodeHint">Share with players</small>
+      </div>
+
+      <!-- Only rendered when the host has approval turned on; hidden otherwise. -->
+      <div id="joinRequestsPanel" class="panel requests-box deco-corner" hidden>
+        <header class="panel-head">
+          <h3 data-i18n="joinRequests">Join requests</h3>
+          <span class="list-count" id="requestsCount">0</span>
+        </header>
+        <div id="joinRequestsList" class="requests-list empty"></div>
+      </div>
+
+      <div class="panel room-privacy deco-corner">
+        <header class="panel-head">
+          <h3 data-i18n="roomVisibility">Room visibility</h3>
+        </header>
+        <div class="privacy-row">
+          <label class="switch-row" for="roomPublicToggle">
+            <span data-i18n="publicShort">Public</span>
+            <input id="roomPublicToggle" type="checkbox" />
+          </label>
+          <label class="switch-row" for="roomApprovalToggle">
+            <span data-i18n="approvalShort">Approval</span>
+            <input id="roomApprovalToggle" type="checkbox" />
+          </label>
+        </div>
       </div>
 
       <div class="admin-grid">

@@ -1,6 +1,6 @@
 import { canGoBack, dismissLayer, layerCount, pushLayer, requestBack, resetLayers } from "./services/navigation.js"
 
-export type ViewId = "homeView" | "gameInfoView" | "joinView" | "playerRoomView" | "adminView" | "localPlayView"
+export type ViewId = "homeView" | "gameInfoView" | "joinView" | "pendingView" | "playerRoomView" | "adminView" | "localPlayView"
 
 export type ViewContext = Record<string, unknown>
 

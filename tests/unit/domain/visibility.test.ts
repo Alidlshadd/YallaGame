@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { projectRoomFor } from "@server/domain/visibility.js"
+import { projectRoomFor, summarizeRoom } from "@server/domain/visibility.js"
 import type { Room, Game, Viewer } from "@shared/types.js"
 
 const game: Game = {
@@ -23,7 +23,9 @@ const room: Room = {
     { id: "p2", name: "B", role: "villager", connected: true },
     { id: "p3", name: "C", role: "villager", connected: false }
   ],
-  createdAt: 0, updatedAt: 0
+  createdAt: 0, updatedAt: 0,
+  hostPlayerId: "p1", isPublic: true, requireApproval: true,
+  pending: [{ id: "req1", name: "D", requestedAt: 0 }]
 }
 
 const games = new Map([[game.id, game]])
@@ -43,6 +45,16 @@ describe("projectRoomFor", () => {
     expect(byId).toEqual({ p1: null, p2: "villager", p3: null })
   })
 
+  it("admin viewer sees the pending join queue", () => {
+    const out = projectRoomFor(room, { kind: "admin", adminSecret: "admin-secret" }, resolveGame)
+    expect(out.pending.map(r => r.name)).toEqual(["D"])
+  })
+
+  it("player viewer never sees who else is waiting to be let in", () => {
+    const out = projectRoomFor(room, { kind: "player", playerId: "p2" }, resolveGame)
+    expect(out.pending).toEqual([])
+  })
+
   it("throws AUTHZ_MISMATCH on bad adminSecret", () => {
     expect(() => projectRoomFor(room, { kind: "admin", adminSecret: "wrong" }, resolveGame)).toThrow(/AUTHZ_MISMATCH/)
   })
@@ -60,5 +72,26 @@ describe("projectRoomFor", () => {
   it("throws UNKNOWN_GAME when resolveGame returns null/undefined", () => {
     const v: Viewer = { kind: "admin", adminSecret: "admin-secret" }
     expect(() => projectRoomFor(room, v, () => undefined as unknown as Game)).toThrow(/UNKNOWN_GAME/)
+  })
+})
+
+describe("summarizeRoom", () => {
+  it("names the host and counts only connected players", () => {
+    const out = summarizeRoom(room, resolveGame)
+    expect(out?.hostName).toBe("A")
+    // p3 is disconnected, so the browser must not advertise them as present.
+    expect(out?.playerCount).toBe(2)
+  })
+
+  it("leaks no secret: no admin secret, no roles, no player names", () => {
+    const out = summarizeRoom(room, resolveGame)
+    const serialized = JSON.stringify(out)
+    expect(serialized).not.toContain("admin-secret")
+    expect(serialized).not.toContain("vampire")
+    expect(serialized).not.toContain("\"B\"")
+  })
+
+  it("returns null for a room whose game is gone", () => {
+    expect(summarizeRoom(room, () => undefined)).toBeNull()
   })
 })

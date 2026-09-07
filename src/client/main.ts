@@ -24,6 +24,7 @@ async function bootstrap() {
   register(homeView)
   registerLazy("joinView", async () => (await import("./views/join.js")).joinView)
   registerLazy("gameInfoView", async () => (await import("./views/gameInfo.js")).gameInfoView)
+  registerLazy("pendingView", async () => (await import("./views/pending.js")).pendingView)
   registerLazy("playerRoomView", async () => (await import("./views/playerRoom.js")).playerRoomView)
   registerLazy("adminView", async () => (await import("./views/admin.js")).adminView)
   registerLazy("localPlayView", async () => (await import("./views/localPlay.js")).localPlayView)
@@ -118,6 +119,13 @@ async function bootstrap() {
     const r = await emit("player:join", { code: existing.code, name: existing.name, playerId: existing.playerId })
     if (r.ok) {
       const data = r.data as PlayerJoinData
+      // A reload while the host still has not decided lands back in the queue
+      // rather than pretending the player is in the room.
+      if (data.status === "pending") {
+        await applyTheme(data.theme)
+        await setView("pendingView", { requestId: data.requestId, code: data.code, theme: data.theme }, { mode: "root" })
+        return
+      }
       await applyTheme(data.room.game.theme)
       await setView("playerRoomView", { initial: data }, { mode: "root" })
       return

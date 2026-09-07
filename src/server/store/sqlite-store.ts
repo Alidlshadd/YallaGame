@@ -5,17 +5,34 @@ import { RoomNotFoundError, type RoomStore } from "./store.js"
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS rooms (
-  code           TEXT PRIMARY KEY,
-  game_id        TEXT NOT NULL,
-  admin_secret   TEXT NOT NULL,
-  assigned       INTEGER NOT NULL DEFAULT 0,
-  settings_json  TEXT NOT NULL,
-  players_json   TEXT NOT NULL,
-  created_at     INTEGER NOT NULL,
-  updated_at     INTEGER NOT NULL
+  code             TEXT PRIMARY KEY,
+  game_id          TEXT NOT NULL,
+  admin_secret     TEXT NOT NULL,
+  assigned         INTEGER NOT NULL DEFAULT 0,
+  settings_json    TEXT NOT NULL,
+  players_json     TEXT NOT NULL,
+  created_at       INTEGER NOT NULL,
+  updated_at       INTEGER NOT NULL,
+  host_player_id   TEXT NOT NULL DEFAULT '',
+  is_public        INTEGER NOT NULL DEFAULT 0,
+  require_approval INTEGER NOT NULL DEFAULT 0,
+  pending_json     TEXT NOT NULL DEFAULT '[]'
 );
 CREATE INDEX IF NOT EXISTS rooms_created_at_idx ON rooms(created_at);
+CREATE INDEX IF NOT EXISTS rooms_public_idx ON rooms(is_public, created_at);
 `
+
+/**
+ * Columns added after the first release. A database written by an older build
+ * already exists on the VPS, and CREATE TABLE IF NOT EXISTS silently leaves it
+ * alone — so bring it forward here rather than dropping anyone's live rooms.
+ */
+const ADDED_COLUMNS: Array<[string, string]> = [
+  ["host_player_id",   "TEXT NOT NULL DEFAULT ''"],
+  ["is_public",        "INTEGER NOT NULL DEFAULT 0"],
+  ["require_approval", "INTEGER NOT NULL DEFAULT 0"],
+  ["pending_json",     "TEXT NOT NULL DEFAULT '[]'"]
+]
 
 interface RoomRow {
   code: string
@@ -26,6 +43,10 @@ interface RoomRow {
   players_json: string
   created_at: number
   updated_at: number
+  host_player_id: string
+  is_public: number
+  require_approval: number
+  pending_json: string
 }
 
 function rowToRoom(row: RoomRow): Room {
@@ -37,7 +58,11 @@ function rowToRoom(row: RoomRow): Room {
     settings: JSON.parse(row.settings_json),
     players: JSON.parse(row.players_json),
     createdAt: row.created_at,
-    updatedAt: row.updated_at
+    updatedAt: row.updated_at,
+    hostPlayerId: row.host_player_id,
+    isPublic: row.is_public === 1,
+    requireApproval: row.require_approval === 1,
+    pending: JSON.parse(row.pending_json)
   }
 }
 
@@ -49,27 +74,45 @@ export class SqliteStore implements RoomStore {
   private readonly stmtDelete: Statement
   private readonly stmtDeleteOld: Statement
   private readonly stmtCount:  Statement
+  private readonly stmtListPublic: Statement
 
   constructor(path: string) {
     this.db = new Database(path)
     if (path !== ":memory:") this.db.pragma("journal_mode = WAL")
     this.db.pragma("foreign_keys = ON")
     this.db.exec(SCHEMA)
+    this.migrate()
 
     this.stmtInsert = this.db.prepare(`
-      INSERT INTO rooms (code, game_id, admin_secret, assigned, settings_json, players_json, created_at, updated_at)
-      VALUES (@code, @gameId, @adminSecret, @assigned, @settings, @players, @createdAt, @updatedAt)
+      INSERT INTO rooms (code, game_id, admin_secret, assigned, settings_json, players_json,
+                         created_at, updated_at, host_player_id, is_public, require_approval, pending_json)
+      VALUES (@code, @gameId, @adminSecret, @assigned, @settings, @players,
+              @createdAt, @updatedAt, @hostPlayerId, @isPublic, @requireApproval, @pending)
     `)
     this.stmtGet = this.db.prepare(`SELECT * FROM rooms WHERE code = ?`)
     this.stmtUpdate = this.db.prepare(`
       UPDATE rooms
          SET game_id = @gameId, admin_secret = @adminSecret, assigned = @assigned,
-             settings_json = @settings, players_json = @players, updated_at = @updatedAt
+             settings_json = @settings, players_json = @players, updated_at = @updatedAt,
+             host_player_id = @hostPlayerId, is_public = @isPublic,
+             require_approval = @requireApproval, pending_json = @pending
        WHERE code = @code
     `)
     this.stmtDelete = this.db.prepare(`DELETE FROM rooms WHERE code = ?`)
     this.stmtDeleteOld = this.db.prepare(`DELETE FROM rooms WHERE created_at < ?`)
     this.stmtCount = this.db.prepare(`SELECT COUNT(*) AS n FROM rooms`)
+    this.stmtListPublic = this.db.prepare(
+      `SELECT * FROM rooms WHERE is_public = 1 ORDER BY created_at DESC LIMIT ?`
+    )
+  }
+
+  private migrate(): void {
+    const existing = new Set(
+      (this.db.prepare(`PRAGMA table_info(rooms)`).all() as Array<{ name: string }>).map(c => c.name)
+    )
+    for (const [name, decl] of ADDED_COLUMNS) {
+      if (!existing.has(name)) this.db.exec(`ALTER TABLE rooms ADD COLUMN ${name} ${decl}`)
+    }
   }
 
   async create(room: Room): Promise<void> {
@@ -78,7 +121,11 @@ export class SqliteStore implements RoomStore {
       assigned: room.assigned ? 1 : 0,
       settings: JSON.stringify(room.settings),
       players: JSON.stringify(room.players),
-      createdAt: room.createdAt, updatedAt: room.updatedAt
+      createdAt: room.createdAt, updatedAt: room.updatedAt,
+      hostPlayerId: room.hostPlayerId,
+      isPublic: room.isPublic ? 1 : 0,
+      requireApproval: room.requireApproval ? 1 : 0,
+      pending: JSON.stringify(room.pending)
     })
   }
 
@@ -99,7 +146,11 @@ export class SqliteStore implements RoomStore {
         assigned: updated.assigned ? 1 : 0,
         settings: JSON.stringify(updated.settings),
         players: JSON.stringify(updated.players),
-        updatedAt: updated.updatedAt
+        updatedAt: updated.updatedAt,
+        hostPlayerId: updated.hostPlayerId,
+        isPublic: updated.isPublic ? 1 : 0,
+        requireApproval: updated.requireApproval ? 1 : 0,
+        pending: JSON.stringify(updated.pending)
       })
       return updated
     }).immediate
@@ -118,6 +169,10 @@ export class SqliteStore implements RoomStore {
   async countActiveRooms(): Promise<number> {
     const row = this.stmtCount.get() as { n: number }
     return row.n
+  }
+
+  async listPublic(limit: number): Promise<Room[]> {
+    return (this.stmtListPublic.all(limit) as RoomRow[]).map(rowToRoom)
   }
 
   async close(): Promise<void> {

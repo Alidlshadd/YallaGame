@@ -1386,8 +1386,23 @@ img.hero-emblem-mark {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   display: grid;
-  place-items: center;
-  padding: var(--s-5);
+  /* One row, exactly as tall as the overlay's content box. Without this the
+     implicit row is content-sized, so the panel's max-height:100% would
+     resolve against the panel itself and cap nothing. */
+  grid-template-rows: minmax(0, 1fr);
+  /* "safe" centering: should the panel ever exceed that row anyway, the
+     overflow goes off the bottom instead of being split across both edges,
+     where the top half could never be scrolled back into view. */
+  align-items: safe center;
+  justify-items: center;
+  padding: calc(var(--s-5) + env(safe-area-inset-top)) var(--s-5)
+           calc(var(--s-5) + env(safe-area-inset-bottom));
+  /* Last-resort scroll: if a phone is so short that even the panel's own
+     internal scroller can't fit the header + cancel button, the overlay
+     itself scrolls rather than clipping them. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   opacity: 0;
   transition: opacity var(--motion-snappy) ease-out;
 }
@@ -1397,6 +1412,10 @@ img.hero-emblem-mark {
 .create-picker {
   position: relative;
   width: min(720px, 100%);
+  /* Never taller than the overlay's content box, so the world list always
+     ends above the bottom of the screen. 100% resolves against the grid
+     area (inset:0 minus padding), which already accounts for safe areas. */
+  max-height: 100%;
   background: linear-gradient(180deg, rgba(20, 16, 28, 0.96) 0%, rgba(8, 6, 14, 0.96) 100%);
   border: 1px solid rgba(212, 175, 55, 0.25);
   border-radius: 16px;
@@ -1441,7 +1460,36 @@ img.hero-emblem-mark {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: var(--s-3);
+  /* The world list is the part that scrolls; the title and the cancel
+     button stay put. min-height:0 defeats the flex item's auto minimum,
+     without it the grid refuses to shrink and overflows the panel. */
+  min-height: 0;
+  /* Keep every card at its natural height. Default `auto` rows stretch to
+     fill the (shrunken) scroll container, which squeezed all five cards to
+     69px and clipped the longer subtitles instead of letting the list
+     scroll. max-content rows overflow, which is what we want here. */
+  grid-auto-rows: max-content;
+  align-content: start;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  /* Breathing room beside the scrollbar. Symmetric rather than padding-right
+     because the scrollbar moves to the left in the Arabic/Kurdish layouts. */
+  padding-inline: var(--s-1);
+  /* A hover lift of -3px must not be clipped by the scroll container. */
+  padding-top: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212, 175, 55, 0.25) transparent;
 }
+.create-picker-grid::-webkit-scrollbar { width: 6px; }
+.create-picker-grid::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.25);
+  border-radius: 999px;
+}
+
+.create-picker-eyebrow,
+.create-picker-title,
+.create-picker-cancel { flex-shrink: 0; }
 
 .create-picker-option {
   position: relative;
@@ -1466,7 +1514,11 @@ img.hero-emblem-mark {
 
 .create-picker-option img {
   width: 100%;
-  aspect-ratio: 1 / 1;
+  /* Stated in CSS rather than left to the tag's height="120" attribute:
+     that attribute silently beat the old `aspect-ratio: 1/1` here, so the
+     square this rule asked for never rendered. 120px is the size the covers
+     have always had on desktop — kept, with object-fit doing the cropping. */
+  height: 120px;
   object-fit: cover;
   object-position: center 12%;
   border-radius: 8px;
@@ -1594,18 +1646,43 @@ img.hero-emblem-mark {
   .home-slide .center-fog { animation: none; filter: blur(20px); opacity: 0.6; }
   .hero-embers { display: none; }
 
+  /* Tighter chrome on phones so more of the 5 worlds sit above the fold
+     before the list needs scrolling. */
+  .create-picker {
+    padding: var(--s-5) var(--s-4);
+    gap: var(--s-4);
+  }
+  .create-picker-title { font-size: 22px; }
   .create-picker-option {
     flex-direction: row;
     align-items: center;
     text-align: left;
     padding: var(--s-3);
   }
-  .create-picker-option img { width: 64px; aspect-ratio: 1 / 1; flex-shrink: 0; }
+  /* Square thumbnail on phones. Needs an explicit height for the same
+     reason as above, otherwise the 120px attribute makes it 64x120 and the
+     card's overflow:hidden crops it. */
+  .create-picker-option img { width: 64px; height: 64px; flex-shrink: 0; }
+  /* Hover lift is a desktop affordance; on touch it only made the scroll
+     container need extra padding. */
+  .create-picker-option:hover { transform: none; }
 }
 
 @media (max-width: 560px) {
   .feat-row { grid-template-columns: 1fr; }
   .shelf-back-top { position: static; align-self: center; margin-top: var(--s-3); }
+}
+
+/* Short screens (small phones, or any phone in landscape): the modal's own
+   chrome is what squeezes the world list, so drop the eyebrow and shrink the
+   heading to hand those pixels back to the cards. */
+@media (max-height: 620px) {
+  .create-picker {
+    padding: var(--s-4) var(--s-3);
+    gap: var(--s-3);
+  }
+  .create-picker-eyebrow { display: none; }
+  .create-picker-title { font-size: 18px; }
 }
 
 /* Low-end perf profile from atmosphere.ts */

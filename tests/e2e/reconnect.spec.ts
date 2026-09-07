@@ -1,23 +1,10 @@
-import { test, expect, type Page } from "@playwright/test"
-
-async function joinAs(page: Page, code: string, name: string): Promise<void> {
-  await page.goto("/")
-  await page.click(".cta-join")
-  await page.fill("#joinCodeInput", code)
-  await page.fill("#playerNameInput", name)
-  await page.click("#joinBtn")
-  await expect(page.locator("#playerWelcome")).toHaveText(name)
-}
+import { test, expect } from "@playwright/test"
+import { createRoom, joinAs } from "./helpers.js"
 
 test("reconnect: A reloads while B stays — A re-binds, B unaffected, no privacy leak", async ({ browser }) => {
   const adminCtx = await browser.newContext()
   const admin = await adminCtx.newPage()
-  await admin.goto("/")
-  await admin.click(".cta-create")
-  await admin.locator(".create-picker-option").first().click()
-  await admin.locator(".gi-hero .gi-cta-primary").click()
-  await expect(admin.locator("#roomCodeText")).not.toHaveText("-----")
-  const code = await admin.locator("#roomCodeText").innerText()
+  const code = await createRoom(admin)
 
   const ctxA = await browser.newContext(); const pageA = await ctxA.newPage(); await joinAs(pageA, code, "Ada")
   const ctxB = await browser.newContext(); const pageB = await ctxB.newPage(); await joinAs(pageB, code, "Bea")

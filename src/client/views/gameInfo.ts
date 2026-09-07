@@ -6,6 +6,7 @@ import { goBack, setView } from "../router.js"
 import { dismissLayer, pushLayer, type LayerHandle } from "../services/navigation.js"
 import { emit } from "../services/socket.js"
 import * as session from "../services/session.js"
+import { hostSetupDialog } from "../ui/hostSetup.js"
 import { showToast } from "../ui/toast.js"
 import { getGames } from "./home.js"
 import { applyTheme, clearTheme } from "../themes/loader.js"
@@ -609,7 +610,17 @@ export const gameInfoView = {
     const detail = getWorldDetail(game.id)
 
     const onCreate = async () => {
-      const r = await emit("admin:create-room", { gameId: game.id })
+      // The host is a player too now, so the room cannot be opened before we
+      // know what to call them — and while we are asking, we may as well ask
+      // who is allowed to find the room.
+      const setup = await hostSetupDialog()
+      if (!setup) return
+      const r = await emit("admin:create-room", {
+        gameId: game.id,
+        hostName: setup.hostName,
+        isPublic: setup.isPublic,
+        requireApproval: setup.requireApproval
+      })
       if (!r.ok) { showToast(t("errorGeneric")); return }
       const data = r.data as CreateRoomData
       session.save({ kind: "admin", code: data.code, adminSecret: data.adminSecret })

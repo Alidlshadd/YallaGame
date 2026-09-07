@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test"
+import { createRoom, joinAs } from "./helpers.js"
 
 interface CapturedFrame { dir: "in" | "out"; payload: string }
 
@@ -11,26 +12,12 @@ function attachFrameCapture(page: Page): CapturedFrame[] {
   return frames
 }
 
-async function joinAs(page: Page, code: string, name: string): Promise<void> {
-  await page.goto("/")
-  await page.click(".cta-join")
-  await page.fill("#joinCodeInput", code)
-  await page.fill("#playerNameInput", name)
-  await page.click("#joinBtn")
-  await expect(page.locator("#playerWelcome")).toHaveText(name)
-}
-
 test("happy path: 4 players, role visibility, wire-level privacy", async ({ browser }) => {
   const adminCtx = await browser.newContext()
   const adminPage = await adminCtx.newPage()
   attachFrameCapture(adminPage)
 
-  await adminPage.goto("/")
-  await adminPage.click(".cta-create")
-  await adminPage.locator(".create-picker-option").first().click()
-  await adminPage.locator(".gi-hero .gi-cta-primary").click()
-  await expect(adminPage.locator("#roomCodeText")).not.toHaveText("-----")
-  const code = await adminPage.locator("#roomCodeText").innerText()
+  const code = await createRoom(adminPage)
 
   const players: Array<{ ctx: Awaited<ReturnType<typeof browser.newContext>>; page: Page; frames: CapturedFrame[]; name: string }> = []
   for (const name of ["Ada","Bea","Cem","Dan"]) {

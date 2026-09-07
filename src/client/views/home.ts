@@ -387,7 +387,8 @@ function buildCreatePicker(lang: ReturnType<typeof getLang>, close: () => void):
   return panel
 }
 
-function openCreatePicker(lang: ReturnType<typeof getLang>): void {
+/** Also opened from the room browser's Create Room button. */
+export function openCreatePicker(lang: ReturnType<typeof getLang>): void {
   if (document.getElementById("createPickerOverlay")) return
 
   const overlay = el("div", {
