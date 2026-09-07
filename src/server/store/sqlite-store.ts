@@ -19,6 +19,15 @@ CREATE TABLE IF NOT EXISTS rooms (
   pending_json     TEXT NOT NULL DEFAULT '[]'
 );
 CREATE INDEX IF NOT EXISTS rooms_created_at_idx ON rooms(created_at);
+`
+
+/**
+ * Indexes over columns that only exist after `migrate()` has run. Keeping them
+ * out of SCHEMA is not a style choice: SCHEMA runs first, and on a database
+ * written by an older build `is_public` does not exist yet, so creating the
+ * index there threw "no such column" and took the whole process down on start.
+ */
+const MIGRATED_INDEXES = `
 CREATE INDEX IF NOT EXISTS rooms_public_idx ON rooms(is_public, created_at);
 `
 
@@ -82,6 +91,7 @@ export class SqliteStore implements RoomStore {
     this.db.pragma("foreign_keys = ON")
     this.db.exec(SCHEMA)
     this.migrate()
+    this.db.exec(MIGRATED_INDEXES)
 
     this.stmtInsert = this.db.prepare(`
       INSERT INTO rooms (code, game_id, admin_secret, assigned, settings_json, players_json,
