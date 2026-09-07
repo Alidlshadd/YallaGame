@@ -1,7 +1,6 @@
 import { el, clear } from "./dom.js"
 import { t } from "../services/i18n.js"
 import { buildAvatar } from "./avatar.js"
-import { buildAccessory } from "./accessory.js"
 import { CHARACTERS } from "@shared/characters.js"
 import { ACCESSORIES, findAccessory, isAccessoryId } from "@shared/accessories.js"
 import type { LangCode } from "@shared/types.js"
@@ -66,7 +65,7 @@ export function buildCharacterPicker(lang: LangCode, taken: string[], onChange: 
       tile.addEventListener("click", () => {
         chosen = def.id
         remember(LAST_CHARACTER_KEY, chosen)
-        renderCharacters(); renderPreview(); onChange(chosen)
+        renderCharacters(); renderAccessories(); renderPreview(); onChange(chosen)
         grid.querySelector<HTMLButtonElement>(`[data-character="${chosen}"]`)?.focus({ preventScroll: true })
       })
       grid.append(tile)
@@ -80,9 +79,8 @@ export function buildCharacterPicker(lang: LangCode, taken: string[], onChange: 
     for (const def of [{ id: "", name: { [lang]: t("avatarNoAccessory") } }, ...ACCESSORIES]) {
       const tile = el("button", { class: "char-tile accessory-tile", type: "button", role: "radio", "aria-checked": String(accessory === def.id), "aria-label": def.name[lang]!, "data-accessory": def.id, tabindex: accessory === def.id ? "0" : "-1" })
       const icon = el("span", { class: "accessory-icon", "aria-hidden": "true" })
-      const art = buildAccessory(def.id)
-      if (art) icon.append(art)
-      else icon.append(el("span", { class: "accessory-none" }, ["∅"]))
+      const character = CHARACTERS.find(c => c.id === chosen) ?? CHARACTERS[0]!
+      icon.append(buildAvatar(character.id, character.name[lang], lang, { size: 58, lazy: false, accessory: def.id }))
       tile.append(icon, el("span", { class: "char-tile-name" }, [def.name[lang]!]))
       tile.addEventListener("click", () => {
         accessory = def.id
@@ -140,7 +138,7 @@ export function buildCharacterPicker(lang: LangCode, taken: string[], onChange: 
       if (next.length === claimed.size && next.every(id => claimed.has(id))) return
       claimed = new Set(next)
       if (chosen && claimed.has(chosen)) { chosen = ""; onChange("") }
-      renderCharacters(); renderPreview()
+      renderCharacters(); renderAccessories(); renderPreview()
     }
   }
 }

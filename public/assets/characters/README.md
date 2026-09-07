@@ -7,9 +7,22 @@ the bitmap is preserved intact and downloaded only once.
 
 `references/accessories-approved.png` records the approved accessory direction.
 The 12 wearable accessories are transparent, scalable SVG UI layers in
-`src/client/ui/accessory.ts`, positioned using each face's anchors. Players can
+`src/client/ui/accessory.ts`, fitted using the measured landmarks in
+`src/client/ui/portraitGeometry.ts`. Players can
 combine any of the 20 portraits with any accessory, or remove the accessory.
 These overlays are not flattened into the portrait bitmap.
+
+Each portrait has separate eye centers/radii, a hat contact line and tilt,
+headphone ear/top positions, and a neck position. Coordinates are measured in
+pixels on the original atlas, then converted to the same viewport as the face.
+Keep these landmarks with the crop when adding or adjusting a portrait. Blinky
+has one eye, so all four eyewear styles render a single fitted lens. Transparent
+lenses preserve facial expressions. Wearables disappear with failed artwork
+instead of floating over a fallback initial.
+
+The accessory picker previews all 12 options on the selected character. The
+2026-09-08 fitting review covered all 240 portrait/accessory combinations, plus
+enlarged eyewear checks for every character and mobile Turkish/Arabic layouts.
 
 The atlas order is left to right, top to bottom:
 

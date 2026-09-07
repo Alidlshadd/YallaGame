@@ -70,6 +70,28 @@ describe("avatar customization", () => {
     expect(picker.value()).toBe("")
     expect(picker.accessory()).toBe("")
   })
+  it("previews every accessory on the current character and refreshes when it changes", () => {
+    const picker = buildCharacterPicker("en", [], vi.fn())
+    document.body.append(picker.element)
+    click('[data-character="ruby"]')
+    for (const tile of document.querySelectorAll(".accessory-tile")) {
+      expect(tile.querySelector(".avatar")?.getAttribute("data-avatar")).toBe("ruby")
+      expect(tile.querySelector(".avatar")?.getAttribute("data-accessory")).toBe(tile.getAttribute("data-accessory"))
+    }
+    click('[data-character="blinky"]')
+    expect(document.querySelector('.accessory-tile[data-accessory="round-glasses"] .avatar')?.getAttribute("data-avatar")).toBe("blinky")
+    expect(document.querySelectorAll('.accessory-tile[data-accessory="round-glasses"] .accessory-lens')).toHaveLength(1)
+  })
+  it("fits one lens to the cyclops and removes wearables if the portrait cannot load", () => {
+    for (const accessory of ["round-glasses", "heart-glasses", "star-glasses", "snorkel"]) {
+      expect(buildAvatar("blinky", "Ada", "en", { accessory }).querySelectorAll(".accessory-lens")).toHaveLength(1)
+      expect(buildAvatar("ruby", "Ada", "en", { accessory }).querySelectorAll(".accessory-lens")).toHaveLength(2)
+    }
+    const avatar = buildAvatar("ruby", "Ada", "en", { accessory: "crown" })
+    avatar.querySelector("img")!.dispatchEvent(new Event("error"))
+    expect(avatar.querySelector(".avatar-accessory")).toBeNull()
+    expect(avatar.textContent).toBe("A")
+  })
 })
 
 describe("accessory input validation", () => {
