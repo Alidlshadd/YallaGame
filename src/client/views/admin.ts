@@ -10,6 +10,7 @@ import { vibrate } from "../ui/haptics.js"
 import { applyTheme, clearTheme } from "../themes/loader.js"
 import { setView, setViewBackHandler } from "../router.js"
 import { showReveal } from "../ui/roleReveal.js"
+import { buildAvatar } from "../ui/avatar.js"
 import type { RoleAssignedPayload } from "@shared/events.js"
 import type { VisibleRoom } from "@shared/types.js"
 
@@ -105,6 +106,7 @@ export const adminView = {
         const nameCell = el("span", { class: "player-name" }, [p.name])
         if (isHost) nameCell.appendChild(el("span", { class: "player-badge" }, [t("hostBadge")]))
         const row = el("div", { class: `player-row ${p.connected ? "" : "off"}${isHost ? " is-host" : ""}` }, [
+          buildAvatar(p.character, p.name, lang, { size: 30 }),
           nameCell,
           el("span", { class: "player-role" }, [roleName(p.role)]),
           kickBtn
@@ -142,6 +144,7 @@ export const adminView = {
         approveBtn.addEventListener("click", () => void decide("admin:approve-join"))
         rejectBtn.addEventListener("click",  () => void decide("admin:reject-join"))
         requestsList.appendChild(el("div", { class: "request-row" }, [
+          buildAvatar(request.character, request.name, lang, { size: 30 }),
           el("span", { class: "request-name" }, [request.name]),
           el("div", { class: "request-actions" }, [rejectBtn, approveBtn])
         ]))

@@ -16,11 +16,11 @@ const game: Game = {
 }
 
 function mkPlayers(n: number): Player[] {
-  return Array.from({ length: n }, (_, i) => ({ id: `p${i}`, name: `P${i}`, role: null, connected: true }))
+  return Array.from({ length: n }, (_, i) => ({ id: `p${i}`, name: `P${i}`, role: null, connected: true, character: "" }))
 }
 
 const player = (id: string, connected: boolean): Player =>
-  ({ id, name: id, role: null, connected })
+  ({ id, name: id, role: null, connected, character: "" })
 
 describe("fillerRoleId", () => {
   it("returns the filler role id", () => {

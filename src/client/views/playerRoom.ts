@@ -1,5 +1,6 @@
 import { $, clear, el } from "../ui/dom.js"
 import { buildCharacterFrame } from "../ui/character.js"
+import { buildAvatar } from "../ui/avatar.js"
 import { getLang, t } from "../services/i18n.js"
 import { socket } from "../services/socket.js"
 import * as session from "../services/session.js"
@@ -30,7 +31,11 @@ export const playerRoomView = {
     function renderHeader() {
       if (!ctx.initial) return
       gameNameEl.textContent = ctx.initial.room.game.title[lang]
-      welcomeEl.textContent  = ctx.initial.player.name
+      clear(welcomeEl)
+      welcomeEl.append(
+        buildAvatar(ctx.initial.player.character, ctx.initial.player.name, lang, { size: 40, lazy: false }),
+        el("span", {}, [ctx.initial.player.name])
+      )
     }
 
     function renderSettled() {

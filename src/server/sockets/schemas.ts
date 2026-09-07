@@ -5,9 +5,13 @@ export const RoomCode = z.string().regex(/^[A-Z2-9]{5}$/, "invalid room code")
 /** Same shape everywhere a person types their name: trimmed, 1-24 chars. */
 export const PlayerName = z.string().trim().min(1).max(24)
 
+/** Shape only; whether the id is real is checked against the catalogue. */
+export const CharacterId = z.string().trim().min(1).max(32)
+
 export const CreateRoomPayload    = z.object({
   gameId: z.string().min(1).max(64),
   hostName: PlayerName,
+  hostCharacter: CharacterId,
   isPublic: z.boolean(),
   requireApproval: z.boolean()
 })
@@ -27,8 +31,11 @@ export const KickPlayerPayload    = z.object({
 export const JoinPayload          = z.object({
   code: RoomCode,
   name: PlayerName,
+  // Optional so a rebinding player keeps the character they already hold.
+  character: CharacterId.optional(),
   playerId: z.string().min(1).max(64).optional()
 })
+export const PeekRoomPayload      = z.object({ code: RoomCode })
 export const UpdateRoomPayload    = z.object({
   code: RoomCode,
   adminSecret: z.string().min(1).max(64),

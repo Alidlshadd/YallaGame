@@ -19,13 +19,13 @@ const room: Room = {
   code: "ABCDE", gameId: "g", adminSecret: "admin-secret",
   assigned: true, settings: {},
   players: [
-    { id: "p1", name: "A", role: "vampire",  connected: true },
-    { id: "p2", name: "B", role: "villager", connected: true },
-    { id: "p3", name: "C", role: "villager", connected: false }
+    { id: "p1", name: "A", role: "vampire",  connected: true,  character: "owl" },
+    { id: "p2", name: "B", role: "villager", connected: true,  character: "fox" },
+    { id: "p3", name: "C", role: "villager", connected: false, character: "wolf" }
   ],
   createdAt: 0, updatedAt: 0,
   hostPlayerId: "p1", isPublic: true, requireApproval: true,
-  pending: [{ id: "req1", name: "D", requestedAt: 0 }]
+  pending: [{ id: "req1", name: "D", requestedAt: 0, character: "raven" }]
 }
 
 const games = new Map([[game.id, game]])
@@ -93,5 +93,17 @@ describe("summarizeRoom", () => {
 
   it("returns null for a room whose game is gone", () => {
     expect(summarizeRoom(room, () => undefined)).toBeNull()
+  })
+
+  it("lists every character already spoken for, seated or queued", () => {
+    const out = summarizeRoom(room, resolveGame)
+    // p3 is disconnected but still holds their seat, so their face is not free;
+    // the queued request's pick is reserved for the same reason.
+    expect(out?.takenCharacters.sort()).toEqual(["fox", "owl", "raven", "wolf"])
+  })
+
+  it("counts a seat with no character as taking nothing", () => {
+    const legacy = { ...room, players: room.players.map(p => ({ ...p, character: "" })), pending: [] }
+    expect(summarizeRoom(legacy, resolveGame)?.takenCharacters).toEqual([])
   })
 })

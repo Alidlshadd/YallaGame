@@ -4,7 +4,8 @@ import type { PendingJoin, Player, SocketData } from "@shared/types.js"
 import type { RoomStore } from "../store/store.js"
 import type { GameResolver } from "../domain/visibility.js"
 import { bind } from "./bind.js"
-import { projectRoomFor } from "../domain/visibility.js"
+import { projectRoomFor, takenCharacters } from "../domain/visibility.js"
+import { isCharacterId } from "@shared/characters.js"
 import { makeSecret } from "../domain/codes.js"
 import { fillerRoleId } from "../domain/roles.js"
 import { JoinPayload, CancelRequestPayload } from "./schemas.js"
@@ -22,7 +23,8 @@ export interface PlayerDeps {
 }
 
 export function registerPlayerHandlers(socket: TypedSocket, deps: PlayerDeps): void {
-  bind(socket, "player:join", JoinPayload, async ({ code, name, playerId }) => {
+  bind(socket, "player:join", JoinPayload, async ({ code, name, character, playerId }) => {
+    if (character !== undefined && !isCharacterId(character)) throw new Error("UNKNOWN_CHARACTER")
     let bound: Player | null = null
     let queued: PendingJoin | null = null
 
@@ -49,20 +51,28 @@ export function registerPlayerHandlers(socket: TypedSocket, deps: PlayerDeps): v
       const collision = room.players.find(p => p.name.toLowerCase() === name.toLowerCase())
       if (collision && collision.connected) throw new Error("NAME_TAKEN")
       if (collision && !collision.connected) {
-        bound = { ...collision, connected: true, role: roleFor(collision.role) }
+        // Coming back to a seat that is still theirs: keep the character they
+        // already had unless they explicitly picked a different free one.
+        const wanted = character && character !== collision.character
+          && !takenCharacters(room).includes(character) ? character : collision.character
+        bound = { ...collision, connected: true, role: roleFor(collision.role), character: wanted }
         return { ...room, players: room.players.map(p => p.id === collision.id ? bound! : p) }
       }
       // A name already waiting in the queue is just as taken as one in a seat.
       if (room.pending.some(r => r.name.toLowerCase() === name.toLowerCase())) throw new Error("NAME_TAKEN")
 
+      // Whoever asks second for the same face is told now, not after they have
+      // sat down or waited for the host.
+      if (character && takenCharacters(room).includes(character)) throw new Error("CHARACTER_TAKEN")
+
       if (room.requireApproval) {
-        const request: PendingJoin = { id: makeSecret(), name, requestedAt: Date.now() }
+        const request: PendingJoin = { id: makeSecret(), name, requestedAt: Date.now(), character: character ?? "" }
         queued = request
         return { ...room, pending: [...room.pending, request] }
       }
 
       if (room.players.length >= deps.config.MAX_PLAYERS_PER_ROOM) throw new Error("ROOM_FULL")
-      const fresh: Player = { id: makeSecret(), name, role: roleFor(null), connected: true }
+      const fresh: Player = { id: makeSecret(), name, role: roleFor(null), connected: true, character: character ?? "" }
       bound = fresh
       return { ...room, players: [...room.players, fresh] }
     })
@@ -106,7 +116,10 @@ export function registerPlayerHandlers(socket: TypedSocket, deps: PlayerDeps): v
     }
 
     const myProjection = projectRoomFor(updated, { kind: "player", playerId: me.id }, deps.resolveGame)
-    return { status: "joined" as const, room: myProjection, player: { id: me.id, name: me.name, role: me.role, roleData } }
+    return {
+      status: "joined" as const, room: myProjection,
+      player: { id: me.id, name: me.name, role: me.role, roleData, character: me.character }
+    }
   })
 
   bind(socket, "player:cancel-request", CancelRequestPayload, async ({ code, requestId }) => {

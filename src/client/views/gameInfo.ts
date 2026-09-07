@@ -618,6 +618,7 @@ export const gameInfoView = {
       const r = await emit("admin:create-room", {
         gameId: game.id,
         hostName: setup.hostName,
+        hostCharacter: setup.hostCharacter,
         isPublic: setup.isPublic,
         requireApproval: setup.requireApproval
       })

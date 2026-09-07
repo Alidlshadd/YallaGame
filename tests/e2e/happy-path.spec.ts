@@ -20,11 +20,12 @@ test("happy path: 4 players, role visibility, wire-level privacy", async ({ brow
   const code = await createRoom(adminPage)
 
   const players: Array<{ ctx: Awaited<ReturnType<typeof browser.newContext>>; page: Page; frames: CapturedFrame[]; name: string }> = []
-  for (const name of ["Ada","Bea","Cem","Dan"]) {
+  // Distinct characters: a room will not seat two people behind the same face.
+  for (const [name, character] of [["Ada","fox"],["Bea","raven"],["Cem","wolf"],["Dan","cat"]] as const) {
     const ctx = await browser.newContext()
     const page = await ctx.newPage()
     const frames = attachFrameCapture(page)
-    await joinAs(page, code, name)
+    await joinAs(page, code, name, character)
     players.push({ ctx, page, frames, name })
   }
 

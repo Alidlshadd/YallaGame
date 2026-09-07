@@ -4,7 +4,8 @@ import type { Player, Room, SocketData } from "@shared/types.js"
 import type { RoomStore } from "../store/store.js"
 import type { GameResolver } from "../domain/visibility.js"
 import { bind } from "./bind.js"
-import { projectRoomFor, summarizeRoom } from "../domain/visibility.js"
+import { projectRoomFor, summarizeRoom, takenCharacters } from "../domain/visibility.js"
+import { isCharacterId } from "@shared/characters.js"
 import { normalizeSettings } from "../domain/settings.js"
 import { buildRolePool, assignRolesToConnected } from "../domain/roles.js"
 import { makeRoomCode, makeSecret } from "../domain/codes.js"
@@ -18,7 +19,8 @@ import {
   UpdateRoomPayload,
   JoinDecisionPayload,
   CloseRoomPayload,
-  ListRoomsPayload
+  ListRoomsPayload,
+  PeekRoomPayload
 } from "./schemas.js"
 import { logger } from "../logger.js"
 import type { Config } from "../config.js"
@@ -58,7 +60,7 @@ async function announceApprovals(deps: AdminDeps, room: Room, playerIds: string[
     deps.io.to(`pending:${room.code}:${id}`).emit("player:join-approved", {
       status: "joined",
       room: projectRoomFor(room, { kind: "player", playerId: id }, deps.resolveGame),
-      player: { id: player.id, name: player.name, role: player.role, roleData }
+      player: { id: player.id, name: player.name, role: player.role, roleData, character: player.character }
     })
     deps.io.in(`pending:${room.code}:${id}`).socketsLeave(`pending:${room.code}:${id}`)
   }
@@ -73,9 +75,10 @@ async function generateUniqueCode(store: RoomStore): Promise<string> {
 }
 
 export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): void {
-  bind(socket, "admin:create-room", CreateRoomPayload, async ({ gameId, hostName, isPublic, requireApproval }) => {
+  bind(socket, "admin:create-room", CreateRoomPayload, async ({ gameId, hostName, hostCharacter, isPublic, requireApproval }) => {
     const game = deps.resolveGame(gameId)
     if (!game) throw new Error("UNKNOWN_GAME")
+    if (!isCharacterId(hostCharacter)) throw new Error("UNKNOWN_CHARACTER")
 
     const totalRooms = await deps.store.countActiveRooms()
     if (totalRooms >= deps.config.MAX_TOTAL_ROOMS) throw new Error("SERVER_BUSY")
@@ -88,7 +91,7 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
     const now = Date.now()
     // The host plays too, so they take the first seat rather than sitting
     // outside the game: their name is what the room browser shows as "created by".
-    const host: Player = { id: makeSecret(), name: hostName, role: null, connected: true }
+    const host: Player = { id: makeSecret(), name: hostName, role: null, connected: true, character: hostCharacter }
     const room: Room = {
       code: finalCode, gameId: game.id, adminSecret,
       assigned: false,
@@ -199,9 +202,14 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
       // leaving them stranded in a queue nobody looks at would be worse.
       if (room.requireApproval && next.requireApproval === false && room.pending.length > 0) {
         promoted = room.pending.map(r => r.id)
+        const claimed = new Set(takenCharacters({ ...room, pending: [] }))
         next.players = [
           ...room.players,
-          ...room.pending.map(r => ({ id: r.id, name: r.name, role: null, connected: true }))
+          ...room.pending.map(r => {
+            const free = r.character && !claimed.has(r.character)
+            if (free) claimed.add(r.character)
+            return { id: r.id, name: r.name, role: null, connected: true, character: free ? r.character : "" }
+          })
         ]
         next.pending = []
       }
@@ -224,7 +232,14 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
       if (room.players.length >= deps.config.MAX_PLAYERS_PER_ROOM) throw new Error("ROOM_FULL")
       // The request id becomes the player id, so the waiting socket is already
       // in the right room name and needs no second round trip to find itself.
-      const seat = { id: request.id, name: request.name, role: null, connected: true }
+      // A character can go stale between the request and the decision: somebody
+       // else may have taken it. The seat is worth more than the picture, so
+       // admit them without one rather than rejecting a person the host accepted.
+      const stillFree = !takenCharacters({ ...room, pending: [] }).includes(request.character)
+      const seat = {
+        id: request.id, name: request.name, role: null, connected: true,
+        character: stillFree ? request.character : ""
+      }
       return { ...room, players: [...room.players, seat], pending: room.pending.filter(r => r.id !== requestId) }
     })
     deps.io.in(`pending:${code}:${requestId}`).socketsJoin([`room:${code}`, `p:${code}:${requestId}`])
@@ -258,6 +273,14 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
     }
     logger.info({ code }, "room closed by host")
     return { closed: true as const }
+  })
+
+  bind(socket, "rooms:peek", PeekRoomPayload, async ({ code }) => {
+    const room = await deps.store.get(code)
+    if (!room) throw new Error("ROOM_NOT_FOUND")
+    const summary = summarizeRoom(room, deps.resolveGame)
+    if (!summary) throw new Error("UNKNOWN_GAME")
+    return { room: summary }
   })
 
   bind(socket, "rooms:list", ListRoomsPayload, async () => {

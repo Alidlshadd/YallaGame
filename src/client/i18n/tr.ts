@@ -220,6 +220,13 @@ const tr: Translations = {
   roomClosedByHost: "Kurucu odayı kapattı.",
   errorRoomFull: "Bu oda dolu.",
   errorRequestGone: "O istek artık beklemiyor.",
+  // Karakter secimi
+  chooseCharacter: "Karakterin",
+  characterTaken: "seçilmiş",
+  joinSetupSub: "Girmek için bir isim ve bir karakter seç.",
+  errorPickCharacter: "Önce bir karakter seç.",
+  errorCharacterTaken: "O karakteri az önce başkası aldı. Başka birini seç.",
+  hostCharacterLabel: "Karakterin",
   copyrightRights: "Tüm hakları saklıdır."
 }
 

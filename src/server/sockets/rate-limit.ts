@@ -5,7 +5,16 @@ const COOLDOWNS_MS: Record<string, number> = {
   "admin:assign-roles":    200,
   "admin:clear-roles":     200,
   "admin:kick-player":     200,
-  "admin:reconnect":       200
+  "admin:reconnect":       200,
+  // The lobby polls every 15s; this only has to stop the Refresh button being
+  // hammered, and a person who taps it twice in a second means it.
+  "rooms:list":            500,
+  "rooms:peek":            500,
+  "admin:approve-join":    150,
+  "admin:reject-join":     150,
+  "admin:update-room":     300,
+  "admin:close-room":      500,
+  "player:cancel-request": 300
 }
 
 type Bag = Map<string, number>

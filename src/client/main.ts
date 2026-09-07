@@ -24,6 +24,7 @@ async function bootstrap() {
   register(homeView)
   registerLazy("joinView", async () => (await import("./views/join.js")).joinView)
   registerLazy("gameInfoView", async () => (await import("./views/gameInfo.js")).gameInfoView)
+  registerLazy("joinSetupView", async () => (await import("./views/joinSetup.js")).joinSetupView)
   registerLazy("pendingView", async () => (await import("./views/pending.js")).pendingView)
   registerLazy("playerRoomView", async () => (await import("./views/playerRoom.js")).playerRoomView)
   registerLazy("adminView", async () => (await import("./views/admin.js")).adminView)
@@ -98,7 +99,7 @@ async function bootstrap() {
   if (/^[A-Z2-9]{5}$/.test(joinParam)) {
     history.replaceState(history.state, "", location.pathname)
     clearTheme()
-    await setView("joinView", { code: joinParam }, { mode: "root" })
+    await setView("joinSetupView", { code: joinParam }, { mode: "root" })
     return
   }
   if (existing?.kind === "admin") {

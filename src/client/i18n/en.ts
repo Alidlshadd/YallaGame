@@ -218,6 +218,13 @@ const en = {
   roomClosedByHost: "The host closed the room.",
   errorRoomFull: "This room is full.",
   errorRequestGone: "That request is no longer waiting.",
+  // Character picking
+  chooseCharacter: "Your character",
+  characterTaken: "already taken",
+  joinSetupSub: "Pick a name and a character to enter.",
+  errorPickCharacter: "Pick a character first.",
+  errorCharacterTaken: "Somebody just took that character. Pick another.",
+  hostCharacterLabel: "Your character",
   copyrightRights: "All rights reserved."
 }
 

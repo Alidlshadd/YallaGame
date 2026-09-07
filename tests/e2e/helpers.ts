@@ -3,6 +3,8 @@ import { expect, type Page } from "@playwright/test"
 export interface CreateRoomOptions {
   /** The host's display name — mandatory now that the host holds a seat. */
   hostName?: string
+  /** Character id from shared/characters.ts. */
+  hostCharacter?: string
   /** Listed in the public room browser. */
   isPublic?: boolean
   /** Park every newcomer in the host's queue instead of seating them. */
@@ -15,7 +17,7 @@ export interface CreateRoomOptions {
  * every spec needs the same four clicks.
  */
 export async function createRoom(page: Page, opts: CreateRoomOptions = {}): Promise<string> {
-  const { hostName = "Host", isPublic = false, requireApproval = false } = opts
+  const { hostName = "Host", hostCharacter = "owl", isPublic = false, requireApproval = false } = opts
 
   await page.goto("/")
   await page.click(".cta-create")
@@ -24,6 +26,7 @@ export async function createRoom(page: Page, opts: CreateRoomOptions = {}): Prom
 
   await expect(page.locator("#hostSetupOverlay")).toBeVisible()
   await page.fill("#hostNameInput", hostName)
+  await page.locator(`#hostSetupOverlay .char-tile[data-character="${hostCharacter}"]`).click()
   await page.locator("#hostPublicInput").setChecked(isPublic)
   await page.locator("#hostApprovalInput").setChecked(requireApproval)
   await page.locator(".host-setup-actions .btn-primary").click()
@@ -32,17 +35,25 @@ export async function createRoom(page: Page, opts: CreateRoomOptions = {}): Prom
   return page.locator("#roomCodeText").innerText()
 }
 
-/** Fill the room browser's code + name fields and press Enter. */
-export async function submitJoin(page: Page, code: string, name: string): Promise<void> {
+/** Type a code in the room browser to reach that room's doorstep. */
+export async function openDoorstep(page: Page, code: string): Promise<void> {
   await page.goto("/")
   await page.click(".cta-join")
   await page.fill("#joinCodeInput", code)
-  await page.fill("#playerNameInput", name)
   await page.click("#joinBtn")
+  await expect(page.locator("#joinSetupView.active-view")).toBeVisible()
+}
+
+/** Walk the doorstep: name, character, submit. */
+export async function submitJoin(page: Page, code: string, name: string, character = "fox"): Promise<void> {
+  await openDoorstep(page, code)
+  await page.fill("#joinSetupName", name)
+  await page.locator(`#joinSetupCharacters .char-tile[data-character="${character}"]`).click()
+  await page.click("#joinSetupSubmit")
 }
 
 /** Join a room that seats players immediately, and wait until they are in. */
-export async function joinAs(page: Page, code: string, name: string): Promise<void> {
-  await submitJoin(page, code, name)
-  await expect(page.locator("#playerWelcome")).toHaveText(name)
+export async function joinAs(page: Page, code: string, name: string, character = "fox"): Promise<void> {
+  await submitJoin(page, code, name, character)
+  await expect(page.locator("#playerWelcome")).toContainText(name)
 }

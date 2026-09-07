@@ -94,12 +94,12 @@ for (const { name, make } of factories) {
       await store.create({
         ...mkRoom("PUB55", 100),
         isPublic: true, requireApproval: true,
-        pending: [{ id: "req1", name: "Ada", requestedAt: 42 }]
+        pending: [{ id: "req1", name: "Ada", requestedAt: 42, character: "owl" }]
       })
       const listed = await store.listPublic(10)
       expect(listed).toHaveLength(1)
       expect(listed[0]?.requireApproval).toBe(true)
-      expect(listed[0]?.pending).toEqual([{ id: "req1", name: "Ada", requestedAt: 42 }])
+      expect(listed[0]?.pending).toEqual([{ id: "req1", name: "Ada", requestedAt: 42, character: "owl" }])
     })
 
     it("countActiveRooms reflects create/delete", async () => {

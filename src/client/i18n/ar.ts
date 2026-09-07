@@ -217,6 +217,13 @@ const ar: Translations = {
   roomClosedByHost: "أغلق المنشئ الغرفة.",
   errorRoomFull: "هذه الغرفة ممتلئة.",
   errorRequestGone: "هذا الطلب لم يعد بالانتظار.",
+  // Character picking (ar)
+  chooseCharacter: "شخصيتك",
+  characterTaken: "محجوزة",
+  joinSetupSub: "اختر اسمًا وشخصية للدخول.",
+  errorPickCharacter: "اختر شخصية أولاً.",
+  errorCharacterTaken: "أخذ أحدهم هذه الشخصية للتو. اختر غيرها.",
+  hostCharacterLabel: "شخصيتك",
   copyrightRights: "جميع الحقوق محفوظة."
 }
 

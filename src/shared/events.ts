@@ -24,7 +24,7 @@ export interface RoleAssignedPayload {
 }
 
 export interface ClientToServerEvents {
-  "admin:create-room":     (p: { gameId: string; hostName: string; isPublic: boolean; requireApproval: boolean }, cb: Ack<CreateRoomData>) => void
+  "admin:create-room":     (p: { gameId: string; hostName: string; hostCharacter: string; isPublic: boolean; requireApproval: boolean }, cb: Ack<CreateRoomData>) => void
   "admin:reconnect":       (p: { code: string; adminSecret: string },                               cb: Ack<AdminRoomData>)  => void
   "admin:update-settings": (p: { code: string; adminSecret: string; settings: Partial<Settings> },  cb: Ack<AdminRoomData>)  => void
   "admin:update-room":     (p: { code: string; adminSecret: string; isPublic?: boolean; requireApproval?: boolean }, cb: Ack<AdminRoomData>) => void
@@ -34,9 +34,11 @@ export interface ClientToServerEvents {
   "admin:approve-join":    (p: { code: string; adminSecret: string; requestId: string },            cb: Ack<AdminRoomData>)  => void
   "admin:reject-join":     (p: { code: string; adminSecret: string; requestId: string },            cb: Ack<AdminRoomData>)  => void
   "admin:close-room":      (p: { code: string; adminSecret: string },                               cb: Ack<{ closed: true }>) => void
-  "player:join":           (p: { code: string; name: string; playerId?: string },                   cb: Ack<PlayerJoinData>) => void
+  "player:join":           (p: { code: string; name: string; character?: string; playerId?: string }, cb: Ack<PlayerJoinData>) => void
   "player:cancel-request": (p: { code: string; requestId: string },                                 cb: Ack<{ cancelled: true }>) => void
   "rooms:list":            (p: Record<string, never>,                                               cb: Ack<RoomListData>)   => void
+  /** One room by code, for the join screen reached with a code rather than a list row. */
+  "rooms:peek":            (p: { code: string },                                                    cb: Ack<{ room: RoomSummary }>) => void
 }
 
 export interface ServerToClientEvents {

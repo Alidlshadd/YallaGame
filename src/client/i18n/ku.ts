@@ -217,6 +217,13 @@ const ku: Translations = {
   roomClosedByHost: "دروستکەر ژوورەکەی داخست.",
   errorRoomFull: "ئەم ژوورە پڕە.",
   errorRequestGone: "ئەو داواکارییە چیتر چاوەڕوان نییە.",
+  // Character picking (ku)
+  chooseCharacter: "کەسایەتییەکەت",
+  characterTaken: "گیراوە",
+  joinSetupSub: "بۆ چوونەژوورەوە ناوێک و کەسایەتییەک هەڵبژێرە.",
+  errorPickCharacter: "سەرەتا کەسایەتییەک هەڵبژێرە.",
+  errorCharacterTaken: "کەسێک ئێستا ئەو کەسایەتییەی برد. یەکێکی تر هەڵبژێرە.",
+  hostCharacterLabel: "کەسایەتییەکەت",
   copyrightRights: "هەموو مافەکان پارێزراون."
 }
 

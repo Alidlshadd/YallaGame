@@ -1,4 +1,6 @@
-import { $ } from "../ui/dom.js"
+import { $, clear } from "../ui/dom.js"
+import { buildAvatar } from "../ui/avatar.js"
+import { getLang } from "../services/i18n.js"
 import { t } from "../services/i18n.js"
 import { socket, emit } from "../services/socket.js"
 import * as session from "../services/session.js"
@@ -18,15 +20,21 @@ import type { JoinedData } from "@shared/events.js"
  */
 export const pendingView = {
   id: "pendingView" as const,
-  mount(ctx: { requestId?: string; code?: string; name?: string; theme?: string }) {
+  mount(ctx: { requestId?: string; code?: string; name?: string; character?: string; theme?: string }) {
     const codeEl = $<HTMLElement>("#pendingRoomCode")
     const cancelBtn = $<HTMLButtonElement>("#cancelRequestBtn")
+    const avatarSlot = $<HTMLElement>("#pendingAvatar")
 
     const requestId = ctx.requestId ?? ""
     const roomCode = ctx.code ?? ""
     codeEl.textContent = roomCode
 
     if (ctx.theme) void applyTheme(ctx.theme).catch(() => {})
+
+    clear(avatarSlot)
+    if (ctx.character) {
+      avatarSlot.appendChild(buildAvatar(ctx.character, ctx.name ?? "", getLang(), { size: 72, lazy: false }))
+    }
 
     // The player is staring at a screen that only changes when somebody else
     // acts, so keep it awake and make a dropped socket visible.

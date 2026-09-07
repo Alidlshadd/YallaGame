@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test"
-import { createRoom } from "./helpers.js"
+import { createRoom, joinAs } from "./helpers.js"
 
 /**
  * The phone back button. Players kept getting stranded on screens that had no
@@ -78,12 +78,8 @@ test("a player is asked before a back press drops them out of a room", async ({ 
 
   const playerCtx = await browser.newContext()
   const player = await playerCtx.newPage()
-  await player.goto("/")
-  await player.click(".cta-join")
-  await player.fill("#joinCodeInput", code)
-  await player.fill("#playerNameInput", "Ada")
-  await player.click("#joinBtn")
-  await expect(player.locator("#playerWelcome")).toHaveText("Ada")
+  await joinAs(player, code, "Ada")
+  await expect(player.locator("#playerWelcome")).toContainText("Ada")
 
   await player.goBack()
   await expect(player.locator("#confirmOverlay")).toBeVisible()

@@ -1,9 +1,12 @@
 import { el } from "./dom.js"
 import { t } from "../services/i18n.js"
 import { dismissLayer, pushLayer, type LayerHandle } from "../services/navigation.js"
+import { buildCharacterPicker } from "./characterPicker.js"
+import { getLang } from "../services/i18n.js"
 
 export interface HostSetup {
   hostName: string
+  hostCharacter: string
   isPublic: boolean
   requireApproval: boolean
 }
@@ -60,6 +63,10 @@ export function hostSetupDialog(): Promise<HostSetup | null> {
 
     const error = el("p", { class: "host-setup-error", role: "alert", hidden: "hidden" }, [t("errorNameRequired")])
 
+    // The host holds a seat, so they pick a face like everybody else. Nothing
+    // is taken yet — the room does not exist until this dialog is accepted.
+    const picker = buildCharacterPicker(getLang(), [], () => { error.hidden = true })
+
     const createBtn = el("button", { class: "btn btn-primary full", type: "button" }, [t("createRoomConfirm")])
     const cancelBtn = el("button", { class: "btn btn-ghost", type: "button" }, [t("cancel")])
 
@@ -78,12 +85,19 @@ export function hostSetupDialog(): Promise<HostSetup | null> {
     const submit = (): void => {
       const hostName = nameInput.value.trim()
       if (!hostName) {
+        error.textContent = t("errorNameRequired")
         error.hidden = false
         nameInput.focus()
         return
       }
+      if (!picker.value()) {
+        error.textContent = t("errorPickCharacter")
+        error.hidden = false
+        return
+      }
       const setup: HostSetup = {
         hostName,
+        hostCharacter: picker.value(),
         isPublic: publicInput.checked,
         requireApproval: approvalInput.checked
       }
@@ -117,6 +131,11 @@ export function hostSetupDialog(): Promise<HostSetup | null> {
         el("small", { class: "field-hint" }, [t("hostNameHint")])
       ]),
       error,
+
+      el("fieldset", { class: "host-setup-group" }, [
+        el("legend", {}, [t("hostCharacterLabel")]),
+        picker.element
+      ]),
 
       el("fieldset", { class: "host-setup-group" }, [
         el("legend", {}, [t("visibilityLabel")]),

@@ -49,6 +49,8 @@ export interface Player {
   name: string
   role: RoleId | null
   connected: boolean
+  /** A character id from `shared/characters.ts`; "" for seats taken before characters existed. */
+  character: string
 }
 
 /**
@@ -60,6 +62,7 @@ export interface PendingJoin {
   id: string
   name: string
   requestedAt: number
+  character: string
 }
 
 export interface Room {
@@ -89,6 +92,7 @@ export interface VisiblePlayer {
   name: string
   connected: boolean
   role: RoleId | null
+  character: string
 }
 
 export interface VisibleRoom {
@@ -118,6 +122,8 @@ export interface RoomSummary {
   /** Roles are out — the game is already running. */
   assigned: boolean
   createdAt: number
+  /** Characters already spoken for, so the join screen can grey them out. */
+  takenCharacters: string[]
 }
 
 export interface SelfPlayer {
@@ -125,6 +131,7 @@ export interface SelfPlayer {
   name: string
   role: RoleId | null
   roleData: Role | null
+  character: string
 }
 
 export type ErrorCode =
@@ -143,6 +150,8 @@ export type ErrorCode =
   | "REQUEST_NOT_FOUND"
   | "JOIN_REJECTED"
   | "ROOM_FULL"
+  | "CHARACTER_TAKEN"
+  | "UNKNOWN_CHARACTER"
 
 export interface SocketData {
   roomCode?: string

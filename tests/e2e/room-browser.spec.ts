@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test"
-import { createRoom, joinAs, submitJoin } from "./helpers.js"
+import { createRoom, joinAs, submitJoin, openDoorstep } from "./helpers.js"
 
 const activeView = (page: import("@playwright/test").Page) =>
   page.locator("section.view.active-view")
@@ -38,10 +38,17 @@ test("joining straight from a room browser row seats the player", async ({ brows
   const player = await playerCtx.newPage()
   await player.goto("/")
   await player.click(".cta-join")
-  await player.fill("#playerNameInput", "Ada")
   await player.locator(".lobby-row", { hasText: code }).locator(".lobby-join").click()
 
-  await expect(player.locator("#playerWelcome")).toHaveText("Ada")
+  // The row hands the doorstep everything it already knows about the room.
+  await expect(player.locator("#joinSetupGame")).toContainText("Vampire")
+  await expect(player.locator("#joinSetupHost")).toContainText("Zeynep")
+
+  await player.fill("#joinSetupName", "Ada")
+  await player.locator('#joinSetupCharacters .char-tile[data-character="fox"]').click()
+  await player.click("#joinSetupSubmit")
+
+  await expect(player.locator("#playerWelcome")).toContainText("Ada")
   await expect(host.locator("#adminPlayersList")).toContainText("Ada")
 
   await hostCtx.close(); await playerCtx.close()
@@ -54,15 +61,12 @@ test("a nameless join is refused before it reaches the server", async ({ browser
 
   const playerCtx = await browser.newContext()
   const player = await playerCtx.newPage()
-  await player.goto("/")
-  await player.click(".cta-join")
-  await player.fill("#joinCodeInput", code)
+  await openDoorstep(player, code)
   // Whitespace is not a name: the field trims before it decides.
-  await player.fill("#playerNameInput", "   ")
-  await player.click("#joinBtn")
-
-  await expect(player.locator("#joinMessage")).toBeVisible()
-  await expect(activeView(player)).toHaveAttribute("id", "joinView")
+  await player.fill("#joinSetupName", "   ")
+  await player.locator('#joinSetupCharacters .char-tile[data-character="fox"]').click()
+  await expect(player.locator("#joinSetupSubmit")).toBeDisabled()
+  await expect(activeView(player)).toHaveAttribute("id", "joinSetupView")
 
   await hostCtx.close(); await playerCtx.close()
 })
@@ -99,7 +103,7 @@ test("the host accepts a join request; the player waits until they do", async ({
   await expect(request).toBeVisible()
   await request.locator(".btn-primary").click()
 
-  await expect(player.locator("#playerWelcome")).toHaveText("Ada")
+  await expect(player.locator("#playerWelcome")).toContainText("Ada")
   await expect(host.locator("#adminPlayersList")).toContainText("Ada")
   await expect(host.locator(".request-row")).toHaveCount(0)
 
@@ -154,7 +158,7 @@ test("turning approval off lets everyone already queued straight in", async ({ b
 
   await host.locator("#roomApprovalToggle").uncheck()
 
-  await expect(player.locator("#playerWelcome")).toHaveText("Ada")
+  await expect(player.locator("#playerWelcome")).toContainText("Ada")
   await expect(host.locator("#adminPlayersList")).toContainText("Ada")
   // With approval off the queue panel has nothing to say.
   await expect(host.locator("#joinRequestsPanel")).toBeHidden()
@@ -195,10 +199,10 @@ test("the host holds a seat and is dealt a role like everyone else", async ({ br
   await expect(hostRow.locator(".kick-btn")).toBeHidden()
 
   const contexts = []
-  for (const name of ["Ada", "Bea"]) {
+  for (const [name, character] of [["Ada", "fox"], ["Bea", "raven"]] as const) {
     const ctx = await browser.newContext()
     const page = await ctx.newPage()
-    await joinAs(page, code, name)
+    await joinAs(page, code, name, character)
     contexts.push(ctx)
   }
 
@@ -209,4 +213,110 @@ test("the host holds a seat and is dealt a role like everyone else", async ({ br
 
   for (const ctx of contexts) await ctx.close()
   await hostCtx.close()
+})
+
+test("a room cannot be created without a character either", async ({ page }) => {
+  await page.goto("/")
+  await page.click(".cta-create")
+  await page.locator(".create-picker-option").first().click()
+  await page.locator(".gi-hero .gi-cta-primary").click()
+
+  await expect(page.locator("#hostSetupOverlay")).toBeVisible()
+  await page.fill("#hostNameInput", "Zeynep")
+  // Whatever the picker remembered from a previous room, clear the choice.
+  await page.evaluate(() => localStorage.removeItem("role-room:last-character"))
+  await page.reload()
+  await page.click(".cta-create")
+  await page.locator(".create-picker-option").first().click()
+  await page.locator(".gi-hero .gi-cta-primary").click()
+  await page.fill("#hostNameInput", "Zeynep")
+  await page.locator(".host-setup-actions .btn-primary").click()
+
+  await expect(page.locator(".host-setup-error")).toBeVisible()
+  await expect(page.locator("#hostSetupOverlay")).toBeVisible()
+})
+
+test("a character already in the room cannot be picked again", async ({ browser }) => {
+  const hostCtx = await browser.newContext()
+  const host = await hostCtx.newPage()
+  // The host takes the Owl when the room is made.
+  const code = await createRoom(host, { hostName: "Zeynep", hostCharacter: "owl", isPublic: true })
+
+  const playerCtx = await browser.newContext()
+  const player = await playerCtx.newPage()
+  await openDoorstep(player, code)
+
+  const owl = player.locator('#joinSetupCharacters .char-tile[data-character="owl"]')
+  await expect(owl).toBeDisabled()
+  await expect(owl).toHaveClass(/is-taken/)
+  // Everything else is still up for grabs.
+  await expect(player.locator('#joinSetupCharacters .char-tile[data-character="fox"]')).toBeEnabled()
+
+  await hostCtx.close(); await playerCtx.close()
+})
+
+test("a face taken while the doorstep is open stops being selectable", async ({ browser }) => {
+  const hostCtx = await browser.newContext()
+  const host = await hostCtx.newPage()
+  const code = await createRoom(host, { hostName: "Zeynep", hostCharacter: "owl", isPublic: true })
+
+  const slowCtx = await browser.newContext()
+  const slow = await slowCtx.newPage()
+  await openDoorstep(slow, code)
+  await slow.fill("#joinSetupName", "Ada")
+  await slow.locator('#joinSetupCharacters .char-tile[data-character="wolf"]').click()
+
+  // Somebody quicker takes the Wolf from another phone.
+  const fastCtx = await browser.newContext()
+  const fast = await fastCtx.newPage()
+  await joinAs(fast, code, "Bea", "wolf")
+
+  // The doorstep polls, so the tile greys out and the choice is dropped.
+  await expect(slow.locator('#joinSetupCharacters .char-tile[data-character="wolf"]')).toBeDisabled()
+  await expect(slow.locator("#joinSetupSubmit")).toBeDisabled()
+
+  // Picking a free one puts them back on track.
+  await slow.locator('#joinSetupCharacters .char-tile[data-character="hare"]').click()
+  await slow.click("#joinSetupSubmit")
+  await expect(slow.locator("#playerWelcome")).toContainText("Ada")
+
+  await hostCtx.close(); await slowCtx.close(); await fastCtx.close()
+})
+
+test("the character a player picked follows them into the host's queue and list", async ({ browser }) => {
+  const hostCtx = await browser.newContext()
+  const host = await hostCtx.newPage()
+  const code = await createRoom(host, { hostName: "Zeynep", hostCharacter: "owl", isPublic: true, requireApproval: true })
+
+  const playerCtx = await browser.newContext()
+  const player = await playerCtx.newPage()
+  await submitJoin(player, code, "Ada", "raven")
+
+  // Waiting, wearing the face they picked.
+  await expect(player.locator("#pendingAvatar .avatar")).toBeVisible()
+  // The host sees it on the request before deciding.
+  const request = host.locator(".request-row", { hasText: "Ada" })
+  await expect(request.locator(".avatar")).toBeVisible()
+  await request.locator(".btn-primary").click()
+
+  await expect(host.locator(".player-row", { hasText: "Ada" }).locator(".avatar")).toBeVisible()
+  await expect(player.locator("#playerWelcome .avatar")).toBeVisible()
+
+  await hostCtx.close(); await playerCtx.close()
+})
+
+test("an invite link goes straight to the doorstep", async ({ browser }) => {
+  const hostCtx = await browser.newContext()
+  const host = await hostCtx.newPage()
+  const code = await createRoom(host, { hostName: "Zeynep" })
+
+  const playerCtx = await browser.newContext()
+  const player = await playerCtx.newPage()
+  await player.goto(`/?join=${code}`)
+
+  await expect(activeView(player)).toHaveAttribute("id", "joinSetupView")
+  await expect(player.locator("#joinSetupHost")).toContainText(code)
+  await expect(player.locator("#joinSetupCharacters .char-tile").first()).toBeVisible()
+
+  await hostCtx.close(); await playerCtx.close()
 })

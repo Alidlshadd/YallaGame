@@ -2,31 +2,17 @@ import { $, clear, el } from "../ui/dom.js"
 import { getLang, t } from "../services/i18n.js"
 import { goBack, setView } from "../router.js"
 import { emit } from "../services/socket.js"
-import * as session from "../services/session.js"
 import { showToast } from "../ui/toast.js"
-import { applyTheme, clearTheme } from "../themes/loader.js"
+import { clearTheme } from "../themes/loader.js"
 import { openCreatePicker } from "./home.js"
-import type { PlayerJoinData, RoomListData } from "@shared/events.js"
-import type { ErrorCode, RoomSummary } from "@shared/types.js"
+import type { RoomListData } from "@shared/events.js"
+import type { RoomSummary } from "@shared/types.js"
 import type { Translations } from "../i18n/en.js"
-
-const ERR_TO_KEY: Partial<Record<ErrorCode, keyof Translations>> = {
-  NAME_TAKEN: "errorNameTaken",
-  NAME_REQUIRED: "errorNameRequired",
-  ROOM_NOT_FOUND: "errorRoomNotFound",
-  RATE_LIMITED: "errorRateLimited",
-  SERVER_BUSY: "errorServerBusy",
-  ROOM_FULL: "errorRoomFull"
-}
-
-/** Typed once, reused every evening — nobody wants to retype their name. */
-const NAME_KEY = "role-room:last-name"
 
 export const joinView = {
   id: "joinView" as const,
   mount(ctx: { code?: string } = {}) {
     const code = $<HTMLInputElement>("#joinCodeInput")
-    const name = $<HTMLInputElement>("#playerNameInput")
     const msg  = $<HTMLDivElement>("#joinMessage")
     const list = $<HTMLDivElement>("#lobbyList")
     const lang = getLang()
@@ -34,14 +20,9 @@ export const joinView = {
     code.classList.remove("locked")
     msg.classList.add("hidden"); msg.textContent = ""
 
-    if (!name.value) name.value = localStorage.getItem(NAME_KEY) ?? ""
-
-    // Invite link (/?join=CODE) prefills and locks the code so the
-    // player only has to type their name.
     if (typeof ctx.code === "string" && ctx.code) {
       code.value = ctx.code.toUpperCase()
       if (code.value.length === 5) code.classList.add("locked")
-      name.focus()
     }
 
     const showError = (key: keyof Translations): void => {
@@ -56,39 +37,17 @@ export const joinView = {
     }
     code.addEventListener("input", onCodeInput)
 
-    /* ─── Joining ─────────────────────────────────────────── */
+    /* ─── Opening the doorstep ────────────────────────────── */
 
-    let joining = false
-    const joinRoom = async (roomCode: string): Promise<void> => {
-      if (joining) return
-      const player = name.value.trim()
-      // The name is what everyone else in the room sees; there is no
-      // anonymous seat, so refuse before the round trip.
-      if (!player) { showError("errorNameRequired"); name.focus(); return }
+    // Nothing joins from this screen any more: the name and the character are
+    // asked next, where there is room to show the faces.
+    const openSetup = (roomCode: string, summary?: RoomSummary): void => {
       if (!roomCode) { showError("errorRoomNotFound"); code.focus(); return }
-
-      joining = true
       msg.classList.add("hidden")
-      const r = await emit("player:join", { code: roomCode, name: player })
-      joining = false
-      if (!r.ok) {
-        showError(ERR_TO_KEY[r.error] ?? "errorGeneric")
-        return
-      }
-      localStorage.setItem(NAME_KEY, player)
-
-      const data = r.data as PlayerJoinData
-      if (data.status === "pending") {
-        await applyTheme(data.theme)
-        await setView("pendingView", { requestId: data.requestId, code: data.code, name: player })
-        return
-      }
-      session.save({ kind: "player", code: roomCode, playerId: data.player.id, name: data.player.name })
-      await applyTheme(data.room.game.theme)
-      await setView("playerRoomView", { initial: data })
+      void setView("joinSetupView", summary ? { code: roomCode, summary } : { code: roomCode })
     }
 
-    const onJoin = () => void joinRoom(code.value.trim().toUpperCase())
+    const onJoin = () => openSetup(code.value.trim().toUpperCase())
 
     /* ─── The room browser ────────────────────────────────── */
 
@@ -104,7 +63,7 @@ export const joinView = {
       list.classList.remove("empty")
       for (const room of rooms) {
         const joinBtn = el("button", { class: "lobby-join btn btn-secondary", type: "button" }, [t("joinRoomAction")])
-        joinBtn.addEventListener("click", () => void joinRoom(room.code))
+        joinBtn.addEventListener("click", () => openSetup(room.code, room))
 
         const badges = el("div", { class: "lobby-badges" }, [
           el("span", { class: `lobby-badge ${room.assigned ? "running" : "waiting"}` }, [
@@ -135,7 +94,8 @@ export const joinView = {
     }
 
     let loading = false
-    const loadRooms = async (): Promise<void> => {
+    const timers = new Set<number>()
+    const loadRooms = async (retryOnCooldown = false): Promise<void> => {
       if (loading) return
       loading = true
       list.setAttribute("aria-busy", "true")
@@ -146,7 +106,15 @@ export const joinView = {
         // A rate-limited refresh is not worth wiping the list that is already
         // on screen; only an empty list needs the message.
         if (list.childElementCount === 0) renderPlaceholder("noOpenRooms")
-        if (r.error === "RATE_LIMITED") showToast(t("errorRateLimited"))
+        // Tapping Refresh right after the screen opened lands inside the
+        // server's cooldown. Silently doing nothing makes the button look
+        // broken, so wait it out and go again.
+        if (r.error === "RATE_LIMITED" && retryOnCooldown) {
+          const id = window.setTimeout(() => { timers.delete(id); void loadRooms() }, 700)
+          timers.add(id)
+        } else if (r.error === "RATE_LIMITED") {
+          showToast(t("errorRateLimited"))
+        }
         return
       }
       renderRooms((r.data as RoomListData).rooms)
@@ -158,7 +126,7 @@ export const joinView = {
     // without the player having to hunt for the refresh button.
     const poll = window.setInterval(() => { void loadRooms() }, 15000)
 
-    const onRefresh = () => void loadRooms()
+    const onRefresh = () => void loadRooms(true)
     const onCreate = () => { openCreatePicker(lang) }
 
     const onBack = () => {
@@ -173,11 +141,9 @@ export const joinView = {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Enter") return
       e.preventDefault()
-      if (e.target === name && code.value.trim().length !== 5) { code.focus(); return }
       onJoin()
     }
     code.addEventListener("keydown", onKey)
-    name.addEventListener("keydown", onKey)
 
     const btn = $<HTMLButtonElement>("#joinBtn")
     const refreshBtn = $<HTMLButtonElement>("#refreshRoomsBtn")
@@ -190,9 +156,10 @@ export const joinView = {
 
     return () => {
       window.clearInterval(poll)
+      for (const id of timers) window.clearTimeout(id)
+      timers.clear()
       code.removeEventListener("input", onCodeInput)
       code.removeEventListener("keydown", onKey)
-      name.removeEventListener("keydown", onKey)
       btn.removeEventListener("click", onJoin)
       refreshBtn.removeEventListener("click", onRefresh)
       createBtn.removeEventListener("click", onCreate)
