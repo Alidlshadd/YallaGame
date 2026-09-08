@@ -2,7 +2,7 @@ import { el, clear } from "./dom.js"
 import { t } from "../services/i18n.js"
 import { buildAvatar } from "./avatar.js"
 import { CHARACTERS } from "@shared/characters.js"
-import { ACCESSORIES, findAccessory, isAccessoryId } from "@shared/accessories.js"
+import { ACCESSORIES, allowsAccessories, characterAccessory, findAccessory, isAccessoryId } from "@shared/accessories.js"
 import type { LangCode } from "@shared/types.js"
 
 const LAST_CHARACTER_KEY = "role-room:last-character"
@@ -47,7 +47,7 @@ export function buildCharacterPicker(lang: LangCode, taken: string[], onChange: 
     const def = CHARACTERS.find(c => c.id === chosen)
     preview.replaceChildren(buildAvatar(def?.id ?? CHARACTERS[0]!.id, "", lang, { size: 100, accessory, lazy: false }))
     previewName.textContent = def?.name[lang] ?? t("chooseCharacter")
-    previewDetail.textContent = findAccessory(accessory)?.name[lang] ?? t("avatarMakeItYours")
+    previewDetail.textContent = allowsAccessories(chosen) ? findAccessory(accessory)?.name[lang] ?? t("avatarMakeItYours") : t("avatarNoAccessory")
     surprise.disabled = CHARACTERS.every(c => claimed.has(c.id))
   }
   function renderCharacters(): void {
@@ -74,8 +74,16 @@ export function buildCharacterPicker(lang: LangCode, taken: string[], onChange: 
     if (focused) grid.querySelector<HTMLButtonElement>(`[data-character="${focused}"]:not(:disabled)`)?.focus({ preventScroll: true })
   }
   function renderAccessories(): void {
+    const allowed = allowsAccessories(chosen)
+    accessoryTab.disabled = !allowed
+    if (!allowed) {
+      accessory = ""
+      remember(LAST_ACCESSORY_KEY, accessory)
+      selectTab("characters")
+    }
     const scroll = accessories.scrollTop
     clear(accessories)
+    if (!allowed) return
     for (const def of [{ id: "", name: { [lang]: t("avatarNoAccessory") } }, ...ACCESSORIES]) {
       const tile = el("button", { class: "char-tile accessory-tile", type: "button", role: "radio", "aria-checked": String(accessory === def.id), "aria-label": def.name[lang]!, "data-accessory": def.id, tabindex: accessory === def.id ? "0" : "-1" })
       const icon = el("span", { class: "accessory-icon", "aria-hidden": "true" })
@@ -93,7 +101,7 @@ export function buildCharacterPicker(lang: LangCode, taken: string[], onChange: 
     accessories.scrollTop = scroll
   }
   function selectTab(tab: string): void {
-    activeTab = tab
+    activeTab = tab === "accessories" && !allowsAccessories(chosen) ? "characters" : tab
     const characters = activeTab === "characters"
     characterPanel.hidden = !characters
     accessoryPanel.hidden = characters
@@ -126,7 +134,7 @@ export function buildCharacterPicker(lang: LangCode, taken: string[], onChange: 
     const free = CHARACTERS.filter(c => !claimed.has(c.id))
     if (!free.length) return
     chosen = free[Math.floor(Math.random() * free.length)]!.id
-    accessory = ACCESSORIES[Math.floor(Math.random() * ACCESSORIES.length)]!.id
+    accessory = characterAccessory(chosen, ACCESSORIES[Math.floor(Math.random() * ACCESSORIES.length)]!.id)
     remember(LAST_CHARACTER_KEY, chosen); remember(LAST_ACCESSORY_KEY, accessory)
     renderCharacters(); renderAccessories(); renderPreview(); onChange(chosen)
   })

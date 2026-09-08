@@ -4,7 +4,7 @@ import { buildCharacterPicker } from "@client/ui/characterPicker.js"
 import { buildAvatar } from "@client/ui/avatar.js"
 import { AccessoryId, CreateRoomPayload, JoinPayload } from "@server/sockets/schemas.js"
 import { CHARACTERS } from "@shared/characters.js"
-import { ACCESSORIES } from "@shared/accessories.js"
+import { ACCESSORIES, characterAccessory } from "@shared/accessories.js"
 
 beforeEach(() => { document.body.replaceChildren(); localStorage.clear() })
 function click(selector: string): void { document.querySelector<HTMLButtonElement>(selector)!.click() }
@@ -19,7 +19,7 @@ describe("avatar customization", () => {
     expect(changed).not.toHaveBeenCalled()
     expect(picker.value()).toBe("ruby")
     expect(picker.accessory()).toBe("crown")
-    expect(document.querySelectorAll(".char-tile[data-character]")).toHaveLength(20)
+    expect(document.querySelectorAll(".char-tile[data-character]")).toHaveLength(21)
     expect(document.querySelector(".avatar-preview .avatar")?.getAttribute("data-accessory")).toBe("crown")
   })
   it("keeps the character when adding/removing accessories and changing tabs", () => {
@@ -35,6 +35,46 @@ describe("avatar customization", () => {
     expect(picker.accessory()).toBe("")
     expect(picker.value()).toBe("wisp")
     expect(document.querySelector(".avatar-preview .avatar-accessory")).toBeNull()
+  })
+  it("clears accessories for Ali and enables them again for another character", () => {
+    localStorage.setItem("role-room:last-accessory", "crown")
+    const picker = buildCharacterPicker("en", [], vi.fn())
+    document.body.append(picker.element)
+    click('[data-character="ali"]')
+    expect(picker.accessory()).toBe("")
+    expect(localStorage.getItem("role-room:last-accessory")).toBe("")
+    const tab = document.querySelector<HTMLButtonElement>('[id$="accessories-tab"]')!
+    expect(tab.disabled).toBe(true)
+    click('[id$="characters-tab"]')
+    document.querySelector('[role="tablist"]')!.dispatchEvent(new KeyboardEvent("keydown", { key: "End", bubbles: true }))
+    expect(document.querySelector<HTMLElement>('[id$="accessories"]')!.hidden).toBe(true)
+    expect(document.querySelector(".avatar-preview img")?.getAttribute("src")).toBe("/assets/characters/ali.png")
+    click('[data-character="ruby"]')
+    expect(tab.disabled).toBe(false)
+    click('.accessory-tile[data-accessory="crown"]')
+    expect(picker.accessory()).toBe("crown")
+  })
+  it("keeps restored and random Ali selections accessory-free", () => {
+    localStorage.setItem("role-room:last-character", "ali")
+    localStorage.setItem("role-room:last-accessory", "crown")
+    const picker = buildCharacterPicker("en", CHARACTERS.filter(c => c.id !== "ali").map(c => c.id), vi.fn())
+    document.body.append(picker.element)
+    expect(picker.value()).toBe("ali")
+    expect(picker.accessory()).toBe("")
+    click(".avatar-surprise")
+    expect(picker.value()).toBe("ali")
+    expect(picker.accessory()).toBe("")
+    expect(document.querySelector(".avatar-preview .avatar-accessory")).toBeNull()
+  })
+  it("strips Ali accessories from rendering and stored player styles", () => {
+    for (const accessory of ACCESSORIES) {
+      expect(characterAccessory("ali", accessory.id)).toBe("")
+      const avatar = buildAvatar("ali", "Ada", "en", { accessory: accessory.id })
+      expect(avatar.dataset.accessory).toBe("")
+      expect(avatar.getAttribute("aria-label")).toBe("Ali")
+      expect(avatar.querySelector(".avatar-accessory")).toBeNull()
+      expect(characterAccessory("ruby", accessory.id)).toBe(accessory.id)
+    }
   })
   it("drops a newly claimed face but preserves the accessory and excludes claimed random picks", () => {
     const changed = vi.fn()

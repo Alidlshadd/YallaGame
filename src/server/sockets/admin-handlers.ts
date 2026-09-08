@@ -6,6 +6,7 @@ import type { GameResolver } from "../domain/visibility.js"
 import { bind } from "./bind.js"
 import { projectRoomFor, summarizeRoom, takenCharacters } from "../domain/visibility.js"
 import { isCharacterId } from "../../shared/characters.js"
+import { characterAccessory } from "../../shared/accessories.js"
 import { normalizeSettings } from "../domain/settings.js"
 import { buildRolePool, assignRolesToConnected } from "../domain/roles.js"
 import { makeRoomCode, makeSecret } from "../domain/codes.js"
@@ -91,7 +92,7 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
     const now = Date.now()
     // The host plays too, so they take the first seat rather than sitting
     // outside the game: their name is what the room browser shows as "created by".
-    const host: Player = { id: makeSecret(), name: hostName, role: null, connected: true, character: hostCharacter, accessory: hostAccessory ?? "" }
+    const host: Player = { id: makeSecret(), name: hostName, role: null, connected: true, character: hostCharacter, accessory: characterAccessory(hostCharacter, hostAccessory) }
     const room: Room = {
       code: finalCode, gameId: game.id, adminSecret,
       assigned: false,

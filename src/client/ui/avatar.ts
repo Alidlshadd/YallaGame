@@ -1,19 +1,20 @@
 import { el } from "./dom.js"
 import { findCharacter } from "@shared/characters.js"
-import { findAccessory } from "@shared/accessories.js"
+import { characterAccessory, findAccessory } from "@shared/accessories.js"
 import { buildAccessory } from "./accessory.js"
 import { portraitGeometry } from "./portraitGeometry.js"
 import type { LangCode } from "@shared/types.js"
 
 export function characterImagePath(id: string): string {
-  return findCharacter(id)?.portrait !== undefined ? "/assets/characters/avatar-atlas.png" : `/assets/characters/${id}.webp`
+  const def = findCharacter(id)
+  return def?.image ?? (def?.portrait !== undefined ? "/assets/characters/avatar-atlas.png" : `/assets/characters/${id}.webp`)
 }
 export function characterName(id: string, lang: LangCode): string { return findCharacter(id)?.name[lang] ?? "" }
 export interface AvatarOptions { size?: number; class?: string; lazy?: boolean; accessory?: string | undefined }
 
 export function buildAvatar(character: string, playerName: string, lang: LangCode, opts: AvatarOptions = {}): HTMLElement {
   const def = findCharacter(character)
-  const accessory = findAccessory(opts.accessory ?? "")
+  const accessory = findAccessory(characterAccessory(character, opts.accessory))
   const geometry = def?.portrait !== undefined ? portraitGeometry(def.portrait) : undefined
   const wrap = el("span", {
     class: `avatar${opts.class ? ` ${opts.class}` : ""}`,

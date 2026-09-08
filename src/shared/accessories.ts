@@ -1,4 +1,13 @@
 import type { LocalizedText } from "./types.js"
+import { findCharacter } from "./characters.js"
+
+export function allowsAccessories(character: string): boolean {
+  return findCharacter(character)?.accessories !== false
+}
+
+export function characterAccessory(character: string, accessory?: string): string {
+  return allowsAccessories(character) ? accessory ?? "" : ""
+}
 
 export interface AccessoryDef {
   id: string

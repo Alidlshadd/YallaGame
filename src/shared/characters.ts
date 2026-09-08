@@ -3,8 +3,10 @@ import type { LocalizedText } from "./types.js"
 export interface CharacterDef {
   id: string
   name: LocalizedText
-  /** Position in the approved portrait atlas. Absent on retired characters. */
+  /** Position in the approved portrait atlas, when using atlas artwork. */
   portrait?: number
+  image?: string
+  accessories?: boolean
 }
 
 /**
@@ -56,6 +58,11 @@ export const CHARACTERS: CharacterDef[] = [
 ].map(([id, en, tr, ar, ku], portrait) => ({
   id: id!, name: { en: en!, tr: tr!, ar: ar!, ku: ku! }, portrait
 }))
+
+CHARACTERS.push({
+  id: "ali", name: { en: "Ali", tr: "Ali", ar: "علي", ku: "علي" },
+  image: "/assets/characters/ali.png", accessories: false
+})
 
 export const CHARACTER_IDS: readonly string[] = [...CHARACTERS, ...LEGACY_CHARACTERS].map(c => c.id)
 

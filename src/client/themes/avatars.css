@@ -41,6 +41,7 @@
 .avatar-tabs button { flex: 1; border-radius: 8px; padding: 10px 4px; display: flex; justify-content: center; align-items: center; gap: 9px; color: #ada8a2; font-size: 13px; }
 .avatar-tabs button[aria-selected="true"] { color: #f3d794; background: linear-gradient(130deg, #a8782c30, #e1bb6910); box-shadow: inset 0 0 0 1px #e1bb6933; }
 .avatar-tabs button span { font-size: 10px; background: #ffffff0a; border-radius: 6px; padding: 2px 5px; }
+.avatar-tabs button:disabled { opacity: .35; cursor: not-allowed; }
 .avatar-tabs button:focus-visible, .avatar-surprise:focus-visible { outline: 2px solid #e1bb69; outline-offset: 2px; }
 .avatar-picker-panel { display: flex; min-height: 0; flex: 1 1 auto; }
 .avatar-picker-panel[hidden] { display: none; }

@@ -6,6 +6,7 @@ import type { GameResolver } from "../domain/visibility.js"
 import { bind } from "./bind.js"
 import { projectRoomFor, takenCharacters } from "../domain/visibility.js"
 import { isCharacterId } from "../../shared/characters.js"
+import { characterAccessory } from "../../shared/accessories.js"
 import { makeSecret } from "../domain/codes.js"
 import { fillerRoleId } from "../domain/roles.js"
 import { JoinPayload, CancelRequestPayload } from "./schemas.js"
@@ -39,7 +40,7 @@ export function registerPlayerHandlers(socket: TypedSocket, deps: PlayerDeps): v
       if (playerId) {
         const existing = room.players.find(p => p.id === playerId)
         if (existing) {
-          bound = { ...existing, connected: true, role: roleFor(existing.role) }
+          bound = { ...existing, connected: true, role: roleFor(existing.role), accessory: characterAccessory(existing.character, existing.accessory) }
           return { ...room, players: room.players.map(p => p.id === playerId ? bound! : p) }
         }
         // Still queued from before the tab reloaded — keep the place in line
@@ -55,7 +56,7 @@ export function registerPlayerHandlers(socket: TypedSocket, deps: PlayerDeps): v
         // already had unless they explicitly picked a different free one.
         const wanted = character && character !== collision.character
           && !takenCharacters(room).includes(character) ? character : collision.character
-        bound = { ...collision, connected: true, role: roleFor(collision.role), character: wanted, accessory: accessory ?? collision.accessory ?? "" }
+        bound = { ...collision, connected: true, role: roleFor(collision.role), character: wanted, accessory: characterAccessory(wanted, accessory ?? collision.accessory) }
         return { ...room, players: room.players.map(p => p.id === collision.id ? bound! : p) }
       }
       // A name already waiting in the queue is just as taken as one in a seat.
@@ -66,13 +67,13 @@ export function registerPlayerHandlers(socket: TypedSocket, deps: PlayerDeps): v
       if (character && takenCharacters(room).includes(character)) throw new Error("CHARACTER_TAKEN")
 
       if (room.requireApproval) {
-        const request: PendingJoin = { id: makeSecret(), name, requestedAt: Date.now(), character: character ?? "", accessory: accessory ?? "" }
+        const request: PendingJoin = { id: makeSecret(), name, requestedAt: Date.now(), character: character ?? "", accessory: characterAccessory(character ?? "", accessory) }
         queued = request
         return { ...room, pending: [...room.pending, request] }
       }
 
       if (room.players.length >= deps.config.MAX_PLAYERS_PER_ROOM) throw new Error("ROOM_FULL")
-      const fresh: Player = { id: makeSecret(), name, role: roleFor(null), connected: true, character: character ?? "", accessory: accessory ?? "" }
+      const fresh: Player = { id: makeSecret(), name, role: roleFor(null), connected: true, character: character ?? "", accessory: characterAccessory(character ?? "", accessory) }
       bound = fresh
       return { ...room, players: [...room.players, fresh] }
     })
