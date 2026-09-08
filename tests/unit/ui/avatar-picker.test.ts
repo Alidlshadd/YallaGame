@@ -19,7 +19,7 @@ describe("avatar customization", () => {
     expect(changed).not.toHaveBeenCalled()
     expect(picker.value()).toBe("ruby")
     expect(picker.accessory()).toBe("crown")
-    expect(document.querySelectorAll(".char-tile[data-character]")).toHaveLength(21)
+    expect(document.querySelectorAll(".char-tile[data-character]")).toHaveLength(22)
     expect(document.querySelector(".avatar-preview .avatar")?.getAttribute("data-accessory")).toBe("crown")
   })
   it("keeps the character when adding/removing accessories and changing tabs", () => {
