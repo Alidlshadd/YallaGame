@@ -146,12 +146,20 @@ export function mountGameStage(opts: GameStageOptions): () => void {
       const fill = el("span", { class: "mlt-bar-fill" })
       // Percentage of the votes actually cast, so an empty round draws nothing.
       fill.style.width = `${row.percentage}%`
-      bars.appendChild(el("div", { class: `mlt-bar${isWinner ? " winner" : ""}` }, [
+      const bar = el("div", { class: `mlt-bar${isWinner ? " winner" : ""}` }, [
         avatarOf(byId.get(row.playerId), row.playerName, 36),
         el("span", { class: "mlt-bar-name" }, [row.playerName]),
         el("span", { class: "mlt-bar-track" }, [fill]),
         el("span", { class: "mlt-bar-count" }, [String(row.voteCount)])
-      ]))
+      ])
+      // Only a room whose host asked for names gets them; without the setting
+      // the field is not in the projection at all.
+      if (row.voters !== undefined && row.voters.length > 0) {
+        bar.appendChild(el("span", { class: "mlt-bar-voters" }, [
+          `${t("mltVotedBy")} ${row.voters.join(", ")}`
+        ]))
+      }
+      bars.appendChild(bar)
     }
 
     // The verdict is a full line rather than a badge on the row: a badge has

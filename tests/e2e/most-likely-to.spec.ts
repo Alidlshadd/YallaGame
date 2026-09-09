@@ -125,3 +125,64 @@ test("most likely to: a phone that reloads mid-round comes back to the round", a
   await ctx.close()
   await hostCtx.close()
 })
+
+test("most likely to: the host can open the names up, and they stay shut until the reveal", async ({ browser }) => {
+  const hostCtx = await browser.newContext()
+  const hostPage = await hostCtx.newPage()
+  const code = await createRoom(hostPage, { theme: "most-likely-to", hostName: "Host", hostCharacter: "ace" })
+
+  const ctx = await browser.newContext()
+  const page = await ctx.newPage()
+  await joinAs(page, code, "Ada", "ruby")
+
+  // The setting is a plain room setting, so it is chosen before the game runs.
+  await hostPage.locator("#setting-showVoters").setChecked(true)
+  await hostPage.click("#saveSettingsBtn")
+  await expect(hostPage.locator("#setting-showVoters")).toBeChecked()
+
+  await hostPage.click("#startGameBtn")
+  await expect(page.locator(".mlt-target").first()).toBeVisible({ timeout: PHASE_TIMEOUT })
+
+  // Still being cast: nothing on screen says who has pointed where.
+  await page.locator(".mlt-target", { hasText: "Host" }).click()
+  await expect(page.locator(".mlt-bar-voters")).toHaveCount(0)
+
+  await hostPage.locator(".mlt-target", { hasText: "Ada" }).click()
+
+  // Opened: every row that took a vote names who cast it.
+  for (const p of [hostPage, page]) {
+    await expect(p.locator(".mlt-bars")).toBeVisible({ timeout: PHASE_TIMEOUT })
+    // Matched on the name cell: a plain hasText also hits the row whose voter
+    // line happens to mention the same person.
+    await expect(p.locator('.mlt-bar:has(.mlt-bar-name:text-is("Host")) .mlt-bar-voters')).toContainText("Ada")
+    await expect(p.locator('.mlt-bar:has(.mlt-bar-name:text-is("Ada")) .mlt-bar-voters')).toContainText("Host")
+  }
+
+  await ctx.close()
+  await hostCtx.close()
+})
+
+test("most likely to: with the setting off the reveal never names a voter", async ({ browser }) => {
+  const hostCtx = await browser.newContext()
+  const hostPage = await hostCtx.newPage()
+  const code = await createRoom(hostPage, { theme: "most-likely-to", hostName: "Host", hostCharacter: "ace" })
+
+  const ctx = await browser.newContext()
+  const page = await ctx.newPage()
+  await joinAs(page, code, "Ada", "ruby")
+
+  await expect(hostPage.locator("#setting-showVoters")).not.toBeChecked()
+  await hostPage.click("#startGameBtn")
+
+  await expect(page.locator(".mlt-target").first()).toBeVisible({ timeout: PHASE_TIMEOUT })
+  await page.locator(".mlt-target", { hasText: "Host" }).click()
+  await hostPage.locator(".mlt-target", { hasText: "Ada" }).click()
+
+  for (const p of [hostPage, page]) {
+    await expect(p.locator(".mlt-bars")).toBeVisible({ timeout: PHASE_TIMEOUT })
+    await expect(p.locator(".mlt-bar-voters")).toHaveCount(0)
+  }
+
+  await ctx.close()
+  await hostCtx.close()
+})

@@ -249,6 +249,7 @@ const en = {
   mltGameOver: "That's the game.",
   mltBackToLobby: "Back to the Room",
   mltWaitingHost: "Waiting for the host…",
+  mltVotedBy: "Voted by",
   errorVoteRejected: "That vote did not go through.",
   copyrightRights: "All rights reserved."
 }

@@ -312,12 +312,50 @@ describe("counting the round", () => {
     expect(result.results.every(r => r.percentage === 0)).toBe(true)
   })
 
+  it("says how many pointed and never who, unless the host asked for names", () => {
+    const secret = tally(resultRoom([["p1", "p2"], ["p3", "p2"]]))
+    expect(secret.results.every(r => r.voters === undefined)).toBe(true)
+    // The field is absent, not an empty list that leaks a count of nothing.
+    expect(JSON.stringify(secret)).not.toContain("voters")
+  })
+
+  it("names the voters once the host turns showVoters on", () => {
+    const room = resultRoom([["p1", "p2"], ["p3", "p2"], ["p2", "p1"]])
+    const named = tally({ ...room, settings: { ...room.settings, showVoters: true } })
+
+    const byId = new Map(named.results.map(r => [r.playerId, r.voters]))
+    expect(byId.get("p2")).toEqual(["Ali", "Morinji"])
+    expect(byId.get("p1")).toEqual(["Mahmud"])
+    // Everybody carries the field, so a nil row is an empty list, not a gap.
+    expect(byId.get("p3")).toEqual([])
+  })
+
   it("drops a vote cast for somebody who has since left the room", () => {
     const room = resultRoom([["p1", "p2"], ["p3", "gone"]])
     const result = tally(room)
 
     expect(result.totalVotes).toBe(1)
     expect(result.winnerPlayerIds).toEqual(["p2"])
+  })
+})
+
+describe("names stay sealed until the reveal", () => {
+  it("keeps the voters out of the voting screen even with showVoters on", async () => {
+    const h = await harness(mkRoom({ settings: { votingSeconds: 20, roundCount: 5, showVoters: true } }))
+    const seq = await atVoting(h)
+    await submitAction(h.deps, "MLT01", "p1", seq, { type: "vote", target: "p2" })
+
+    // A round the table can watch being cast is not the same game.
+    const shown = await h.viewFor("p3")
+    expect(shown.kind).toBe("voting")
+    // Names are on this screen as buttons; what must not be here is which of
+    // them has already pointed, and at whom.
+    expect(JSON.stringify(shown)).not.toContain("voters")
+    expect(shown).toMatchObject({ myVote: null, votedCount: 1 })
+
+    await vi.advanceTimersByTimeAsync(VOTING_MS)
+    const opened = await h.viewFor("p3") as MostLikelyToResult
+    expect(opened.results.find(r => r.playerId === "p2")?.voters).toEqual(["Ali"])
   })
 })
 

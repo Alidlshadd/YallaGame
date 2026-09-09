@@ -100,6 +100,11 @@ function openRound(asked: readonly string[], rng: () => number): MostLikelyToSta
 export function tally(room: Room): MostLikelyToResult {
   const state = stateOf(room)
   const counts = new Map<string, number>(room.players.map(p => [p.id, 0]))
+  const voters = new Map<string, string[]>(room.players.map(p => [p.id, []]))
+  const nameOf = new Map(room.players.map(p => [p.id, p.name]))
+  // Off by default: a round where the table can see who pointed at whom is a
+  // different evening, so the host has to ask for it.
+  const named = room.settings["showVoters"] === true
 
   let totalVotes = 0
   for (const vote of state.votes) {
@@ -108,6 +113,9 @@ export function tally(room: Room): MostLikelyToResult {
     // against a seat that is no longer there.
     if (current === undefined) continue
     counts.set(vote.targetId, current + 1)
+    // A voter who has since left is counted but cannot be named.
+    const voterName = nameOf.get(vote.voterId)
+    if (voterName !== undefined) voters.get(vote.targetId)!.push(voterName)
     totalVotes++
   }
 
@@ -118,7 +126,8 @@ export function tally(room: Room): MostLikelyToResult {
         playerId: p.id,
         playerName: p.name,
         voteCount,
-        percentage: totalVotes === 0 ? 0 : Math.round((voteCount / totalVotes) * 100)
+        percentage: totalVotes === 0 ? 0 : Math.round((voteCount / totalVotes) * 100),
+        ...(named ? { voters: voters.get(p.id) ?? [] } : {})
       }
     })
     .sort((a, b) => b.voteCount - a.voteCount || a.playerName.localeCompare(b.playerName))

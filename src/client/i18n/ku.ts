@@ -248,6 +248,7 @@ const ku: Translations = {
   mltGameOver: "یاری تەواو بوو.",
   mltBackToLobby: "گەڕانەوە بۆ ژوور",
   mltWaitingHost: "چاوەڕوانی هۆست…",
+  mltVotedBy: "دەنگیان دا:",
   errorVoteRejected: "دەنگەکەت نەنێردرا.",
   copyrightRights: "هەموو مافەکان پارێزراون."
 }

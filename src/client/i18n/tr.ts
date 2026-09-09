@@ -251,6 +251,7 @@ const tr: Translations = {
   mltGameOver: "Oyun bitti.",
   mltBackToLobby: "Odaya Dön",
   mltWaitingHost: "Host bekleniyor…",
+  mltVotedBy: "Oy verenler:",
   errorVoteRejected: "Oy gönderilemedi.",
   copyrightRights: "Tüm hakları saklıdır."
 }

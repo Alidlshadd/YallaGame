@@ -248,6 +248,7 @@ const ar: Translations = {
   mltGameOver: "انتهت اللعبة.",
   mltBackToLobby: "العودة إلى الغرفة",
   mltWaitingHost: "بانتظار المضيف…",
+  mltVotedBy: "صوّت له:",
   errorVoteRejected: "لم يتم إرسال صوتك.",
   copyrightRights: "جميع الحقوق محفوظة."
 }

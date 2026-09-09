@@ -26,6 +26,12 @@ export interface MostLikelyToTally {
   voteCount: number
   /** Of the votes actually cast, rounded. 0 for a round nobody voted in. */
   percentage: number
+  /**
+   * Who pointed at this person. Present only in a room whose host turned
+   * `showVoters` on — otherwise the reveal says how many, never who, and the
+   * field is absent rather than empty.
+   */
+  voters?: string[]
 }
 
 export interface MostLikelyToResult {

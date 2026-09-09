@@ -4583,3 +4583,12 @@ body.stage-open { overflow: hidden; }
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
+
+/* Who pointed at this person — only in a room whose host asked for names. */
+.mlt-bar-voters {
+  grid-column: 2 / -1;
+  margin-top: 2px;
+  font-size: var(--type-xs);
+  line-height: 1.4;
+  color: var(--text-muted);
+}

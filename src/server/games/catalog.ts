@@ -485,7 +485,7 @@ export const GAME_CATALOG: readonly Game[] = [
     // The server keeps the clock, collects the votes and opens them together,
     // so this room runs on the turn engine rather than on a deal of roles.
     turnBased: true,
-    defaultSettings: { votingSeconds: 20, roundCount: 5 },
+    defaultSettings: { votingSeconds: 20, roundCount: 5, showVoters: false },
     title: {
       ku: "کێ زۆرترین ئەگەری هەیە؟",
       ar: "من الأكثر احتمالاً؟",
@@ -550,6 +550,19 @@ export const GAME_CATALOG: readonly Game[] = [
           ar: "عدد الجولات",
           en: "Rounds",
           tr: "Tur Sayısı"
+        }
+      },
+      {
+        // Off means the reveal says how many pointed at somebody and never
+        // who. On means the table sees every name. Two different evenings,
+        // and the host picks which one before the game starts.
+        type: "boolean",
+        key: "showVoters",
+        label: {
+          ku: "دەنگدەران ئاشکرا بکە",
+          ar: "إظهار من صوّت لمن",
+          en: "Show Who Voted",
+          tr: "Kimin Oy Verdiğini Göster"
         }
       }
     ]
