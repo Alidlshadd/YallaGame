@@ -97,6 +97,7 @@ function broadcast(deps: EngineDeps, room: Room): void {
   const engine = deps.resolveEngine(room.gameId)
   for (const player of room.players) {
     deps.emitPhase(room.code, player.id, {
+      code: room.code,
       phase: room.phase,
       seq: room.phaseSeq,
       round: room.round,
@@ -258,6 +259,7 @@ export async function sendPhaseTo(deps: EngineDeps, code: string, playerId: stri
   const engine = deps.resolveEngine(room.gameId)
   if (engine === undefined) return
   deps.emitPhase(code, playerId, {
+    code,
     phase: room.phase,
     seq: room.phaseSeq,
     round: room.round,

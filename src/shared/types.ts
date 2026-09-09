@@ -53,6 +53,11 @@ export interface Game {
   icon: string
   theme: string
   minPlayers: number
+  /**
+   * The server runs this one turn by turn, so the host gets a Start button
+   * instead of a deal. Absent on the games that only hand out roles.
+   */
+  turnBased?: boolean
   defaultSettings: Settings
   title: LocalizedText
   subtitle: LocalizedText

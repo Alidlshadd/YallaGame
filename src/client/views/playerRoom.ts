@@ -7,6 +7,7 @@ import * as session from "../services/session.js"
 import { applyTheme, clearTheme } from "../themes/loader.js"
 import { applyCharacterTheme } from "../themes/characterTheme.js"
 import { showReveal } from "../ui/roleReveal.js"
+import { mountGameStage } from "../ui/gameStage.js"
 import { setView, setViewBackHandler } from "../router.js"
 import { showToast } from "../ui/toast.js"
 import { confirmDialog } from "../ui/confirm.js"
@@ -96,6 +97,12 @@ export const playerRoomView = {
     const releaseWakeLock = holdWakeLock()
     const stopWatchingConnection = watchConnection()
 
+    // A turn-based game is drawn over this screen. With no game running the
+    // stage stays hidden, so the role card is what the player sees.
+    const releaseGameStage = ctx.initial
+      ? mountGameStage({ code: ctx.initial.room.code, myPlayerId: ctx.initial.player.id })
+      : () => {}
+
     socket.on("player:role-assigned", onAssigned)
     socket.on("player:role-cleared",  onCleared)
     socket.on("player:kicked",        onKicked)
@@ -133,6 +140,7 @@ export const playerRoomView = {
       setViewBackHandler(null)
       releaseWakeLock()
       stopWatchingConnection()
+      releaseGameStage()
       socket.off("player:role-assigned", onAssigned)
       socket.off("player:role-cleared",  onCleared)
       socket.off("player:kicked",        onKicked)

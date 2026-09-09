@@ -9,6 +9,8 @@ export interface CreateRoomOptions {
   isPublic?: boolean
   /** Park every newcomer in the host's queue instead of seating them. */
   requireApproval?: boolean
+  /** Which world to create. Defaults to whichever the picker lists first. */
+  theme?: string
 }
 
 /**
@@ -17,11 +19,14 @@ export interface CreateRoomOptions {
  * every spec needs the same four clicks.
  */
 export async function createRoom(page: Page, opts: CreateRoomOptions = {}): Promise<string> {
-  const { hostName = "Host", hostCharacter = "ace", isPublic = false, requireApproval = false } = opts
+  const { hostName = "Host", hostCharacter = "ace", isPublic = false, requireApproval = false, theme } = opts
 
   await page.goto("/")
   await page.click(".cta-create")
-  await page.locator(".create-picker-option").first().click()
+  const option = theme === undefined
+    ? page.locator(".create-picker-option").first()
+    : page.locator(`.create-picker-option[data-theme="${theme}"]`)
+  await option.click()
   await page.locator(".gi-hero .gi-cta-primary").click()
 
   await expect(page.locator("#hostSetupOverlay")).toBeVisible()

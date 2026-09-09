@@ -232,6 +232,23 @@ const ku: Translations = {
   avatarRandom: "سەرسامم بکە",
   avatarNoAccessory: "بێ ئاکسسوارات",
   avatarCustomize: "ئەڤەتارەکەت جوان بکە",
+  // کێ زۆرترین ئەگەری هەیە؟ — شاشەکانی یاریی خولەکی
+  mltStartGame: "دەستپێکردنی یاری",
+  mltEndGame: "کۆتاییهێنان بە یاری",
+  mltRound: "خول",
+  mltGetReady: "ئامادە بن…",
+  mltVoteHint: "دەست بنێ بەو کەسەی مەبەستتە.",
+  mltVoted: "دەنگیان دا",
+  mltVoteLocked: "دەنگەکەت تۆمار کرا. تا کاتی ئاشکراکردن شاراوە دەمێنێتەوە.",
+  mltResults: "دەنگەکان ئاشکرا بوون",
+  mltMostLikely: "زۆرترین ئەگەر",
+  mltTie: "یەکسانن.",
+  mltNoVotes: "لەم خولەدا کەس دەنگی نەدا.",
+  mltNextRound: "خولی داهاتوو",
+  mltGameOver: "یاری تەواو بوو.",
+  mltBackToLobby: "گەڕانەوە بۆ ژوور",
+  mltWaitingHost: "چاوەڕوانی هۆست…",
+  errorVoteRejected: "دەنگەکەت نەنێردرا.",
   copyrightRights: "هەموو مافەکان پارێزراون."
 }
 

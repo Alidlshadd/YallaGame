@@ -12,6 +12,7 @@ import { applyCharacterTheme } from "../themes/characterTheme.js"
 import { setView, setViewBackHandler } from "../router.js"
 import { showReveal } from "../ui/roleReveal.js"
 import { buildAvatar } from "../ui/avatar.js"
+import { mountGameStage } from "../ui/gameStage.js"
 import type { RoleAssignedPayload } from "@shared/events.js"
 import type { VisibleRoom } from "@shared/types.js"
 
@@ -32,6 +33,8 @@ export const adminView = {
     const settingsEl = $<HTMLDivElement>("#dynamicSettings")
     const listEl     = $<HTMLDivElement>("#adminPlayersList")
     const assignBtn  = $<HTMLButtonElement>("#assignRolesBtn")
+    const clearBtn   = $<HTMLButtonElement>("#clearRolesBtn")
+    const startBtn   = $<HTMLButtonElement>("#startGameBtn")
     const requestsPanel = $<HTMLDivElement>("#joinRequestsPanel")
     const requestsList  = $<HTMLDivElement>("#joinRequestsList")
     const requestsCount = $<HTMLElement>("#requestsCount")
@@ -166,7 +169,19 @@ export const adminView = {
       gameSelEl.textContent  = room.game.title[lang]
     }
 
-    function renderAll() { renderHeader(); renderSettings(); renderPlayers(); renderRequests(); renderPrivacy() }
+    /**
+     * A turn-based game is started, not dealt: the server owns the rounds, so
+     * the two role buttons have nothing to do and would only throw. The games
+     * that hand out roles never see the Start pair.
+     */
+    function renderActions() {
+      const turnBased = room?.game.turnBased === true
+      assignBtn.hidden = turnBased
+      clearBtn.hidden  = turnBased
+      startBtn.hidden  = !turnBased
+    }
+
+    function renderAll() { renderHeader(); renderSettings(); renderPlayers(); renderRequests(); renderPrivacy(); renderActions() }
 
     const onUpdated = (next: VisibleRoom) => {
       const dealt = !room?.assigned && next.assigned
@@ -197,6 +212,17 @@ export const adminView = {
     // The host watches the player list fill up without touching the screen.
     const releaseWakeLock = holdWakeLock()
     const stopWatchingConnection = watchConnection()
+
+    // The host holds a seat and plays along, so a running turn is drawn over
+    // this screen rather than on one of its own.
+    const hostSession = session.load()
+    const releaseGameStage = room !== null && hostSession?.kind === "admin"
+      ? mountGameStage({
+          code: room.code,
+          myPlayerId: room.hostPlayerId,
+          adminSecret: hostSession.adminSecret
+        })
+      : () => {}
 
     if (room) renderAll()
 
@@ -232,6 +258,15 @@ export const adminView = {
       const s = session.load(); if (s?.kind !== "admin") return
       const r = await emit("admin:clear-roles", { code: room.code, adminSecret: s.adminSecret })
       if (!r.ok) showToast(t("errorGeneric"))
+    }
+
+    const onStartGame = async () => {
+      if (!room) return
+      const s = session.load(); if (s?.kind !== "admin") return
+      const r = await emit("game:start", { code: room.code, adminSecret: s.adminSecret })
+      if (!r.ok) {
+        showToast(r.error === "NEED_MORE_PLAYERS" ? t("errorNeedMorePlayers") : t("errorGeneric"))
+      }
     }
 
     const onPrivacyChange = async () => {
@@ -295,7 +330,6 @@ export const adminView = {
     setViewBackHandler(() => { requestLeave(); return true })
 
     const saveBtn   = $<HTMLButtonElement>("#saveSettingsBtn")
-    const clearBtn  = $<HTMLButtonElement>("#clearRolesBtn")
     const copyBtn   = $<HTMLButtonElement>("#copyCodeBtn")
     const shareBtn  = $<HTMLButtonElement>("#shareLinkBtn")
     const leaveBtn  = $<HTMLButtonElement>("#adminLeaveBtn")
@@ -307,6 +341,7 @@ export const adminView = {
     saveBtn.addEventListener("click", onSave)
     assignBtn.addEventListener("click", onAssign)
     clearBtn.addEventListener("click", onClear)
+    startBtn.addEventListener("click", onStartGame)
     copyBtn.addEventListener("click", onCopy)
     shareBtn.addEventListener("click", onShare)
     leaveBtn.addEventListener("click", onLeave)
@@ -324,6 +359,8 @@ export const adminView = {
       saveBtn.removeEventListener("click", onSave)
       assignBtn.removeEventListener("click", onAssign)
       clearBtn.removeEventListener("click", onClear)
+      startBtn.removeEventListener("click", onStartGame)
+      releaseGameStage()
       copyBtn.removeEventListener("click", onCopy)
       shareBtn.removeEventListener("click", onShare)
       leaveBtn.removeEventListener("click", onLeave)

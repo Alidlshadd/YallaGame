@@ -21,6 +21,9 @@ export type PlayerJoinData = JoinedData | PendingData
  * only what that person is allowed to know.
  */
 export interface PhaseEvent {
+  /** Which room this is about. A phone holds the last one it saw across a
+      reload, and must not draw room A's round while sitting in room B. */
+  code: string
   phase: Phase
   seq: number
   round: number

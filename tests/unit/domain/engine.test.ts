@@ -341,6 +341,14 @@ describe("projection", () => {
     }
   })
 
+  it("names the room on every phase, so a phone holding one can tell whose it is", async () => {
+    const h = await harness()
+    await startGame(h.deps, "ABCDE", "s3cret")
+    h.phases.length = 0
+    await sendPhaseTo(h.deps, "ABCDE", "p1")
+    expect(h.phases.every(p => p.payload.code === "ABCDE")).toBe(true)
+  })
+
   it("sends no view at all for an idle room", async () => {
     const h = await harness()
     await startGame(h.deps, "ABCDE", "s3cret")

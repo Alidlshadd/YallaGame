@@ -1,0 +1,252 @@
+import { $, clear, el } from "./dom.js"
+import { getLang, t } from "../services/i18n.js"
+import { emit, lastPhase, socket } from "../services/socket.js"
+import { buildAvatar } from "./avatar.js"
+import { showToast } from "./toast.js"
+import { vibrate } from "./haptics.js"
+import type { PhaseEvent } from "@shared/events.js"
+import type { MostLikelyToPlayer, MostLikelyToView } from "@shared/most-likely-to.js"
+
+/**
+ * The screen a turn-based game is played on.
+ *
+ * It lives above whichever room view is mounted — the host stays on the admin
+ * room, players stay on their own — and draws whatever the last `game:phase`
+ * said, nothing more. Every decision about what is allowed was already made on
+ * the server: this only stops asking for what it knows is refused.
+ *
+ * An idle room projects no view, so the stage hides itself and the room
+ * underneath is back.
+ */
+
+export interface GameStageOptions {
+  code: string
+  myPlayerId: string
+  /** Only the host holds one. It is what the phase-closing buttons need. */
+  adminSecret?: string
+}
+
+/** Under this many seconds left, the clock starts asking for attention. */
+const URGENT_SECONDS = 5
+
+export function mountGameStage(opts: GameStageOptions): () => void {
+  const stage = $<HTMLElement>("#gameStage")
+  const isHost = typeof opts.adminSecret === "string" && opts.adminSecret.length > 0
+
+  let phase: PhaseEvent | null = null
+  let clockOffset = 0
+  let sending = false
+  let clockEl: HTMLElement | null = null
+
+  /** The table shares one countdown, so it runs off the server's clock. */
+  const serverNow = (): number => Date.now() + clockOffset
+
+  function drawClock(): void {
+    if (clockEl === null || phase === null) return
+    if (phase.endsAt === null) {
+      clockEl.hidden = true
+      return
+    }
+    const left = Math.max(0, phase.endsAt - serverNow())
+    // Rounding up alone showed "21" on a twenty-second phase, because the
+    // measured offset leaves a few milliseconds over the nominal length.
+    const seconds = Math.max(0, Math.ceil((left - 250) / 1000))
+    clockEl.hidden = false
+    clockEl.textContent = String(seconds)
+    clockEl.classList.toggle("urgent", seconds <= URGENT_SECONDS)
+  }
+
+  async function castVote(target: string): Promise<void> {
+    if (phase === null || sending) return
+    sending = true
+    // `seq` is the screen this tap came from; the server refuses one sent from
+    // a round it has already closed.
+    const r = await emit("game:action", {
+      code: opts.code,
+      seq: phase.seq,
+      action: { type: "vote", target }
+    })
+    sending = false
+    if (r.ok) vibrate("tap")
+    else showToast(t("errorVoteRejected"))
+  }
+
+  async function closePhase(): Promise<void> {
+    if (phase === null || opts.adminSecret === undefined) return
+    const r = await emit("game:advance", { code: opts.code, adminSecret: opts.adminSecret, seq: phase.seq })
+    if (!r.ok) showToast(t("errorGeneric"))
+  }
+
+  async function endGame(): Promise<void> {
+    if (opts.adminSecret === undefined) return
+    const r = await emit("game:end", { code: opts.code, adminSecret: opts.adminSecret })
+    if (!r.ok) showToast(t("errorGeneric"))
+  }
+
+  function avatarOf(person: MostLikelyToPlayer | undefined, name: string, size: number): HTMLElement {
+    return buildAvatar(person?.character ?? "", name, getLang(), {
+      size,
+      lazy: false,
+      accessory: person?.accessory ?? ""
+    })
+  }
+
+  function buildHead(roundNumber: number): HTMLElement {
+    clockEl = el("span", { class: "mlt-clock", "aria-live": "off" })
+    clockEl.hidden = true
+    const head = el("header", { class: "mlt-head" }, [
+      el("span", { class: "mlt-round" }, [`${t("mltRound")} ${roundNumber}`]),
+      clockEl
+    ])
+
+    // The stage covers the room it is drawn over, so the way out of a running
+    // game has to be on the stage itself.
+    if (isHost) {
+      const quit = el("button", { class: "btn btn-ghost mlt-end", type: "button" }, [t("mltEndGame")])
+      quit.addEventListener("click", () => void endGame())
+      head.appendChild(quit)
+    }
+    return head
+  }
+
+  function buildVoting(view: Extract<MostLikelyToView, { kind: "voting" }>): HTMLElement[] {
+    const locked = view.myVote !== null
+    const grid = el("div", { class: "mlt-targets" })
+
+    for (const person of view.roster) {
+      // Nobody votes for themselves, so the button is not there to be tapped.
+      if (person.id === opts.myPlayerId) continue
+      const chosen = view.myVote === person.id
+      const button = el("button", {
+        class: `mlt-target${chosen ? " chosen" : ""}${person.connected ? "" : " off"}`,
+        type: "button",
+        "aria-pressed": chosen ? "true" : "false"
+      }, [
+        avatarOf(person, person.name, 52),
+        el("span", { class: "mlt-target-name" }, [person.name])
+      ]) as HTMLButtonElement
+      button.disabled = locked
+      button.addEventListener("click", () => void castVote(person.id))
+      grid.appendChild(button)
+    }
+
+    return [
+      grid,
+      el("p", { class: "mlt-hint" }, [locked ? t("mltVoteLocked") : t("mltVoteHint")]),
+      el("p", { class: "mlt-counter" }, [`${view.votedCount} / ${view.totalPlayers} ${t("mltVoted")}`])
+    ]
+  }
+
+  function buildReveal(view: Extract<MostLikelyToView, { kind: "result" | "over" } >): HTMLElement[] {
+    const byId = new Map(view.roster.map(p => [p.id, p]))
+    const bars = el("div", { class: "mlt-bars" })
+
+    for (const row of view.results) {
+      const isWinner = view.winnerPlayerIds.includes(row.playerId)
+      const fill = el("span", { class: "mlt-bar-fill" })
+      // Percentage of the votes actually cast, so an empty round draws nothing.
+      fill.style.width = `${row.percentage}%`
+      bars.appendChild(el("div", { class: `mlt-bar${isWinner ? " winner" : ""}` }, [
+        avatarOf(byId.get(row.playerId), row.playerName, 36),
+        el("span", { class: "mlt-bar-name" }, [row.playerName]),
+        el("span", { class: "mlt-bar-track" }, [fill]),
+        el("span", { class: "mlt-bar-count" }, [String(row.voteCount)])
+      ]))
+    }
+
+    // The verdict is a full line rather than a badge on the row: a badge has
+    // to share the row with a name, and a long name pushed it off the phone.
+    const winnerNames = view.results
+      .filter(r => view.winnerPlayerIds.includes(r.playerId))
+      .map(r => r.playerName)
+    const verdict =
+      view.totalVotes === 0 ? t("mltNoVotes")
+      : view.isTie          ? `${t("mltTie")} ${winnerNames.join(" · ")}`
+      : `${t("mltMostLikely")}: ${winnerNames[0] ?? ""}`
+
+    const out: HTMLElement[] = [
+      el("p", { class: "mlt-eyebrow" }, [view.kind === "over" ? t("mltGameOver") : t("mltResults")]),
+      bars,
+      el("p", { class: "mlt-verdict" }, [verdict])
+    ]
+
+    if (isHost) {
+      const label = view.kind === "over" ? t("mltBackToLobby") : t("mltNextRound")
+      const button = el("button", { class: "btn btn-primary mlt-advance", type: "button" }, [label])
+      button.addEventListener("click", () => void (view.kind === "over" ? endGame() : closePhase()))
+      out.push(button)
+    } else {
+      out.push(el("p", { class: "mlt-counter" }, [t("mltWaitingHost")]))
+    }
+    return out
+  }
+
+  function render(): void {
+    clear(stage)
+    clockEl = null
+
+    const view = phase?.view as MostLikelyToView | null | undefined
+    if (phase === null || view === null || view === undefined) {
+      stage.hidden = true
+      document.body.classList.remove("stage-open")
+      return
+    }
+
+    stage.hidden = false
+    document.body.classList.add("stage-open")
+
+    const lang = getLang()
+    const panel = el("div", { class: "mlt" })
+    if (view.kind === "question" || view.kind === "voting") {
+      panel.setAttribute("data-category", view.category)
+    }
+
+    panel.append(buildHead(view.roundNumber))
+    panel.append(el("p", { class: "mlt-question" }, [view.question[lang]]))
+
+    if (view.kind === "question") panel.append(el("p", { class: "mlt-hint" }, [t("mltGetReady")]))
+    else if (view.kind === "voting") panel.append(...buildVoting(view))
+    else panel.append(...buildReveal(view))
+
+    stage.appendChild(panel)
+    drawClock()
+  }
+
+  const onPhase = (payload: PhaseEvent): void => {
+    // Another room's round, held by a socket this phone shares. Not ours.
+    if (payload.code !== opts.code) return
+    // A packet that overtook a newer one must not drag the room backwards.
+    if (phase !== null && payload.seq < phase.seq) return
+    const moved = phase === null || payload.seq !== phase.seq
+    phase = payload
+    render()
+    if (moved && payload.view !== null) vibrate("tap")
+  }
+
+  socket.on("game:phase", onPhase)
+
+  // The phase that arrived while this screen was still being fetched — a
+  // reload, or a reconnect into a game that was already running.
+  phase = lastPhase(opts.code)
+
+  const ticker = window.setInterval(drawClock, 250)
+
+  void (async () => {
+    const sent = Date.now()
+    const r = await emit("time:sync", {})
+    if (!r.ok) return
+    // Half the round trip is the best guess at how stale the answer already is.
+    clockOffset = (r.data as { now: number }).now - (sent + (Date.now() - sent) / 2)
+    drawClock()
+  })()
+
+  render()
+
+  return () => {
+    socket.off("game:phase", onPhase)
+    window.clearInterval(ticker)
+    clear(stage)
+    stage.hidden = true
+    document.body.classList.remove("stage-open")
+  }
+}

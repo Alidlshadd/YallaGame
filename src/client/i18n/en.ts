@@ -233,6 +233,23 @@ const en = {
   avatarRandom: "Surprise me",
   avatarNoAccessory: "No accessory",
   avatarCustomize: "Customize your avatar",
+  // Most Likely To — the turn-based game screens
+  mltStartGame: "Start Game",
+  mltEndGame: "End Game",
+  mltRound: "Round",
+  mltGetReady: "Get ready…",
+  mltVoteHint: "Tap the one person you mean.",
+  mltVoted: "voted",
+  mltVoteLocked: "Your vote is in. It stays hidden until the reveal.",
+  mltResults: "The votes are open",
+  mltMostLikely: "Most likely",
+  mltTie: "It's a tie.",
+  mltNoVotes: "Nobody voted this round.",
+  mltNextRound: "Next Round",
+  mltGameOver: "That's the game.",
+  mltBackToLobby: "Back to the Room",
+  mltWaitingHost: "Waiting for the host…",
+  errorVoteRejected: "That vote did not go through.",
   copyrightRights: "All rights reserved."
 }
 

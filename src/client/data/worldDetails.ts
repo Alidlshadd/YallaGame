@@ -357,12 +357,64 @@ const WHO_AM_I: WorldDetail = {
   ]
 }
 
+/* No cover or background art yet — the page falls back to the plain hero,
+   which is why every image field is left off rather than pointed at a file
+   that is not there. */
+const MOST_LIKELY_TO: WorldDetail = {
+  slogan: "ONE QUESTION. EVERY FINGER POINTS.",
+  description: {
+    en: "The room reads one question, everybody picks somebody, and nobody sees a single vote until they all open at once. The answer is never the point — the argument afterwards is.",
+    tr: "Odaya tek bir soru düşer, herkes birini seçer ve oylar hep birlikte açılana kadar kimse tek bir oyu göremez. Asıl mesele cevap değil, sonrasında çıkan tartışma.",
+    ar: "سؤال واحد أمام الجميع، كل واحد يختار شخصاً، ولا أحد يرى صوتاً واحداً حتى تُكشف الأصوات كلها معاً. الجواب ليس الهدف — الجدال بعده هو الهدف.",
+    ku: "یەک پرسیار بۆ هەموو ژوورەکە، هەر کەسێک کەسێک هەڵدەبژێرێت، و کەس هیچ دەنگێک نابینێت تا هەمووی پێکەوە ئاشکرا دەبێت. وەڵامەکە مەبەست نییە — ئەو دەمەقاڵێیەی دوای دێت مەبەستە."
+  },
+  tags: [
+    { en: "Vote & Reveal",  tr: "Oy & Açılış",     ar: "تصويت وكشف",     ku: "دەنگدان و ئاشکراکردن" },
+    { en: "3 – 10 Players", tr: "3 – 10 Oyuncu",   ar: "٣ – ١٠ لاعبون",  ku: "٣ – ١٠ یاریزان" },
+    { en: "Party Game",     tr: "Parti Oyunu",     ar: "لعبة حفلات",      ku: "یاری ئاهەنگ" },
+    { en: "No Roles",       tr: "Rol Yok",         ar: "بلا أدوار",       ku: "بێ ڕۆڵ" }
+  ],
+  stats: {
+    recommendedPlayers: "3 – 10",
+    sessionTime: { en: "5 – 15 Min",      tr: "5 – 15 Dk",       ar: "٥ – ١٥ دقيقة",    ku: "٥ – ١٥ خولەک" },
+    difficulty:  { en: "Easy",            tr: "Kolay",           ar: "سهل",              ku: "ئاسان" },
+    bestFor:     { en: "Warming Up",      tr: "Isınma Turu",     ar: "لكسر الجليد",      ku: "بۆ گەرمکردنەوە" }
+  },
+  bottomCTA: {
+    title: {
+      en: "Who is your table going to pick?",
+      tr: "Masan kimi seçecek?",
+      ar: "من ستختاره طاولتك؟",
+      ku: "مێزەکەت کێ هەڵدەبژێرێت؟"
+    },
+    subtitle: {
+      en: "Vote in secret. Open together. Argue after.",
+      tr: "Gizlice oy ver. Birlikte aç. Sonra tartış.",
+      ar: "صوّت سراً. اكشفوا معاً. ثم تجادلوا.",
+      ku: "بە نهێنی دەنگ بدە. پێکەوە بیکەنەوە. پاشان دەمەقاڵێ بکەن."
+    }
+  },
+  categories: [
+    { key: "funny",      icon: "smile",  difficulty: "Quick",  description: "The questions nobody can answer with a straight face.",
+      title: { en: "Funny",       tr: "Komik",      ar: "مضحك",        ku: "پێکەنیناوی" } },
+    { key: "friendship", icon: "users",  difficulty: "Easy",   description: "What this table already knows about each other.",
+      title: { en: "Friendship",  tr: "Arkadaşlık", ar: "الصداقة",     ku: "هاوڕێیەتی" } },
+    { key: "school",     icon: "book",   difficulty: "Easy",   description: "Homework, alarms, and the back row.",
+      title: { en: "School",      tr: "Okul",       ar: "المدرسة",     ku: "قوتابخانە" } },
+    { key: "daily",      icon: "sun",    difficulty: "Easy",   description: "The small habits everybody denies having.",
+      title: { en: "Daily Life",  tr: "Günlük Hayat", ar: "الحياة اليومية", ku: "ژیانی ڕۆژانە" } },
+    { key: "chaos",      icon: "zap",    difficulty: "Medium", description: "Zombies, buttons, and arguments out of nothing.",
+      title: { en: "Chaos",       tr: "Kaos",       ar: "الفوضى",      ku: "شێواوی" } }
+  ]
+}
+
 const WORLDS: Record<string, WorldDetail> = {
   "vampire-village":        VAMPIRE,
   "mafia-classic":          MAFIA,
   "spy-game":               SPY,
   "who-am-i":               WHO_AM_I,
-  "football-player-guess":  FOOTBALL
+  "football-player-guess":  FOOTBALL,
+  "most-likely-to":         MOST_LIKELY_TO
 }
 
 export function getWorldDetail(gameId: string): WorldDetail | undefined {

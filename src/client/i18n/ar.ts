@@ -232,6 +232,23 @@ const ar: Translations = {
   avatarRandom: "فاجئني",
   avatarNoAccessory: "بدون إكسسوار",
   avatarCustomize: "خصّص صورتك",
+  // من الأكثر احتمالاً؟ — شاشات اللعب بالأدوار
+  mltStartGame: "ابدأ اللعبة",
+  mltEndGame: "أنهِ اللعبة",
+  mltRound: "الجولة",
+  mltGetReady: "استعدوا…",
+  mltVoteHint: "اضغط على الشخص الذي تقصده.",
+  mltVoted: "صوّتوا",
+  mltVoteLocked: "تم تسجيل صوتك. يبقى مخفياً حتى الكشف.",
+  mltResults: "كُشفت الأصوات",
+  mltMostLikely: "الأكثر احتمالاً",
+  mltTie: "تعادل.",
+  mltNoVotes: "لم يصوّت أحد في هذه الجولة.",
+  mltNextRound: "الجولة التالية",
+  mltGameOver: "انتهت اللعبة.",
+  mltBackToLobby: "العودة إلى الغرفة",
+  mltWaitingHost: "بانتظار المضيف…",
+  errorVoteRejected: "لم يتم إرسال صوتك.",
   copyrightRights: "جميع الحقوق محفوظة."
 }
 

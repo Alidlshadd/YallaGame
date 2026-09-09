@@ -476,6 +476,83 @@ export const GAME_CATALOG: readonly Game[] = [
         label: { ku: "کاتی خولی (چرکە)", ar: "وقت الجولة (ثواني)", en: "Round Time (seconds)", tr: "Tur Süresi (saniye)" }
       }
     ]
+  },
+  {
+    id: "most-likely-to",
+    icon: "🫵",
+    theme: "most-likely-to",
+    minPlayers: 2,
+    // The server keeps the clock, collects the votes and opens them together,
+    // so this room runs on the turn engine rather than on a deal of roles.
+    turnBased: true,
+    defaultSettings: { votingSeconds: 20, roundCount: 5 },
+    title: {
+      ku: "کێ زۆرترین ئەگەری هەیە؟",
+      ar: "من الأكثر احتمالاً؟",
+      en: "Most Likely To",
+      tr: "En Muhtemel Kim?"
+    },
+    subtitle: {
+      ku: "پرسیارێک، دەنگدانێکی نهێنی، و هەموو دەنگەکان پێکەوە دەکرێنەوە.",
+      ar: "سؤال واحد، تصويت سري، وتُكشف كل الأصوات معاً.",
+      en: "One question, one secret vote each, and every vote opens at once.",
+      tr: "Tek soru, herkesten gizli bir oy ve oyların hep birlikte açılması."
+    },
+    rules: {
+      ku: [
+        "هۆست ژوور دروست دەکات و یاری دەست پێ دەکات.",
+        "هەموو یاریزانێک هەمان پرسیار دەبینێت.",
+        "هەر کەسێک دەنگ بە کەسێکی دیکە دەدات — بۆ خۆی نا.",
+        "کاتێک کات تەواو دەبێت هەموو دەنگەکان پێکەوە دەردەکەون."
+      ],
+      ar: [
+        "ينشئ المضيف غرفة ويبدأ اللعبة.",
+        "يرى جميع اللاعبين السؤال نفسه.",
+        "كل لاعب يصوّت للاعب آخر — لا يمكنه التصويت لنفسه.",
+        "عند انتهاء الوقت تُكشف كل الأصوات دفعة واحدة."
+      ],
+      en: [
+        "The host creates a room and starts the game.",
+        "Everybody sees the same question.",
+        "Each player votes for somebody else — never for themselves.",
+        "When the clock runs out every vote is revealed at once."
+      ],
+      tr: [
+        "Host oda kurar ve oyunu başlatır.",
+        "Herkes aynı soruyu görür.",
+        "Her oyuncu bir başkasına oy verir — kendine oy veremez.",
+        "Süre dolunca bütün oylar aynı anda açılır."
+      ]
+    },
+    // Nobody is dealt anything: the question is public and the vote is the
+    // only hidden thing, so there are no roles to hand out.
+    roles: [],
+    settings: [
+      {
+        type: "number",
+        key: "votingSeconds",
+        min: 10,
+        max: 60,
+        label: {
+          ku: "کاتی دەنگدان (چرکە)",
+          ar: "وقت التصويت (ثواني)",
+          en: "Voting Time (seconds)",
+          tr: "Oylama Süresi (saniye)"
+        }
+      },
+      {
+        type: "number",
+        key: "roundCount",
+        min: 1,
+        max: 20,
+        label: {
+          ku: "ژمارەی خولەکان",
+          ar: "عدد الجولات",
+          en: "Rounds",
+          tr: "Tur Sayısı"
+        }
+      }
+    ]
   }
 ] as const
 

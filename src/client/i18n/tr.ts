@@ -235,6 +235,23 @@ const tr: Translations = {
   avatarRandom: "Şaşırt beni",
   avatarNoAccessory: "Aksesuar yok",
   avatarCustomize: "Avatarını özelleştir",
+  // En Muhtemel Kim? — sıra tabanlı oyun ekranları
+  mltStartGame: "Oyunu Başlat",
+  mltEndGame: "Oyunu Bitir",
+  mltRound: "Tur",
+  mltGetReady: "Hazır ol…",
+  mltVoteHint: "Aklındaki kişiye dokun.",
+  mltVoted: "oy verdi",
+  mltVoteLocked: "Oy verdin. Açılana kadar gizli kalacak.",
+  mltResults: "Oylar açıldı",
+  mltMostLikely: "En muhtemel",
+  mltTie: "Berabere.",
+  mltNoVotes: "Bu turda kimse oy vermedi.",
+  mltNextRound: "Sonraki Tur",
+  mltGameOver: "Oyun bitti.",
+  mltBackToLobby: "Odaya Dön",
+  mltWaitingHost: "Host bekleniyor…",
+  errorVoteRejected: "Oy gönderilemedi.",
   copyrightRights: "Tüm hakları saklıdır."
 }
 

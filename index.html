@@ -229,6 +229,9 @@
       <div class="admin-actions">
         <button id="assignRolesBtn" class="btn btn-primary glow-breathe" data-i18n="assignRoles">Assign Roles</button>
         <button id="clearRolesBtn" class="btn btn-danger" data-i18n="clearRoles">Clear Roles</button>
+        <!-- Turn-based games are started, not dealt; shown instead of the two above.
+             Ending one lives on the game stage, which covers this screen. -->
+        <button id="startGameBtn" class="btn btn-primary glow-breathe" data-i18n="mltStartGame" hidden>Start Game</button>
       </div>
     </section>
   </main>
@@ -244,6 +247,9 @@
 
   <!-- Live socket state for the room screens; hidden until the link drops. -->
   <div id="connBanner" class="conn-banner" role="status" aria-live="polite"></div>
+
+  <!-- Where a turn-based game is played; drawn over the room until it ends. -->
+  <div id="gameStage" class="game-stage" role="region" aria-live="polite" hidden></div>
 
   <div id="toast" class="toast hidden" role="status"></div>
 
