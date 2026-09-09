@@ -12,7 +12,18 @@
  *   - /api, socket.io  → never touched
  */
 
-const VERSION = "v1"
+/*
+ * Bump this whenever a file under `public/` is replaced in place.
+ *
+ * Vite's own output is content-hashed, so a new build is a new URL and the
+ * cache sorts itself out. Everything hand-placed in `public/` — the world
+ * covers above all — keeps its name forever, and `staleWhileRevalidate` hands
+ * back the copy it already has before it goes looking for a newer one. That
+ * is right for art that never changes and wrong the day it does: the phone
+ * shows the old cover until the visit after next. Changing the version drops
+ * both caches on activate, which is the only thing that fixes it that visit.
+ */
+const VERSION = "v2"
 const SHELL_CACHE = `yalla-shell-${VERSION}`
 const ASSET_CACHE = `yalla-assets-${VERSION}`
 const SHELL_URL = "/"
