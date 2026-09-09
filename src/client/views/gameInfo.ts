@@ -173,7 +173,11 @@ function buildHero(
     void setView("localPlayView", { gameId: game.id })
   })
 
-  const actions = el("div", { class: "gi-actions" }, [createBtn, joinBtn, localBtn])
+  const actions = el("div", { class: "gi-actions" },
+    game.turnBased === true || game.id === "most-likely-to"
+      ? [createBtn, joinBtn]
+      : [createBtn, joinBtn, localBtn]
+  )
 
   const hint = el("p", { class: "gi-hint" }, [
     el("span", { class: "gi-hint-icon", "aria-hidden": "true" }, ["▣"]),

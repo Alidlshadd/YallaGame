@@ -42,6 +42,7 @@ const STORAGE_KEY = "role-room:local-play"
 const SPY_GAME_ID = "spy-game"
 const WHO_AM_I_GAME_ID = "who-am-i"
 const FOOTBALL_GAME_ID = "football-player-guess"
+const MOST_LIKELY_TO_GAME_ID = "most-likely-to"
 /* After the unified word-categories.ts refactor: pick 4 broad categories
    that exist in the shared file and produce playable spy rounds out of the
    box. "iraq-kurdistan-cities" gives the audience a local hook. */
@@ -674,7 +675,7 @@ function initialStepForGame(game: Game): Step {
 
 function seedStateForGame(gameId: string): boolean {
   const game = findGame(gameId)
-  if (!game) return false
+  if (!game || game.turnBased === true || game.id === MOST_LIKELY_TO_GAME_ID) return false
   state = {
     ...freshState(),
     gameId,
@@ -789,7 +790,19 @@ export const localPlayView = {
     loadState()
 
     if (typeof ctx.gameId === "string") {
-      if (seedStateForGame(ctx.gameId)) presetGameId = ctx.gameId
+      if (seedStateForGame(ctx.gameId)) {
+        presetGameId = ctx.gameId
+      } else if (findGame(ctx.gameId)?.turnBased === true || ctx.gameId === MOST_LIKELY_TO_GAME_ID) {
+        // Do not let a previously saved local game leak into an unsupported
+        // turn-based deep link.
+        state = freshState()
+      }
+    }
+    // A stale session (or an old deep link) must not re-enter the role-based
+    // wizard for a turn-based game. Those games are started from a room.
+    if (state.gameId && (findGame(state.gameId)?.turnBased === true || state.gameId === MOST_LIKELY_TO_GAME_ID)) {
+      state = freshState()
+      presetGameId = null
     }
 
     let wakeLock: (() => void) | null = null
@@ -929,7 +942,10 @@ function renderProgressBar(stepIdx: number, totalSteps: number): HTMLElement {
 }
 
 function renderGamePicker(container: HTMLDivElement, lang: LangCode, render: () => void): void {
-  const games = getGames()
+  // Turn-based games run through the shared room/game-stage flow. Local Play
+  // is a pass-and-play role/reveal flow and cannot start those games without
+  // trying to build a role pool from `roles: []`.
+  const games = getGames().filter(game => game.turnBased !== true && game.id !== MOST_LIKELY_TO_GAME_ID)
 
   const grid = el("div", { class: "lp-game-grid" })
   for (const game of games) {
