@@ -25,7 +25,7 @@ export const MOST_LIKELY_TO_QUESTIONS: readonly Question[] = [
     category: "funny",
     text: {
       en: "Who is most likely to forget their own birthday?",
-      tr: "Kendi doğum gününü unutma ihtimali en yüksek kişi kim?",
+      tr: "Kim kendi doğum gününü unutabilir?",
       ar: "من الأكثر احتمالاً أن ينسى عيد ميلاده؟",
       ku: "کێ زۆرترین ئەگەری هەیە ڕۆژی لەدایکبوونی خۆی لەبیر بکات؟"
     }
@@ -34,10 +34,10 @@ export const MOST_LIKELY_TO_QUESTIONS: readonly Question[] = [
     id: "become-famous",
     category: "funny",
     text: {
-      en: "Who is most likely to become famous?",
-      tr: "Ünlü olma ihtimali en yüksek kişi kim?",
-      ar: "من الأكثر احتمالاً أن يصبح مشهوراً؟",
-      ku: "کێ زۆرترین ئەگەری هەیە ببێتە کەسێکی بەناوبانگ؟"
+      en: "Who is most likely to become famous one day?",
+      tr: "Kim bir gün ünlü olur?",
+      ar: "من الأكثر احتمالاً أن يصبح مشهوراً يوماً ما؟",
+      ku: "کێ زۆرترین ئەگەری هەیە ڕۆژێک ببێتە کەسێکی بەناوبانگ؟"
     }
   },
   {
@@ -54,20 +54,20 @@ export const MOST_LIKELY_TO_QUESTIONS: readonly Question[] = [
     id: "text-wrong-person",
     category: "funny",
     text: {
-      en: "Who is most likely to send a text to the wrong person?",
-      tr: "Yanlış kişiye mesaj atma ihtimali en yüksek kişi kim?",
-      ar: "من الأكثر احتمالاً أن يرسل رسالة للشخص الخطأ؟",
-      ku: "کێ زۆرترین ئەگەری هەیە نامەیەک بۆ کەسی هەڵە بنێرێت؟"
+      en: "Who is most likely to text the wrong person?",
+      tr: "Kim yanlış kişiye mesaj atar?",
+      ar: "من الأكثر احتمالاً أن يرسل رسالة إلى الشخص الخطأ؟",
+      ku: "کێ زۆرترین ئەگەری هەیە نامە بۆ کەسی هەڵە بنێرێت؟"
     }
   },
   {
     id: "talk-to-self",
     category: "funny",
     text: {
-      en: "Who is most likely to get caught talking to themselves?",
-      tr: "Kendi kendine konuşurken yakalanma ihtimali en yüksek kişi kim?",
-      ar: "من الأكثر احتمالاً أن يُضبط وهو يتحدث مع نفسه؟",
-      ku: "کێ زۆرترین ئەگەری هەیە لەکاتی قسەکردن لەگەڵ خۆیدا بگیرێت؟"
+      en: "Who talks to themselves in front of the mirror?",
+      tr: "Kim aynanın karşısında kendi kendine konuşur?",
+      ar: "من يتحدث مع نفسه أمام المرآة؟",
+      ku: "کێ لەبەردەم ئاوێنەدا لەگەڵ خۆی قسە دەکات؟"
     }
   },
   {
@@ -124,20 +124,20 @@ export const MOST_LIKELY_TO_QUESTIONS: readonly Question[] = [
     id: "become-a-meme",
     category: "funny",
     text: {
-      en: "Who is most likely to accidentally become an internet meme?",
-      tr: "Yanlışlıkla internet mizahına konu olma ihtimali en yüksek kişi kim?",
-      ar: "من الأكثر احتمالاً أن يتحول بالصدفة إلى ميم على الإنترنت؟",
-      ku: "کێ زۆرترین ئەگەری هەیە بەهەڵە ببێتە مێمێکی ئینتەرنێت؟"
+      en: "Who is most likely to become an internet meme?",
+      tr: "Kim internette meme olur?",
+      ar: "من الأكثر احتمالاً أن يتحوّل إلى ميم على الإنترنت؟",
+      ku: "کێ زۆرترین ئەگەری هەیە ببێتە میمێک لە ئینتەرنێتدا؟"
     }
   },
   {
     id: "talk-to-pet",
     category: "funny",
     text: {
-      en: "Who is most likely to talk to their pet like it understands every word?",
-      tr: "Evcil hayvanıyla her kelimeyi anlıyormuş gibi konuşma ihtimali en yüksek kişi kim?",
-      ar: "من الأكثر احتمالاً أن يتحدث إلى حيوانه الأليف وكأنه يفهم كل كلمة؟",
-      ku: "کێ زۆرترین ئەگەری هەیە لەگەڵ ئاژەڵە ماڵییەکەیدا قسە بکات وەک ئەوەی هەموو وشەیەک تێبگات؟"
+      en: "Who is most likely to have a serious argument with a cat or dog?",
+      tr: "Kim kedi veya köpekle ciddi ciddi tartışır?",
+      ar: "من الأكثر احتمالاً أن يدخل في جدال جاد مع قط أو كلب؟",
+      ku: "کێ زۆرترین ئەگەری هەیە بە جدی دەمەقاڵێ لەگەڵ پشیلە یان سەگ بکات؟"
     }
   },
 
@@ -146,20 +146,20 @@ export const MOST_LIKELY_TO_QUESTIONS: readonly Question[] = [
     id: "laugh-wrong-moment",
     category: "friendship",
     text: {
-      en: "Who is most likely to laugh at the wrong moment?",
-      tr: "Yanlış zamanda gülme ihtimali en yüksek kişi kim?",
-      ar: "من الأكثر احتمالاً أن يضحك في الوقت الخطأ؟",
-      ku: "کێ زۆرترین ئەگەری هەیە لە کاتی هەڵەدا پێبکەنێت؟"
+      en: "Who is most likely to start laughing at the wrong moment?",
+      tr: "Kim yanlış zamanda gülmeye başlar?",
+      ar: "من الأكثر احتمالاً أن يبدأ بالضحك في الوقت غير المناسب؟",
+      ku: "کێ زۆرترین ئەگەری هەیە لە کاتێکی نەگونجاودا دەست بە پێکەنین بکات؟"
     }
   },
   {
     id: "reply-three-days-later",
     category: "friendship",
     text: {
-      en: "Who is most likely to reply to a message three days later?",
-      tr: "Bir mesaja üç gün sonra cevap verme ihtimali en yüksek kişi kim?",
-      ar: "من الأكثر احتمالاً أن يرد على رسالة بعد ثلاثة أيام؟",
-      ku: "کێ زۆرترین ئەگەری هەیە دوای سێ ڕۆژ وەڵامی نامەیەک بداتەوە؟"
+      en: "Who takes the longest to reply to messages?",
+      tr: "Kim mesajlara en geç cevap verir?",
+      ar: "من يتأخر أكثر في الرد على الرسائل؟",
+      ku: "کێ لە هەمووان درەنگتر وەڵامی نامەکان دەداتەوە؟"
     }
   },
   {
@@ -186,10 +186,10 @@ export const MOST_LIKELY_TO_QUESTIONS: readonly Question[] = [
     id: "best-advice",
     category: "friendship",
     text: {
-      en: "Who is most likely to give the best advice at 3 a.m.?",
-      tr: "Sabahın üçünde en iyi tavsiyeyi verme ihtimali en yüksek kişi kim?",
-      ar: "من الأكثر احتمالاً أن يقدّم أفضل نصيحة في الساعة الثالثة فجراً؟",
-      ku: "کێ زۆرترین ئەگەری هەیە لە کاتژمێر سێی شەودا باشترین ڕاوێژ بدات؟"
+      en: "Who gives the most sensible advice in the group?",
+      tr: "Kim grubun en mantıklı tavsiyesini verir?",
+      ar: "من يقدّم النصيحة الأكثر منطقية في المجموعة؟",
+      ku: "کێ لە کۆمەڵەکەدا لۆژیکیترین ئامۆژگاری دەدات؟"
     }
   },
   {
@@ -226,20 +226,20 @@ export const MOST_LIKELY_TO_QUESTIONS: readonly Question[] = [
     id: "organize-group-trip",
     category: "friendship",
     text: {
-      en: "Who is most likely to organize the entire group trip on their own?",
-      tr: "Grup gezisini tek başına organize etme ihtimali en yüksek kişi kim?",
-      ar: "من الأكثر احتمالاً أن ينظّم رحلة المجموعة كلها بمفرده؟",
-      ku: "کێ زۆرترین ئەگەری هەیە بە تەنیا هەموو گەشتی گرووپەکە ڕێکبخات؟"
+      en: "Who organizes the entire vacation plan?",
+      tr: "Kim tatil planını tamamen organize eder?",
+      ar: "من ينظّم خطة العطلة بالكامل؟",
+      ku: "کێ هەموو پلانی پشووەکە ڕێک دەخات؟"
     }
   },
   {
     id: "always-late-hangout",
     category: "friendship",
     text: {
-      en: "Who is most likely to always be the last one to show up?",
-      tr: "Buluşmaya her zaman en son gelme ihtimali en yüksek kişi kim?",
-      ar: "من الأكثر احتمالاً أن يكون دائماً آخر من يصل؟",
-      ku: "کێ زۆرترین ئەگەری هەیە هەمیشە دواین کەس بێت کە دەگات؟"
+      en: "Who is most likely to be late?",
+      tr: "Kim en çok geç kalır?",
+      ar: "من الأكثر تأخراً عن المواعيد؟",
+      ku: "کێ زۆرتر درەنگ دەگات؟"
     }
   },
   {
@@ -298,10 +298,10 @@ export const MOST_LIKELY_TO_QUESTIONS: readonly Question[] = [
     id: "fall-asleep-class",
     category: "school",
     text: {
-      en: "Who is most likely to fall asleep in the middle of class?",
-      tr: "Ders sırasında uyuyakalma ihtimali en yüksek kişi kim?",
-      ar: "من الأكثر احتمالاً أن ينام في منتصف الحصة؟",
-      ku: "کێ زۆرترین ئەگەری هەیە لە ناوەڕاستی وانەدا بخەوێت؟"
+      en: "Who is most likely to fall asleep in class?",
+      tr: "Kim derste uyuyakalabilir?",
+      ar: "من الأكثر احتمالاً أن يغلبه النوم في الدرس؟",
+      ku: "کێ زۆرترین ئەگەری هەیە لە وانەدا خەوی لێ بکەوێت؟"
     }
   },
   {
@@ -328,10 +328,10 @@ export const MOST_LIKELY_TO_QUESTIONS: readonly Question[] = [
     id: "ace-without-studying",
     category: "school",
     text: {
-      en: "Who is most likely to ace a test without studying at all?",
-      tr: "Hiç çalışmadan sınavdan tam not alma ihtimali en yüksek kişi kim?",
-      ar: "من الأكثر احتمالاً أن ينجح في اختبار دون أن يذاكر إطلاقاً؟",
-      ku: "کێ زۆرترین ئەگەری هەیە بێ خوێندنەوە نمرەی باڵا لە تاقیکردنەوەدا بەدەست بهێنێت؟"
+      en: "Who says “I didn't study at all” before an exam and gets the highest score?",
+      tr: "Kim sınavdan önce “hiç çalışmadım” deyip en yüksek notu alır?",
+      ar: "من يقول قبل الامتحان «لم أدرس أبداً» ثم يحصل على أعلى درجة؟",
+      ku: "کێ پێش تاقیکردنەوە دەڵێت «هیچم نەخوێندووە» و پاشان بەرزترین نمرە دەهێنێت؟"
     }
   },
   {
@@ -480,20 +480,20 @@ export const MOST_LIKELY_TO_QUESTIONS: readonly Question[] = [
     id: "snooze-ten-times",
     category: "daily",
     text: {
-      en: "Who is most likely to snooze their alarm at least ten times?",
-      tr: "Alarmını en az on kez erteleme ihtimali en yüksek kişi kim?",
-      ar: "من الأكثر احتمالاً أن يؤجل المنبه عشر مرات على الأقل؟",
-      ku: "کێ زۆرترین ئەگەری هەیە بەلایەنی کەمەوە دە جار ئاگادارکردنەوەکە دوابخات؟"
+      en: "Who is most likely to snooze their alarm 10 times?",
+      tr: "Kim alarmı 10 kez erteler?",
+      ar: "من الأكثر احتمالاً أن يؤجل المنبّه 10 مرات؟",
+      ku: "کێ زۆرترین ئەگەری هەیە ١٠ جار زەنگی ئاگادارکەرەوەکەی دوا بخات؟"
     }
   },
   {
     id: "same-food-always",
     category: "daily",
     text: {
-      en: "Who is most likely to order the exact same thing every single time?",
-      tr: "Her seferinde tıpatıp aynı şeyi sipariş etme ihtimali en yüksek kişi kim?",
-      ar: "من الأكثر احتمالاً أن يطلب نفس الطبق بالضبط في كل مرة؟",
-      ku: "کێ زۆرترین ئەگەری هەیە هەموو جارێک هەمان شت داوا بکات؟"
+      en: "Who always orders the same meal?",
+      tr: "Kim her zaman aynı yemeği sipariş eder?",
+      ar: "من يطلب الوجبة نفسها دائماً؟",
+      ku: "کێ هەمیشە هەمان خواردن داوا دەکات؟"
     }
   },
 
@@ -502,10 +502,10 @@ export const MOST_LIKELY_TO_QUESTIONS: readonly Question[] = [
     id: "zombie-apocalypse",
     category: "chaos",
     text: {
-      en: "Who is most likely to survive a zombie apocalypse?",
-      tr: "Zombi istilasında hayatta kalma ihtimali en yüksek kişi kim?",
-      ar: "من الأكثر احتمالاً أن ينجو من غزو الزومبي؟",
-      ku: "کێ زۆرترین ئەگەری هەیە لە هێرشی زۆمبی ڕزگاری ببێت؟"
+      en: "Who would survive the longest in a zombie apocalypse?",
+      tr: "Kim zombi istilasında en uzun süre hayatta kalır?",
+      ar: "من سيبقى حياً لأطول وقت في اجتياح الزومبي؟",
+      ku: "کێ لە هێرشی زۆمبییەکاندا درێژترین ماوە بە زیندوویی دەمێنێتەوە؟"
     }
   },
   {
@@ -542,10 +542,10 @@ export const MOST_LIKELY_TO_QUESTIONS: readonly Question[] = [
     id: "lost-using-gps",
     category: "chaos",
     text: {
-      en: "Who is most likely to get lost even while using GPS?",
-      tr: "GPS kullanırken bile kaybolma ihtimali en yüksek kişi kim?",
-      ar: "من الأكثر احتمالاً أن يضيع حتى وهو يستخدم نظام تحديد المواقع؟",
-      ku: "کێ زۆرترین ئەگەری هەیە تەنانەت لەکاتی بەکارهێنانی GPSیشدا ون بێت؟"
+      en: "Who gets lost even with Google Maps open?",
+      tr: "Kim Google Maps açıkken bile kaybolur?",
+      ar: "من يضل الطريق حتى وخرائط Google مفتوحة؟",
+      ku: "کێ تەنانەت کاتێک نەخشەی Google کراوەیە ڕێگا ون دەکات؟"
     }
   },
   {
@@ -592,10 +592,10 @@ export const MOST_LIKELY_TO_QUESTIONS: readonly Question[] = [
     id: "survive-desert-island",
     category: "chaos",
     text: {
-      en: "Who is most likely to survive stranded on a desert island?",
-      tr: "Issız bir adada mahsur kalıp hayatta kalma ihtimali en yüksek kişi kim?",
-      ar: "من الأكثر احتمالاً أن ينجو عالقاً على جزيرة صحراوية؟",
-      ku: "کێ زۆرترین ئەگەری هەیە لە دورگەیەکی چۆڵدا ڕزگاری بمێنێتەوە؟"
+      en: "Who could manage to live alone on an island?",
+      tr: "Kim bir adada tek başına yaşamayı başarır?",
+      ar: "من يستطيع العيش بمفرده على جزيرة؟",
+      ku: "کێ دەتوانێت بە تەنها لە دورگەیەکدا بژیێت؟"
     }
   },
   {
@@ -612,10 +612,10 @@ export const MOST_LIKELY_TO_QUESTIONS: readonly Question[] = [
     id: "start-business-on-whim",
     category: "chaos",
     text: {
-      en: "Who is most likely to start a business on a complete whim?",
-      tr: "Anlık bir kararla iş kurma ihtimali en yüksek kişi kim?",
-      ar: "من الأكثر احتمالاً أن يبدأ مشروعاً تجارياً بقرار مفاجئ؟",
-      ku: "کێ زۆرترین ئەگەری هەیە بە بڕیارێکی کتوپڕ بازرگانییەک دەست پێ بکات؟"
+      en: "Who is most likely to start their own company one day?",
+      tr: "Kim bir gün kendi şirketini kurar?",
+      ar: "من الأكثر احتمالاً أن يؤسس شركته الخاصة يوماً ما؟",
+      ku: "کێ زۆرترین ئەگەری هەیە ڕۆژێک کۆمپانیای خۆی دامەزرێنێت؟"
     }
   },
   {
@@ -626,6 +626,817 @@ export const MOST_LIKELY_TO_QUESTIONS: readonly Question[] = [
       tr: "Yanlışlıkla bir tarikata katılma ihtimali en yüksek kişi kim?",
       ar: "من الأكثر احتمالاً أن ينضم بالخطأ إلى طائفة غامضة؟",
       ku: "کێ زۆرترین ئەگەری هەیە بەهەڵە بچێتە ناو تاقمێکی نهێنی؟"
+    }
+  },
+  // Additional community questions; equivalent questions above retain their ids.
+  {
+    id: "fall-asleep-easily",
+    category: "daily",
+    text: {
+      en: "Who falls asleep the most easily?",
+      tr: "Kim en kolay uyuyakalır?",
+      ar: "من يغلبه النوم بسهولة أكثر من غيره؟",
+      ku: "کێ لە هەمووان ئاسانتر خەوی لێ دەکەوێت؟"
+    }
+  },
+  {
+    id: "lose-phone-every-week",
+    category: "daily",
+    text: {
+      en: "Who cannot go a week without losing their phone?",
+      tr: "Kim bir hafta boyunca telefonunu kaybetmeden yaşayamaz?",
+      ar: "من لا يستطيع أن يمضي أسبوعاً دون أن يضيّع هاتفه؟",
+      ku: "کێ ناتوانێت هەفتەیەک بەسەر ببات بەبێ ئەوەی مۆبایلەکەی ون بکات؟"
+    }
+  },
+  {
+    id: "order-food-most",
+    category: "daily",
+    text: {
+      en: "Who orders food the most often?",
+      tr: "Kim en çok yemek sipariş eder?",
+      ar: "من يطلب الطعام أكثر من الجميع؟",
+      ku: "کێ لە هەمووان زیاتر داوای خواردن دەکات؟"
+    }
+  },
+  {
+    id: "take-most-photos",
+    category: "daily",
+    text: {
+      en: "Who takes the most photos?",
+      tr: "Kim en çok fotoğraf çeker?",
+      ar: "من يلتقط أكبر عدد من الصور؟",
+      ku: "کێ لە هەمووان زیاتر وێنە دەگرێت؟"
+    }
+  },
+  {
+    id: "group-jokester",
+    category: "friendship",
+    text: {
+      en: "Who cracks the most jokes in the friend group?",
+      tr: "Kim arkadaş grubunda en çok şaka yapar?",
+      ar: "من يمزح أكثر في مجموعة الأصدقاء؟",
+      ku: "کێ لە کۆمەڵی هاوڕێکاندا لە هەمووان زیاتر گاڵتە دەکات؟"
+    }
+  },
+  {
+    id: "panic-over-small-things",
+    category: "funny",
+    text: {
+      en: "Who is most likely to panic over the smallest thing?",
+      tr: "Kim en küçük şeyden panik olur?",
+      ar: "من الأكثر احتمالاً أن يصاب بالذعر من أبسط شيء؟",
+      ku: "کێ زۆرترین ئەگەری هەیە لە بچووکترین شت تۆقیو بێت؟"
+    }
+  },
+  {
+    id: "horror-movie-first-to-run",
+    category: "chaos",
+    text: {
+      en: "Who would be the first to run away in a horror movie?",
+      tr: "Kim bir korku filminde ilk kaçar?",
+      ar: "من سيكون أول من يهرب في فيلم رعب؟",
+      ku: "کێ لە فیلمێکی ترسناکدا یەکەم کەس دەبێت هەڵبێت؟"
+    }
+  },
+  {
+    id: "zombie-first-caught",
+    category: "chaos",
+    text: {
+      en: "Who would be the first caught in a zombie apocalypse?",
+      tr: "Kim zombi istilasında ilk yakalanır?",
+      ar: "من سيكون أول من يقع في قبضة الزومبي عند اجتياحهم؟",
+      ku: "کێ لە هێرشی زۆمبییەکاندا یەکەم کەس دەبێت بگیرێت؟"
+    }
+  },
+  {
+    id: "wrong-bus",
+    category: "daily",
+    text: {
+      en: "Who is most likely to get on the wrong bus?",
+      tr: "Kim yanlış otobüse biner?",
+      ar: "من الأكثر احتمالاً أن يركب الحافلة الخطأ؟",
+      ku: "کێ زۆرترین ئەگەری هەیە سواری پاسی هەڵە ببێت؟"
+    }
+  },
+  {
+    id: "lost-in-another-city",
+    category: "daily",
+    text: {
+      en: "Who is most likely to get lost visiting another city?",
+      tr: "Kim başka bir şehre gidip yolu kaybeder?",
+      ar: "من الأكثر احتمالاً أن يزور مدينة أخرى ويضل الطريق؟",
+      ku: "کێ زۆرترین ئەگەری هەیە بچێتە شارێکی تر و ڕێگا ون بکات؟"
+    }
+  },
+  {
+    id: "forget-why-left-home",
+    category: "funny",
+    text: {
+      en: "Who is most likely to leave home and forget why they went out?",
+      tr: "Kim evden çıkıp neden çıktığını unutur?",
+      ar: "من الأكثر احتمالاً أن يخرج من البيت وينسى لماذا خرج؟",
+      ku: "کێ زۆرترین ئەگەری هەیە لە ماڵ بێتە دەرەوە و لەبیری بچێت بۆچی هاتووەتە دەرەوە؟"
+    }
+  },
+  {
+    id: "search-phone-in-hand",
+    category: "funny",
+    text: {
+      en: "Who is most likely to look for their phone while holding it?",
+      tr: "Kim telefonu elindeyken telefonunu arar?",
+      ar: "من الأكثر احتمالاً أن يبحث عن هاتفه وهو في يده؟",
+      ku: "کێ زۆرترین ئەگەری هەیە بەدوای مۆبایلەکەیدا بگەڕێت کە لە دەستیدایە؟"
+    }
+  },
+  {
+    id: "five-minutes-half-hour",
+    category: "friendship",
+    text: {
+      en: "Who says “I'll be there in 5 minutes” but arrives half an hour later?",
+      tr: "Kim en çok “5 dakikaya geliyorum” deyip yarım saat sonra gelir?",
+      ar: "من يقول «سأصل خلال 5 دقائق» ثم يصل بعد نصف ساعة؟",
+      ku: "کێ دەڵێت «بە ٥ خولەک دەگەم» بەڵام دوای نیو کاتژمێر دەگات؟"
+    }
+  },
+  {
+    id: "game-until-morning",
+    category: "daily",
+    text: {
+      en: "Who is most likely to play games until morning?",
+      tr: "Kim sabaha kadar oyun oynar?",
+      ar: "من الأكثر احتمالاً أن يلعب حتى الصباح؟",
+      ku: "کێ زۆرترین ئەگەری هەیە تا بەیانی یاری بکات؟"
+    }
+  },
+  {
+    id: "angry-game-loser",
+    category: "friendship",
+    text: {
+      en: "Who gets the angriest when they lose a game?",
+      tr: "Kim bir oyunda kaybedince en çok sinirlenir?",
+      ar: "من يغضب أكثر عندما يخسر في لعبة؟",
+      ku: "کێ لە هەمووان زیاتر تووڕە دەبێت کاتێک لە یارییەکدا دەدۆڕێت؟"
+    }
+  },
+  {
+    id: "suspected-game-cheater",
+    category: "friendship",
+    text: {
+      en: "Who would be the first person suspected of cheating in a game?",
+      tr: "Kim oyunda hile yaptığından şüphelenilecek ilk kişidir?",
+      ar: "من سيكون أول شخص يُشتبه بأنه يغش في اللعبة؟",
+      ku: "کێ یەکەم کەس دەبێت گومانی لێ بکرێت کە لە یاریدا فێڵ دەکات؟"
+    }
+  },
+  {
+    id: "most-competitive",
+    category: "friendship",
+    text: {
+      en: "Who is the most competitive?",
+      tr: "Kim en rekabetçi kişidir?",
+      ar: "من هو الأكثر تنافسية؟",
+      ku: "کێ لە هەمووان زیاتر حەزی لە کێبڕکێیە؟"
+    }
+  },
+  {
+    id: "worst-at-secrets",
+    category: "friendship",
+    text: {
+      en: "Who is the worst at keeping secrets?",
+      tr: "Kim sır saklamakta en kötüdür?",
+      ar: "من هو الأسوأ في حفظ الأسرار؟",
+      ku: "کێ لە هەمووان خراپتر نهێنی دەپارێزێت؟"
+    }
+  },
+  {
+    id: "knows-all-gossip",
+    category: "friendship",
+    text: {
+      en: "Who knows all the gossip in the group?",
+      tr: "Kim grubun bütün dedikodularını bilir?",
+      ar: "من يعرف كل أخبار النميمة في المجموعة؟",
+      ku: "کێ هەموو قسەو‌باسەکانی ناو کۆمەڵەکە دەزانێت؟"
+    }
+  },
+  {
+    id: "accidentally-reveal-secret",
+    category: "friendship",
+    text: {
+      en: "Who is most likely to accidentally reveal a secret?",
+      tr: "Kim istemeden bir sırrı açıklar?",
+      ar: "من الأكثر احتمالاً أن يكشف سراً دون قصد؟",
+      ku: "کێ زۆرترین ئەگەری هەیە بەبێ مەبەست نهێنییەک ئاشکرا بکات؟"
+    }
+  },
+  {
+    id: "best-excuses",
+    category: "funny",
+    text: {
+      en: "Who comes up with the best excuses?",
+      tr: "Kim en iyi bahane uydurur?",
+      ar: "من يختلق أفضل الأعذار؟",
+      ku: "کێ باشترین بیانوو دەهێنێتەوە؟"
+    }
+  },
+  {
+    id: "call-teacher-mom",
+    category: "school",
+    text: {
+      en: "Who is most likely to accidentally call their teacher “Mom”?",
+      tr: "Kim öğretmene/hocaya yanlışlıkla “anne” diyebilir?",
+      ar: "من الأكثر احتمالاً أن ينادي المعلّم «ماما» بالخطأ؟",
+      ku: "کێ زۆرترین ئەگەری هەیە بەهەڵە بە مامۆستاکەی بڵێت «دایە»؟"
+    }
+  },
+  {
+    id: "study-day-before-exam",
+    category: "school",
+    text: {
+      en: "Who starts studying the day before an exam?",
+      tr: "Kim sınava bir gün kala çalışmaya başlar?",
+      ar: "من يبدأ الدراسة قبل الامتحان بيوم واحد؟",
+      ku: "کێ ڕۆژێک پێش تاقیکردنەوە دەست بە خوێندن دەکات؟"
+    }
+  },
+  {
+    id: "forget-homework-deadline",
+    category: "school",
+    text: {
+      en: "Who is most likely to forget the homework deadline?",
+      tr: "Kim ödevin son tarihini unutur?",
+      ar: "من الأكثر احتمالاً أن ينسى موعد تسليم الواجب؟",
+      ku: "کێ زۆرترین ئەگەری هەیە دوا وادەی ڕادەستکردنی ئەرکی ماڵەوە لەبیر بکات؟"
+    }
+  },
+  {
+    id: "leave-exam-first",
+    category: "school",
+    text: {
+      en: "Who is the first to leave an exam?",
+      tr: "Kim sınavda en önce çıkar?",
+      ar: "من يخرج أولاً من الامتحان؟",
+      ku: "کێ لە تاقیکردنەوەدا لە هەمووان زووتر دەچێتە دەرەوە؟"
+    }
+  },
+  {
+    id: "most-coffee-at-school",
+    category: "school",
+    text: {
+      en: "Who drinks the most coffee at school or university?",
+      tr: "Kim okulda/üniversitede en çok kahve içer?",
+      ar: "من يشرب أكبر كمية من القهوة في المدرسة أو الجامعة؟",
+      ku: "کێ لە قوتابخانە یان زانکۆدا لە هەمووان زیاتر قاوە دەخواتەوە؟"
+    }
+  },
+  {
+    id: "sit-in-wrong-class",
+    category: "school",
+    text: {
+      en: "Who is most likely to walk into the wrong classroom and sit down?",
+      tr: "Kim yanlış sınıfa girip oturur?",
+      ar: "من الأكثر احتمالاً أن يدخل الصف الخطأ ويجلس فيه؟",
+      ku: "کێ زۆرترین ئەگەری هەیە بچێتە پۆلی هەڵە و تێیدا دابنیشێت؟"
+    }
+  },
+  {
+    id: "forget-presentation",
+    category: "school",
+    text: {
+      en: "Who is most likely to forget what to say during a presentation?",
+      tr: "Kim sunum sırasında ne söyleyeceğini unutur?",
+      ar: "من الأكثر احتمالاً أن ينسى ما يريد قوله أثناء العرض التقديمي؟",
+      ku: "کێ زۆرترین ئەگەری هەیە لە کاتی پێشکەشکردندا لەبیری بچێت چی بڵێت؟"
+    }
+  },
+  {
+    id: "finish-project-last-night",
+    category: "school",
+    text: {
+      en: "Who finishes a project on the very last night?",
+      tr: "Kim projeyi son gece bitirir?",
+      ar: "من ينهي المشروع في الليلة الأخيرة؟",
+      ku: "کێ لە دوا شەودا پڕۆژەکە تەواو دەکات؟"
+    }
+  },
+  {
+    id: "become-millionaire",
+    category: "daily",
+    text: {
+      en: "Who is most likely to become a millionaire?",
+      tr: "Kim milyoner olma ihtimali en yüksek kişidir?",
+      ar: "من الأكثر احتمالاً أن يصبح مليونيراً؟",
+      ku: "کێ زۆرترین ئەگەری هەیە ببێتە ملیۆنێر؟"
+    }
+  },
+  {
+    id: "spend-everything-on-nothing",
+    category: "daily",
+    text: {
+      en: "Who is most likely to spend all their money on something unnecessary?",
+      tr: "Kim bütün parasını gereksiz bir şeye harcar?",
+      ar: "من الأكثر احتمالاً أن ينفق كل ماله على شيء لا يحتاجه؟",
+      ku: "کێ زۆرترین ئەگەری هەیە هەموو پارەکەی لەسەر شتێکی بێ‌پێویست خەرج بکات؟"
+    }
+  },
+  {
+    id: "best-at-bargaining",
+    category: "daily",
+    text: {
+      en: "Who is the best at bargaining?",
+      tr: "Kim pazarlık yaparken en başarılıdır?",
+      ar: "من هو الأبرع في المساومة على السعر؟",
+      ku: "کێ لە هەمووان باشتر لەسەر نرخ دانوسان دەکات؟"
+    }
+  },
+  {
+    id: "accidental-expensive-purchase",
+    category: "daily",
+    text: {
+      en: "Who is most likely to accidentally buy something very expensive?",
+      tr: "Kim yanlışlıkla çok pahalı bir şey satın alır?",
+      ar: "من الأكثر احتمالاً أن يشتري شيئاً باهظ الثمن بالخطأ؟",
+      ku: "کێ زۆرترین ئەگەری هەیە بەهەڵە شتێکی زۆر گران بکڕێت؟"
+    }
+  },
+  {
+    id: "most-online-packages",
+    category: "daily",
+    text: {
+      en: "Who is always waiting for the most online shopping deliveries?",
+      tr: "Kim online alışverişte en çok paket bekler?",
+      ar: "من ينتظر أكبر عدد من طرود التسوّق عبر الإنترنت؟",
+      ku: "کێ چاوەڕێی زۆرترین پاکەتی کڕینی ئۆنلاین دەکات؟"
+    }
+  },
+  {
+    id: "buy-unneeded-sale-items",
+    category: "daily",
+    text: {
+      en: "Who buys things they don't need just because they're on sale?",
+      tr: "Kim indirim görünce ihtiyacı olmayan şeyi alır?",
+      ar: "من يشتري أشياء لا يحتاجها لمجرد أنها مخفّضة؟",
+      ku: "کێ شتی بێ‌پێویست دەکڕێت تەنها لەبەر ئەوەی داشکاندنی لەسەرە؟"
+    }
+  },
+  {
+    id: "lend-friends-money",
+    category: "friendship",
+    text: {
+      en: "Who is always lending money to friends?",
+      tr: "Kim arkadaşlarına sürekli borç verir?",
+      ar: "من يُقرض أصدقاءه المال باستمرار؟",
+      ku: "کێ بەردەوام پارە بە قەرز دەدات بە هاوڕێکانی؟"
+    }
+  },
+  {
+    id: "forget-to-pay-bill",
+    category: "daily",
+    text: {
+      en: "Who is most likely to forget to pay the bill?",
+      tr: "Kim hesabı ödemeyi unutur?",
+      ar: "من الأكثر احتمالاً أن ينسى دفع الحساب؟",
+      ku: "کێ زۆرترین ئەگەری هەیە پارەدانی حسابەکە لەبیر بکات؟"
+    }
+  },
+  {
+    id: "go-out-without-money",
+    category: "daily",
+    text: {
+      en: "Who is most likely to go out without any money?",
+      tr: "Kim cebinde para olmadan dışarı çıkar?",
+      ar: "من الأكثر احتمالاً أن يخرج دون مال في جيبه؟",
+      ku: "کێ زۆرترین ئەگەری هەیە بێ پارە لە گیرفانیدا بچێتە دەرەوە؟"
+    }
+  },
+  {
+    id: "eat-the-most",
+    category: "daily",
+    text: {
+      en: "Who eats the most?",
+      tr: "Kim en çok yemek yer?",
+      ar: "من يأكل أكثر من الجميع؟",
+      ku: "کێ لە هەمووان زیاتر خواردن دەخوات؟"
+    }
+  },
+  {
+    id: "order-food-at-three-am",
+    category: "daily",
+    text: {
+      en: "Who is most likely to order food at 3 a.m.?",
+      tr: "Kim gece 3'te yemek sipariş eder?",
+      ar: "من الأكثر احتمالاً أن يطلب الطعام في الثالثة فجراً؟",
+      ku: "کێ زۆرترین ئەگەری هەیە کاتژمێر ٣ی بەرەبەیان داوای خواردن بکات؟"
+    }
+  },
+  {
+    id: "win-spicy-food-contest",
+    category: "funny",
+    text: {
+      en: "Who would win a spicy food eating contest?",
+      tr: "Kim acı yeme yarışmasını kazanır?",
+      ar: "من سيفوز في مسابقة أكل الطعام الحار؟",
+      ku: "کێ لە کێبڕکێی خواردنی خواردنی تیژدا دەباتەوە؟"
+    }
+  },
+  {
+    id: "weird-food-combinations",
+    category: "funny",
+    text: {
+      en: "Who is most likely to try the weirdest food combination?",
+      tr: "Kim en garip yemek kombinasyonunu dener?",
+      ar: "من الأكثر احتمالاً أن يجرّب أغرب خليط من الأطعمة؟",
+      ku: "کێ زۆرترین ئەگەری هەیە سەیرترین تێکەڵەی خواردن تاقی بکاتەوە؟"
+    }
+  },
+  {
+    id: "stare-into-fridge",
+    category: "daily",
+    text: {
+      en: "Who opens the fridge and stares for 5 minutes without taking anything?",
+      tr: "Kim buzdolabını açıp 5 dakika hiçbir şey almadan bakar?",
+      ar: "من يفتح الثلاجة ويحدّق فيها 5 دقائق دون أن يأخذ شيئاً؟",
+      ku: "کێ سەلاجەکە دەکاتەوە و ٥ خولەک سەیری دەکات بەبێ ئەوەی هیچ شتێک هەڵبگرێت؟"
+    }
+  },
+  {
+    id: "just-one-bite",
+    category: "friendship",
+    text: {
+      en: "Who always asks for “just one bite” of someone else's food?",
+      tr: "Kim başkasının yemeğinden sürekli “bir lokma” ister?",
+      ar: "من يطلب دائماً «لقمة واحدة فقط» من طعام الآخرين؟",
+      ku: "کێ هەمیشە داوای «تەنها یەک پاروو» لە خواردنی کەسانی تر دەکات؟"
+    }
+  },
+  {
+    id: "read-menu-twenty-minutes",
+    category: "daily",
+    text: {
+      en: "Who studies the restaurant menu for 20 minutes?",
+      tr: "Kim restoranda menüyü 20 dakika inceler?",
+      ar: "من يدرس قائمة الطعام في المطعم لمدة 20 دقيقة؟",
+      ku: "کێ لە چێشتخانەدا ٢٠ خولەک سەیری لیستی خواردن دەکات؟"
+    }
+  },
+  {
+    id: "stay-quiet-wrong-order",
+    category: "daily",
+    text: {
+      en: "Who stays quiet even when the wrong food order arrives?",
+      tr: "Kim yanlış sipariş gelse bile sesini çıkarmaz?",
+      ar: "من يظل صامتاً حتى لو وصل طلب الطعام الخطأ؟",
+      ku: "کێ تەنانەت کاتێک خواردنی هەڵەی بۆ دێت بێدەنگ دەمێنێتەوە؟"
+    }
+  },
+  {
+    id: "kitchen-battlefield",
+    category: "funny",
+    text: {
+      en: "Who turns the kitchen into a battlefield while trying to cook?",
+      tr: "Kim yemek yapmaya çalışırken mutfağı savaş alanına çevirir?",
+      ar: "من يحوّل المطبخ إلى ساحة حرب وهو يحاول الطبخ؟",
+      ku: "کێ لە کاتی هەوڵدان بۆ چێشتلێناندا چێشتخانەکە دەکاتە گۆڕەپانی جەنگ؟"
+    }
+  },
+  {
+    id: "befriend-aliens-first",
+    category: "chaos",
+    text: {
+      en: "Who would be the first to befriend aliens?",
+      tr: "Kim uzaylılarla ilk arkadaş olur?",
+      ar: "من سيكون أول من يصادق الكائنات الفضائية؟",
+      ku: "کێ یەکەم کەس دەبێت ببێتە هاوڕێی بوونەوەرە ئاسمانییەکان؟"
+    }
+  },
+  {
+    id: "photograph-an-alien",
+    category: "chaos",
+    text: {
+      en: "Who would try to take a photo if they saw an alien?",
+      tr: "Kim uzaylı görse fotoğraf çekmeye çalışır?",
+      ar: "من سيحاول التقاط صورة إذا رأى كائناً فضائياً؟",
+      ku: "کێ ئەگەر بوونەوەرێکی ئاسمانی ببینێت هەوڵ دەدات وێنەی بگرێت؟"
+    }
+  },
+  {
+    id: "plan-world-domination",
+    category: "chaos",
+    text: {
+      en: "Who could come up with a plan to take over the world?",
+      tr: "Kim dünyayı ele geçirme planı yapabilecek kişidir?",
+      ar: "من قد يضع خطة للسيطرة على العالم؟",
+      ku: "کێ دەکرێت پلانێک بۆ دەستبەسەرداگرتنی جیهان دابنێت؟"
+    }
+  },
+  {
+    id: "secret-agent",
+    category: "chaos",
+    text: {
+      en: "Who is most likely to turn out to be a secret agent?",
+      tr: "Kim gizli ajan çıkma ihtimali en yüksek kişidir?",
+      ar: "من الأكثر احتمالاً أن يتبيّن أنه عميل سري؟",
+      ku: "کێ زۆرترین ئەگەری هەیە دەربکەوێت کە سیخوڕێکی نهێنییە؟"
+    }
+  },
+  {
+    id: "accidental-cult-leader",
+    category: "chaos",
+    text: {
+      en: "Who is most likely to accidentally become the leader of a cult?",
+      tr: "Kim yanlışlıkla bir tarikatın lideri olur?",
+      ar: "من الأكثر احتمالاً أن يصبح زعيم طائفة بالصدفة؟",
+      ku: "کێ زۆرترین ئەگەری هەیە بەهەڵە ببێتە سەرکردەی تەریقەتێک؟"
+    }
+  },
+  {
+    id: "time-travel-to-past",
+    category: "chaos",
+    text: {
+      en: "Who would travel to the past if given the chance to time travel?",
+      tr: "Kim zamanda yolculuk yapma fırsatı bulsa geçmişe gider?",
+      ar: "من سيختار الذهاب إلى الماضي لو أتيحت له فرصة السفر عبر الزمن؟",
+      ku: "کێ ئەگەر دەرفەتی گەشت بە کاتدا بدۆزێتەوە، دەچێتە ڕابردوو؟"
+    }
+  },
+  {
+    id: "accidentally-change-history",
+    category: "chaos",
+    text: {
+      en: "Who would time travel and accidentally change history?",
+      tr: "Kim zamanda yolculuk yapıp yanlışlıkla tarihi değiştirir?",
+      ar: "من سيسافر عبر الزمن ويغيّر التاريخ بالخطأ؟",
+      ku: "کێ گەشت بە کاتدا دەکات و بەهەڵە مێژوو دەگۆڕێت؟"
+    }
+  },
+  {
+    id: "argue-with-robots",
+    category: "chaos",
+    text: {
+      en: "Who is most likely to start arguing with robots?",
+      tr: "Kim robotlarla tartışmaya başlar?",
+      ar: "من الأكثر احتمالاً أن يبدأ جدالاً مع الروبوتات؟",
+      ku: "کێ زۆرترین ئەگەری هەیە دەست بە دەمەقاڵێ لەگەڵ ڕۆبۆتەکان بکات؟"
+    }
+  },
+  {
+    id: "befriend-ai",
+    category: "chaos",
+    text: {
+      en: "Who is most likely to become best friends with an AI?",
+      tr: "Kim yapay zekâyla en iyi arkadaş olur?",
+      ar: "من الأكثر احتمالاً أن يصبح أفضل صديق للذكاء الاصطناعي؟",
+      ku: "کێ زۆرترین ئەگەری هەیە ببێتە باشترین هاوڕێی زیرەکیی دەستکرد؟"
+    }
+  },
+  {
+    id: "accidentally-go-viral",
+    category: "funny",
+    text: {
+      en: "Who is most likely to accidentally go viral one day?",
+      tr: "Kim bir gün yanlışlıkla viral olur?",
+      ar: "من الأكثر احتمالاً أن ينتشر على الإنترنت بالصدفة يوماً ما؟",
+      ku: "کێ زۆرترین ئەگەری هەیە ڕۆژێک بە ڕێکەوت ناوی بە خێرایی لە ئینتەرنێتدا بڵاو ببێتەوە؟"
+    }
+  },
+  {
+    id: "most-social-followers",
+    category: "daily",
+    text: {
+      en: "Who is most likely to gain the most followers on social media?",
+      tr: "Kim sosyal medyada en çok takipçiye ulaşır?",
+      ar: "من الأكثر احتمالاً أن يجمع أكبر عدد من المتابعين على مواقع التواصل؟",
+      ku: "کێ زۆرترین ئەگەری هەیە لە تۆڕە کۆمەڵایەتییەکاندا زۆرترین شوێنکەوتوو کۆ بکاتەوە؟"
+    }
+  },
+  {
+    id: "accidental-livestream",
+    category: "funny",
+    text: {
+      en: "Who is most likely to accidentally start a livestream?",
+      tr: "Kim yanlışlıkla canlı yayın açar?",
+      ar: "من الأكثر احتمالاً أن يبدأ بثاً مباشراً بالخطأ؟",
+      ku: "کێ زۆرترین ئەگەری هەیە بەهەڵە پەخشی ڕاستەوخۆ دەست پێ بکات؟"
+    }
+  },
+  {
+    id: "forget-camera-is-on",
+    category: "funny",
+    text: {
+      en: "Who is most likely to not notice their phone camera is on?",
+      tr: "Kim telefonunun kamerasının açık olduğunu fark etmez?",
+      ar: "من الأكثر احتمالاً ألا يلاحظ أن كاميرا هاتفه تعمل؟",
+      ku: "کێ زۆرترین ئەگەری هەیە تێبینی نەکات کامێرای مۆبایلەکەی کراوەیە؟"
+    }
+  },
+  {
+    id: "silly-video-million-views",
+    category: "funny",
+    text: {
+      en: "Who could make the silliest video and get millions of views?",
+      tr: "Kim en saçma videoyu çekip milyonlarca izlenme alır?",
+      ar: "من قد يصوّر أسخف فيديو ويحصل على ملايين المشاهدات؟",
+      ku: "کێ دەکرێت بێماناترین ڤیدیۆ دروست بکات و ملیۆنان بینین بەدەست بهێنێت؟"
+    }
+  },
+  {
+    id: "try-being-influencer",
+    category: "daily",
+    text: {
+      en: "Who is most likely to try becoming an influencer?",
+      tr: "Kim influencer olmayı dener?",
+      ar: "من الأكثر احتمالاً أن يحاول أن يصبح مؤثراً على مواقع التواصل؟",
+      ku: "کێ زۆرترین ئەگەری هەیە هەوڵ بدات ببێتە ئینفلۆنسەر؟"
+    }
+  },
+  {
+    id: "forget-account-password",
+    category: "daily",
+    text: {
+      en: "Who is most likely to forget their account password?",
+      tr: "Kim hesabının şifresini unutur?",
+      ar: "من الأكثر احتمالاً أن ينسى كلمة مرور حسابه؟",
+      ku: "کێ زۆرترین ئەگەری هەیە وشەی نهێنیی هەژمارەکەی لەبیر بکات؟"
+    }
+  },
+  {
+    id: "hundred-open-tabs",
+    category: "daily",
+    text: {
+      en: "Who leaves 100 browser tabs open?",
+      tr: "Kim 100 tane sekme açık bırakır?",
+      ar: "من يترك 100 علامة تبويب مفتوحة في المتصفح؟",
+      ku: "کێ ١٠٠ تابی وێبگەڕ بە کراوەیی بەجێ دەهێڵێت؟"
+    }
+  },
+  {
+    id: "wifi-end-of-world",
+    category: "funny",
+    text: {
+      en: "Who acts like their world has ended when the Wi-Fi goes down?",
+      tr: "Kim Wi-Fi gidince dünyası yıkılmış gibi davranır?",
+      ar: "من يتصرّف وكأن عالمه انهار عندما ينقطع الواي فاي؟",
+      ku: "کێ کاتێک وای‌فای دەبڕێت وا هەڵسوکەوت دەکات وەک جیهانەکەی ڕووخابێت؟"
+    }
+  },
+  {
+    id: "friend-group-leader",
+    category: "friendship",
+    text: {
+      en: "Who is most likely to become the leader of the friend group?",
+      tr: "Kim arkadaş grubunun lideri olur?",
+      ar: "من الأكثر احتمالاً أن يصبح قائد مجموعة الأصدقاء؟",
+      ku: "کێ زۆرترین ئەگەری هەیە ببێتە سەرکردەی کۆمەڵی هاوڕێکان؟"
+    }
+  },
+  {
+    id: "calm-everyone-down",
+    category: "friendship",
+    text: {
+      en: "Who calms everyone down when a fight breaks out?",
+      tr: "Kim kavga çıktığında herkesi sakinleştirir?",
+      ar: "من يهدّئ الجميع عندما ينشب شجار؟",
+      ku: "کێ کاتێک شەڕێک ڕوودەدات هەمووان ئارام دەکاتەوە؟"
+    }
+  },
+  {
+    id: "instant-friends",
+    category: "friendship",
+    text: {
+      en: "Who becomes friends with everyone within two minutes?",
+      tr: "Kim iki dakika içinde herkesle arkadaş olur?",
+      ar: "من يصادق الجميع خلال دقيقتين؟",
+      ku: "کێ لە ماوەی دوو خولەکدا دەبێتە هاوڕێی هەمووان؟"
+    }
+  },
+  {
+    id: "shy-with-new-people",
+    category: "friendship",
+    text: {
+      en: "Who is the shyest about talking to someone new?",
+      tr: "Kim yeni biriyle konuşmaya en çekinen kişidir?",
+      ar: "من هو الأكثر خجلاً من التحدث مع شخص جديد؟",
+      ku: "کێ لە هەمووان زیاتر شەرم دەکات لەگەڵ کەسێکی نوێ قسە بکات؟"
+    }
+  },
+  {
+    id: "make-everyone-laugh",
+    category: "friendship",
+    text: {
+      en: "Who makes the most people laugh?",
+      tr: "Kim en çok insanı güldürür?",
+      ar: "من يُضحك أكبر عدد من الناس؟",
+      ku: "کێ زۆرترین کەس پێدەکەنێنێت؟"
+    }
+  },
+  {
+    id: "first-to-agree-bad-idea",
+    category: "chaos",
+    text: {
+      en: "Who is the first to say “Let's do it” to a bad idea?",
+      tr: "Kim kötü bir fikre ilk “hadi yapalım” der?",
+      ar: "من يكون أول من يقول «هيا نفعلها» لفكرة سيئة؟",
+      ku: "کێ یەکەم کەس دەبێت بۆ بیرۆکەیەکی خراپ بڵێت «وەرن بیکەین»؟"
+    }
+  },
+  {
+    id: "ignore-own-plan",
+    category: "friendship",
+    text: {
+      en: "Who makes a plan but doesn't follow it themselves?",
+      tr: "Kim plan yapar ama plana kendisi uymaz?",
+      ar: "من يضع الخطة ثم لا يلتزم بها بنفسه؟",
+      ku: "کێ پلان دادەنێت بەڵام خۆی پابەندی نابێت؟"
+    }
+  },
+  {
+    id: "forget-passport-at-hotel",
+    category: "daily",
+    text: {
+      en: "Who is most likely to leave their passport at the hotel on vacation?",
+      tr: "Kim tatilde pasaportunu otelde unutur?",
+      ar: "من الأكثر احتمالاً أن ينسى جواز سفره في الفندق أثناء العطلة؟",
+      ku: "کێ زۆرترین ئەگەری هەیە لە پشوودا پاسپۆرتەکەی لە هوتێل لەبیر بکات؟"
+    }
+  },
+  {
+    id: "attend-wrong-wedding",
+    category: "chaos",
+    text: {
+      en: "Who is most likely to accidentally attend the wrong wedding?",
+      tr: "Kim yanlışlıkla başka bir düğüne katılabilir?",
+      ar: "من الأكثر احتمالاً أن يحضر حفل زفاف آخر بالخطأ؟",
+      ku: "کێ زۆرترین ئەگەری هەیە بەهەڵە بەشداری لە ئاهەنگی هاوسەرگیرییەکی تر بکات؟"
+    }
+  },
+  {
+    id: "wrong-shoes-all-day",
+    category: "funny",
+    text: {
+      en: "Who could wear the wrong shoes all day without noticing?",
+      tr: "Kim bir gün boyunca yanlış ayakkabıyla dolaşır ve fark etmez?",
+      ar: "من قد يتجوّل طوال اليوم بالحذاء الخطأ دون أن يلاحظ؟",
+      ku: "کێ دەکرێت ڕۆژێکی تەواو بە پێڵاوی هەڵەوە بگەڕێت و تێبینی نەکات؟"
+    }
+  },
+  {
+    id: "one-item-twenty-purchases",
+    category: "daily",
+    text: {
+      en: "Who goes to the shop for one thing and comes back with 20?",
+      tr: "Kim markete bir şey almaya gidip 20 farklı şeyle geri döner?",
+      ar: "من يذهب إلى المتجر لشراء شيء واحد ويعود بعشرين شيئاً؟",
+      ku: "کێ بۆ کڕینی یەک شت دەچێتە مارکێت و بە ٢٠ شتی جیاواز دەگەڕێتەوە؟"
+    }
+  },
+  {
+    id: "go-out-in-pajamas",
+    category: "funny",
+    text: {
+      en: "Who is most likely to leave home in pajamas and only realize later?",
+      tr: "Kim evden pijamayla çıkıp sonradan fark eder?",
+      ar: "من الأكثر احتمالاً أن يخرج بالبيجاما ولا ينتبه إلا لاحقاً؟",
+      ku: "کێ زۆرترین ئەگەری هەیە بە پیژامە لە ماڵ بچێتە دەرەوە و دواتر تێبینی بکات؟"
+    }
+  },
+  {
+    id: "unrecognized-celebrity",
+    category: "funny",
+    text: {
+      en: "Who could happen to chat with a celebrity without realizing they're famous?",
+      tr: "Kim yanlışlıkla bir ünlüyle konuşup onun ünlü olduğunu anlamaz?",
+      ar: "من قد يتحدث صدفة مع شخص مشهور دون أن يعرف أنه مشهور؟",
+      ku: "کێ دەکرێت بە ڕێکەوت لەگەڵ کەسێکی بەناوبانگ قسە بکات و نەزانێت بەناوبانگە؟"
+    }
+  },
+  {
+    id: "home-alone-concert",
+    category: "funny",
+    text: {
+      en: "Who acts like they're giving a concert when home alone?",
+      tr: "Kim evde tek başınayken konser veriyormuş gibi davranır?",
+      ar: "من يتصرّف وكأنه يحيي حفلاً غنائياً عندما يكون وحده في البيت؟",
+      ku: "کێ کاتێک بە تەنهایە لە ماڵ وا هەڵسوکەوت دەکات وەک کۆنسێرتێک پێشکەش بکات؟"
+    }
+  },
+  {
+    id: "sleep-through-end-of-world",
+    category: "chaos",
+    text: {
+      en: "Who would keep sleeping even on the last day of the world?",
+      tr: "Kim dünyanın son günü olsa bile uyumaya devam eder?",
+      ar: "من سيواصل النوم حتى لو كان اليوم الأخير في العالم؟",
+      ku: "کێ تەنانەت ئەگەر دوا ڕۆژی جیهانیش بێت هەر بەردەوام دەخەوێت؟"
+    }
+  },
+  {
+    id: "chosen-for-most-questions",
+    category: "friendship",
+    text: {
+      en: "Who is most likely to be picked for most of these questions?",
+      tr: "Kim bu soruların çoğunda seçilecek kişidir?",
+      ar: "من الأكثر احتمالاً أن يتم اختياره في معظم هذه الأسئلة؟",
+      ku: "کێ زۆرترین ئەگەری هەیە لە زۆربەی ئەم پرسیارانەدا هەڵبژێردرێت؟"
     }
   }
 ] as const
