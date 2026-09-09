@@ -3,6 +3,7 @@ import { t } from "../services/i18n.js"
 import { dismissLayer, pushLayer, type LayerHandle } from "../services/navigation.js"
 import { buildCharacterPicker } from "./characterPicker.js"
 import { getLang } from "../services/i18n.js"
+import { applyCharacterTheme } from "../themes/characterTheme.js"
 
 export interface HostSetup {
   hostName: string
@@ -74,6 +75,7 @@ export function hostSetupDialog(): Promise<HostSetup | null> {
     const finish = (result: HostSetup | null): void => {
       if (settled) return
       settled = true
+      applyCharacterTheme()
       dismissLayer(handle)
       overlay.removeAttribute("id")
       overlay.classList.remove("visible")

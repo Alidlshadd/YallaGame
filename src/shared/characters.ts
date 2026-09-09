@@ -69,6 +69,11 @@ CHARACTERS.push({
   image: "/assets/characters/mahmud.png", accessories: false
 })
 
+CHARACTERS.push({
+  id: "morinji", name: { en: "Morinji", tr: "Morinji", ar: "مورينجي", ku: "مۆرینجی" },
+  image: "/assets/characters/morinji.png", accessories: false
+})
+
 export const CHARACTER_IDS: readonly string[] = [...CHARACTERS, ...LEGACY_CHARACTERS].map(c => c.id)
 
 export function isCharacterId(value: string): boolean {

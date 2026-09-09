@@ -7,6 +7,7 @@ import * as session from "../services/session.js"
 import { setView, setViewBackHandler } from "../router.js"
 import { showToast } from "../ui/toast.js"
 import { applyTheme, clearTheme } from "../themes/loader.js"
+import { applyCharacterTheme } from "../themes/characterTheme.js"
 import { watchConnection } from "../services/connection.js"
 import { holdWakeLock } from "../services/wakeLock.js"
 import { vibrate } from "../ui/haptics.js"
@@ -26,6 +27,7 @@ export const pendingView = {
     const avatarSlot = $<HTMLElement>("#pendingAvatar")
 
     const requestId = ctx.requestId ?? ""
+    applyCharacterTheme(ctx.character)
     const roomCode = ctx.code ?? ""
     codeEl.textContent = roomCode
 
@@ -77,6 +79,7 @@ export const pendingView = {
     setViewBackHandler(() => { withdraw(); return true })
 
     return () => {
+      applyCharacterTheme()
       setViewBackHandler(null)
       releaseWakeLock()
       stopWatchingConnection()

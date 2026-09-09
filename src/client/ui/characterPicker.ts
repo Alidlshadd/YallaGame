@@ -2,6 +2,7 @@ import { el, clear } from "./dom.js"
 import { t } from "../services/i18n.js"
 import { buildAvatar } from "./avatar.js"
 import { CHARACTERS } from "@shared/characters.js"
+import { applyCharacterTheme } from "../themes/characterTheme.js"
 import { ACCESSORIES, allowsAccessories, characterAccessory, findAccessory, isAccessoryId } from "@shared/accessories.js"
 import type { LangCode } from "@shared/types.js"
 
@@ -44,6 +45,7 @@ export function buildCharacterPicker(lang: LangCode, taken: string[], onChange: 
   const element = el("div", { class: "avatar-picker" }, [stage, tabs, characterPanel, accessoryPanel])
 
   function renderPreview(): void {
+    applyCharacterTheme(chosen)
     const def = CHARACTERS.find(c => c.id === chosen)
     preview.replaceChildren(buildAvatar(def?.id ?? CHARACTERS[0]!.id, "", lang, { size: 100, accessory, lazy: false }))
     previewName.textContent = def?.name[lang] ?? t("chooseCharacter")

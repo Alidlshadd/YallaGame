@@ -5,6 +5,7 @@ import { getLang, t } from "../services/i18n.js"
 import { socket } from "../services/socket.js"
 import * as session from "../services/session.js"
 import { applyTheme, clearTheme } from "../themes/loader.js"
+import { applyCharacterTheme } from "../themes/characterTheme.js"
 import { showReveal } from "../ui/roleReveal.js"
 import { setView, setViewBackHandler } from "../router.js"
 import { showToast } from "../ui/toast.js"
@@ -23,6 +24,7 @@ export const playerRoomView = {
     const cardEl     = $<HTMLDivElement>("#playerRoleCard")
 
     const lang = getLang()
+    applyCharacterTheme(ctx.initial?.player.character)
     let myRole = ctx.initial?.player.role ?? null
     let myRoleData = ctx.initial?.player.roleData ?? null
 
@@ -127,6 +129,7 @@ export const playerRoomView = {
     renderSettled()
 
     return () => {
+      applyCharacterTheme()
       setViewBackHandler(null)
       releaseWakeLock()
       stopWatchingConnection()

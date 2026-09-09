@@ -8,6 +8,7 @@ import { watchConnection } from "../services/connection.js"
 import { holdWakeLock } from "../services/wakeLock.js"
 import { vibrate } from "../ui/haptics.js"
 import { applyTheme, clearTheme } from "../themes/loader.js"
+import { applyCharacterTheme } from "../themes/characterTheme.js"
 import { setView, setViewBackHandler } from "../router.js"
 import { showReveal } from "../ui/roleReveal.js"
 import { buildAvatar } from "../ui/avatar.js"
@@ -158,6 +159,7 @@ export const adminView = {
     }
 
     function renderHeader() {
+      applyCharacterTheme(room?.players.find(p => p.id === room?.hostPlayerId)?.character)
       if (!room) return
       codeEl.textContent     = room.code
       gameNameEl.textContent = room.game.title[lang]
@@ -310,6 +312,7 @@ export const adminView = {
     leaveBtn.addEventListener("click", onLeave)
 
     return () => {
+      applyCharacterTheme()
       setViewBackHandler(null)
       releaseWakeLock()
       stopWatchingConnection()

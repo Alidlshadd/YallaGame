@@ -69,7 +69,7 @@ test("accessories survive host creation, approval and player reconnection", asyn
   await hostContext.close(); await playerContext.close()
 })
 
-test("mobile avatar studio has 22 faces, removable accessories and usable tabs", async ({ browser }) => {
+test("mobile avatar studio has 23 faces, removable accessories and usable tabs", async ({ browser }) => {
   const hostContext = await browser.newContext()
   const host = await hostContext.newPage()
   const code = await createRoom(host)
@@ -78,7 +78,7 @@ test("mobile avatar studio has 22 faces, removable accessories and usable tabs",
   await page.addInitScript(() => localStorage.setItem("role-room:lang", "tr"))
   await openDoorstep(page, code)
   await page.fill("#joinSetupName", "Deniz")
-  await expect(page.locator(".char-tile[data-character]")).toHaveCount(22)
+  await expect(page.locator(".char-tile[data-character]")).toHaveCount(23)
   await page.locator('[data-character="ruby"]').click()
   await expect(page.locator('.avatar-preview img')).toHaveJSProperty("naturalWidth", 1024)
   await page.screenshot({ path: ".playwright-mcp/avatars-mobile-characters.png" })

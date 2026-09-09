@@ -5,6 +5,7 @@ import * as session from "../services/session.js"
 import { setView, setViewBackHandler, goBack } from "../router.js"
 import { applyTheme, clearTheme } from "../themes/loader.js"
 import { buildCharacterPicker } from "../ui/characterPicker.js"
+import { applyCharacterTheme } from "../themes/characterTheme.js"
 import type { PlayerJoinData } from "@shared/events.js"
 import type { ErrorCode, RoomSummary } from "@shared/types.js"
 import type { Translations } from "../i18n/en.js"
@@ -140,6 +141,7 @@ export const joinSetupView = {
     setViewBackHandler(() => { clearTheme(); return false })
 
     return () => {
+      applyCharacterTheme()
       setViewBackHandler(null)
       window.clearInterval(poll)
       nameInput.removeEventListener("input", onNameInput)

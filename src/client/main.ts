@@ -9,6 +9,7 @@ import { ensureAtmosphere, applyPerformanceProfile } from "./ui/atmosphere.js"
 import { initLazyImageFade } from "./ui/lazyImage.js"
 import "./themes/_base.css"
 import "./themes/home.css"
+import "./themes/morinji.css"
 import type { LangCode } from "@shared/types.js"
 import type { AdminRoomData, PlayerJoinData } from "@shared/events.js"
 
