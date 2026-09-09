@@ -394,6 +394,7 @@ const MOST_LIKELY_TO: WorldDetail = {
   },
   detailBackground:       worldBackground("most-likely-to-detail"),
   detailBackgroundMobile: worldBackground("most-likely-to-detail-mobile"),
+  sectionsBackground:     worldBackground("most-likely-to-sections-bg"),
   // Its own art rather than the hero's: the terrace is painted dark and empty
   // down the middle, which is where the closing question sits.
   ctaBackground:          worldBackground("most-likely-to-cta-bg"),

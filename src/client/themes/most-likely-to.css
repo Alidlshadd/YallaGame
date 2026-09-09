@@ -28,6 +28,39 @@
   animation: mlt-lights 16s ease-in-out infinite;
 }
 
+/* The middle detail sections share one continuous Erbil evening atmosphere.
+   Keep this scoped to Most Likely To so the other worlds retain their own
+   section art and scrims. */
+[data-theme="most-likely-to"] .gi-sections-wrap--has-image {
+  background:
+    linear-gradient(180deg,
+      rgba(5, 3, 10, 0.86) 0%,
+      rgba(8, 4, 14, 0.68) 48%,
+      rgba(5, 3, 10, 0.86) 100%),
+    var(--gi-sections-bg-image, none) center / cover no-repeat;
+  background-color: #05030a;
+}
+
+[data-theme="most-likely-to"] .gi-sections-wrap--has-image::before {
+  background:
+    radial-gradient(ellipse at 18% 28%, rgba(185, 140, 255, 0.08), transparent 54%),
+    radial-gradient(ellipse at 82% 68%, rgba(240, 194, 87, 0.07), transparent 58%);
+  animation: none;
+}
+
+@media (max-width: 768px) {
+  [data-theme="most-likely-to"] .gi-sections-wrap--has-image {
+    background-image:
+      linear-gradient(180deg,
+        rgba(5, 3, 10, 0.88) 0%,
+        rgba(8, 4, 14, 0.70) 48%,
+        rgba(5, 3, 10, 0.88) 100%),
+      var(--gi-sections-bg-image-mobile, var(--gi-sections-bg-image, none));
+    background-position: center;
+    background-attachment: scroll;
+  }
+}
+
 @keyframes mlt-lights {
   0%, 100% { opacity: 0.85; transform: translate(0, 0); }
   50%      { opacity: 1;    transform: translate(-0.5%, 0.4%); }
