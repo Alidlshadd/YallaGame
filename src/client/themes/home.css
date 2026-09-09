@@ -856,37 +856,33 @@ img.hero-emblem-mark {
   letter-spacing: 0.04em;
 }
 
-/* Rail holds book covers side-by-side on the wooden shelf below */
+/* Four books per row; additional worlds continue on the next row. */
 
 .shelf-rail {
   position: relative;
   z-index: 3;
   flex: 1;
   min-height: 0;
-  display: flex;
-  align-items: flex-end;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 240px));
+  align-items: end;
+  align-content: start;
   justify-content: center;
   gap: clamp(var(--s-3), 1.6vw, var(--s-5));
-  overflow-x: auto;
-  overflow-y: visible;
+  row-gap: var(--s-7);
+  overflow: visible;
   padding: var(--s-5) var(--s-3) 0;
-  scroll-snap-type: x proximity;
-  scroll-behavior: smooth;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(212, 175, 55, 0.25) transparent;
   perspective: 1600px;
   perspective-origin: 50% 80%;
 }
-.shelf-rail::-webkit-scrollbar { height: 6px; }
-.shelf-rail::-webkit-scrollbar-thumb { background: rgba(212, 175, 55, 0.25); border-radius: 999px; }
-.shelf-rail::-webkit-scrollbar-track { background: transparent; }
 
 /* ─── BOOK COVER CARDS ────────────────────────────────────── */
 
 .shelf-card {
   position: relative;
   flex: 0 0 auto;
-  width: clamp(180px, 16vw, 240px);
+  width: 100%;
+  min-width: 0;
   aspect-ratio: 2 / 3;
   background: transparent;
   border: 0;
@@ -1621,8 +1617,7 @@ img.hero-emblem-mark {
   .shelf-slide { padding: var(--s-6) var(--s-3); }
   .shelf-title { font-size: clamp(28px, 7vw, 44px); }
 
-  /* Mobile: 2-col grid so every world is visible without horizontal scroll.
-     Desktop horizontal carousel is preserved above 900px. */
+  /* Mobile: two columns keep the covers readable on smaller screens. */
   .shelf-rail {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1844,4 +1839,3 @@ img.hero-emblem-mark {
   .hero-slide .cta-create,
   .hero-slide .cta-join { width: 100%; }
 }
-
