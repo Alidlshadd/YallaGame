@@ -943,7 +943,7 @@ body[data-perf="low"] *::after {
   align-items: center;
 }
 
-.gi-hero-left { display: flex; flex-direction: column; gap: var(--s-3); }
+.gi-hero-copy { display: flex; flex-direction: column; gap: var(--s-3); }
 
 .gi-title-row {
   display: flex;

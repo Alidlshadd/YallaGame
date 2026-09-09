@@ -30,3 +30,24 @@ const COVERS: Record<string, string> = Object.fromEntries(
 export function worldCoverPath(theme: string): string {
   return COVERS[theme] ?? ""
 }
+
+/*
+ * The cinematic backdrops behind a world's detail page, hashed for the same
+ * reason as the covers. Keyed on the file's own name rather than on the theme,
+ * because a world has several — a hero, a sections panel, a closing CTA — and
+ * they were never named to a single pattern.
+ */
+const BACKGROUNDS: Record<string, string> = Object.fromEntries(
+  Object.entries(
+    import.meta.glob<string>("../assets/world-bg/*", {
+      eager: true,
+      query: "?url",
+      import: "default"
+    })
+  ).map(([path, url]) => [path.replace(/^.*\/(.+)\.[^.]+$/, "$1"), url])
+)
+
+/** A backdrop by file name, e.g. `worldBackground("spy-game-detail")`. */
+export function worldBackground(name: string): string {
+  return BACKGROUNDS[name] ?? ""
+}

@@ -1,0 +1,87 @@
+/* Shared by every catalog game's detail page, including future games.
+   Structural containers have a physical LTR order; only copy follows the locale.
+   Keep theme colors, artwork, cropping, frames and animations in their own CSS. */
+body:has(#gameInfoView.active-view),
+.gi-page,
+.gi-setup-overlay {
+  --gi-copy-direction: ltr;
+  --gi-copy-align: left;
+}
+
+html[dir="rtl"] :is(body:has(#gameInfoView.active-view), .gi-page, .gi-setup-overlay) {
+  --gi-copy-direction: rtl;
+  --gi-copy-align: right;
+}
+
+:is(.gi-page, .gi-setup-overlay) :is(
+  .gi-hero-grid, .gi-hero-copy, .gi-poster, .gi-title-row, .gi-tags,
+  .gi-actions, .gi-cta, .gi-back, .gi-hint, .gi-about-panel, .gi-about-left,
+  .gi-stats, .gi-stat, .gi-stat-text, .gi-section-header, .gi-section-eyebrow,
+  .gi-steps, .gi-step, .gi-roles, .gi-role, .gi-role-body,
+  .gi-categories, .gi-category, .gi-category-text, .gi-about-briefing,
+  .gi-bottom-panel, .gi-setup-panel, .gi-setup-header, .gi-setup-groups,
+  .gi-setup-group-title, .gi-setup-footer
+) {
+  direction: ltr;
+  min-width: 0;
+}
+
+:is(.gi-page, .gi-setup-overlay) :is(h1, h2, h3, p, .gi-tag,
+  .gi-stat-label, .gi-stat-value, .gi-role-badge, .gi-category-diff),
+:is(.gi-page, .gi-setup-overlay) :is(.gi-cta, .gi-back, .gi-hint,
+  .gi-section-eyebrow, .gi-about-briefing, .gi-setup-group-title) > span:not([aria-hidden="true"]):not(.gi-cta-icon):not(.gi-back-arrow):not(.gi-hint-icon):not(.gi-ornament) {
+  direction: var(--gi-copy-direction);
+  text-align: var(--gi-copy-align);
+  unicode-bidi: isolate;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+/* These text-bearing rows also contain icons: retain their physical order. */
+:is(.gi-page, .gi-setup-overlay) :is(.gi-hint, .gi-section-eyebrow, .gi-setup-group-title) {
+  direction: ltr;
+}
+
+.gi-page .gi-hero-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  grid-template-areas: "poster copy";
+  /* A longer translation must not vertically recenter the poster. */
+  align-items: start;
+}
+.gi-page .gi-poster { grid-area: poster; }
+.gi-page .gi-hero-copy { grid-area: copy; }
+
+:is(.gi-page, .gi-setup-overlay) .gi-cta {
+  max-width: 100%;
+  white-space: normal;
+}
+:is(.gi-page, .gi-setup-overlay) .gi-cta-icon { flex-shrink: 0; }
+.gi-page .gi-tag { max-width: 100%; }
+
+/* Category names must wrap rather than silently truncating long translations. */
+:is(.gi-page, .gi-setup-overlay) .gi-category-title {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+/* Shared header controls must not swap sides when a detail page changes locale. */
+body:has(#gameInfoView.active-view) :is(.main-nav, .lang-switch, .brand) { direction: ltr; }
+body:has(#gameInfoView.active-view) :is(.main-nav button, .brand-text) {
+  direction: var(--gi-copy-direction);
+  text-align: var(--gi-copy-align);
+  unicode-bidi: isolate;
+}
+body:has(#gameInfoView.active-view) .lang-switch :is([data-lang="ar"], [data-lang="ku"]) {
+  direction: rtl;
+}
+
+@media (max-width: 900px) {
+  .gi-page .gi-hero-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "poster" "copy";
+  }
+  /* The original mobile rule targeted .gi-about, not its actual grid panel. */
+  .gi-page .gi-about-panel { grid-template-columns: minmax(0, 1fr); }
+}

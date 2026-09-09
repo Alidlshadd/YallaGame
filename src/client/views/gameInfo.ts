@@ -13,6 +13,7 @@ import { worldCoverPath } from "../data/assets.js"
 import { getWorldDetail } from "../data/worldDetails.js"
 import type { CategoryDifficulty } from "../data/worldDetails.js"
 import { buildCategoryIconSvg } from "../data/categoryIcons.js"
+import "../themes/game-info-layout.css"
 
 /* Localized label for a category difficulty enum value. */
 function difficultyLabel(d: CategoryDifficulty): string {
@@ -106,7 +107,7 @@ function buildHero(
   const description = detail?.description[lang] ?? game.subtitle[lang]
   const tags = detail?.tags ?? []
 
-  // Right: framed poster using existing WebP cover
+  // The shared layout keeps the framed poster on the physical left.
   const poster = el("div", { class: "gi-poster" })
   const posterFrame = el("div", { class: "gi-poster-frame" })
   const posterImg = el("img", {
@@ -122,7 +123,7 @@ function buildHero(
   if (fx) posterFrame.appendChild(fx)
   poster.appendChild(posterFrame)
 
-  // Left: premium theme glyph + WORLD eyebrow (no emoji)
+  // Text direction is independent of the poster/copy placement.
   const titleRow = el("div", { class: "gi-title-row" }, [
     buildThemeIcon(game.theme),
     el("p", { class: "gi-eyebrow" }, [t("worldLabel").toUpperCase()])
@@ -179,7 +180,7 @@ function buildHero(
     el("span", {}, [t("noDownloadHint")])
   ])
 
-  const left = el("div", { class: "gi-hero-left" }, [
+  const copy = el("div", { class: "gi-hero-copy" }, [
     titleRow,
     title,
     sloganEl,
@@ -192,7 +193,7 @@ function buildHero(
   const hero = el("section", { class: "gi-hero" }, [
     el("div", { class: "gi-hero-bg" }),
     el("div", { class: "gi-hero-vignette" }),
-    el("div", { class: "gi-hero-grid" }, [left, poster])
+    el("div", { class: "gi-hero-grid" }, [poster, copy])
   ])
   // When a per-world cinematic backdrop is provided, hand the URL to CSS via
   // a CSS variable so the gi-hero-bg layer can pick it up while still composing
@@ -507,7 +508,7 @@ function openCategorySetup(
     onCreate()
   })
 
-  const cancelBtn = el("button", { class: "gi-cta gi-cta-ghost", type: "button" }, [t("cancel")])
+  const cancelBtn = el("button", { class: "gi-cta gi-cta-ghost", type: "button" }, [el("span", {}, [t("cancel")])])
   cancelBtn.addEventListener("click", close)
 
   const closeBtn = el("button", {

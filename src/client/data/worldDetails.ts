@@ -1,4 +1,5 @@
 import type { LocalizedText } from "@shared/types.js"
+import { worldBackground } from "./assets.js"
 
 /* World detail config — augments the server-side Game catalog with the extra
    atmosphere/marketing content the cinematic game-info page renders.
@@ -81,9 +82,9 @@ const VAMPIRE: WorldDetail = {
     title:    { en: "Ready to enter Vampire Village?", tr: "Vampir Köyü'ne girmeye hazır mısın?", ar: "هل أنت مستعد لدخول قرية مصاصي الدماء؟", ku: "ئامادەی بچیتە ناو گوندی ڤامپایەرەوە؟" },
     subtitle: { en: "Trust no one. Survive the night.", tr: "Kimseye güvenme. Geceyi atlat.",       ar: "لا تثق بأحد. انجُ من الليل.",         ku: "متمانە بە کەس مەکە. ڕزگاری ببە لە شەو." }
   },
-  detailBackground:   "/assets/world-bg/vampire-village-detail.webp",
-  sectionsBackground: "/assets/world-bg/vampire-sections-bg.webp",
-  ctaBackground:      "/assets/world-bg/vampire-cta-bg.webp",
+  detailBackground:   worldBackground("vampire-village-detail"),
+  sectionsBackground: worldBackground("vampire-sections-bg"),
+  ctaBackground:      worldBackground("vampire-cta-bg"),
   roleImages: {
     vampire:   "/assets/roles/vampire/night-vampire.webp",
     doctor:    "/assets/roles/vampire/doctor.webp",
@@ -116,9 +117,9 @@ const MAFIA: WorldDetail = {
     title:    { en: "Ready to enter Classic Mafia?",       tr: "Klasik Mafya'ya girmeye hazır mısın?", ar: "هل أنت مستعد لدخول المافيا الكلاسيكية؟", ku: "ئامادەی بچیتە یاری مافیای کلاسیکەوە؟" },
     subtitle: { en: "Trust is a weapon. Choose carefully.", tr: "Güven bir silahtır. Dikkatli seç.",    ar: "الثقة سلاح. اختر بحذر.",                  ku: "متمانە چەکێکە. بە وردی هەڵبژێرە." }
   },
-  detailBackground:   "/assets/world-bg/mafia-classic-detail.webp",
-  sectionsBackground: "/assets/world-bg/mafia-sections-bg.webp",
-  ctaBackground:      "/assets/world-bg/mafia-cta-bg.webp",
+  detailBackground:   worldBackground("mafia-classic-detail"),
+  sectionsBackground: worldBackground("mafia-sections-bg"),
+  ctaBackground:      worldBackground("mafia-cta-bg"),
   roleImages: {
     mafia:     "/assets/roles/mafia/mafia-boss.webp",
     doctor:    "/assets/roles/mafia/doctor.webp",
@@ -151,9 +152,9 @@ const SPY: WorldDetail = {
     title:    { en: "Ready to enter Spy Game?",       tr: "Casus Oyunu'na girmeye hazır mısın?", ar: "مستعد لدخول لعبة الجاسوس؟",    ku: "ئامادەی بچیتە یاری سیخوڕەوە؟" },
     subtitle: { en: "Trust the mission. Question everyone.", tr: "Göreve güven. Herkesi sorgula.", ar: "ثق بالمهمة. شكك بالجميع.", ku: "متمانە بە ئەرک بکە. لە هەمووان بپرسە." }
   },
-  detailBackground:   "/assets/world-bg/spy-game-detail.webp",
-  sectionsBackground: "/assets/world-bg/spy-sections-bg.webp",
-  ctaBackground:      "/assets/world-bg/spy-cta-bg.webp"
+  detailBackground:   worldBackground("spy-game-detail"),
+  sectionsBackground: worldBackground("spy-sections-bg"),
+  ctaBackground:      worldBackground("spy-cta-bg")
 }
 
 const FOOTBALL: WorldDetail = {
@@ -180,9 +181,9 @@ const FOOTBALL: WorldDetail = {
     title:    { en: "Ready to enter FC World?",         tr: "FC World'e girmeye hazır mısın?",    ar: "هل أنت مستعد لدخول عالم FC؟",       ku: "ئامادەی بچیتە جیهانی FC؟" },
     subtitle: { en: "Step onto the pitch. Reveal the legend.", tr: "Sahaya çık. Efsaneyi ortaya çıkar.", ar: "ادخل الملعب. اكشف الأسطورة.", ku: "بێ بۆ سەر یاریگا. پاڵەوانەکە ئاشکرا بکە." }
   },
-  detailBackground:   "/assets/world-bg/football-sections-bg.png",
-  sectionsBackground: "/assets/world-bg/football-sections-bg.png",
-  ctaBackground:      "/assets/world-bg/football-cta-bg.png"
+  detailBackground:   worldBackground("football-sections-bg"),
+  sectionsBackground: worldBackground("football-sections-bg"),
+  ctaBackground:      worldBackground("football-cta-bg")
 }
 
 const WHO_AM_I: WorldDetail = {
@@ -209,9 +210,9 @@ const WHO_AM_I: WorldDetail = {
     title:    { en: "Ready to play Who Am I?",            tr: "Ben Neyim oynamaya hazır mısın?",       ar: "هل أنت مستعد للعب من أنا؟",          ku: "ئامادەی یاری من چیم بکەیت؟" },
     subtitle: { en: "Ask smart questions. Guess your identity.", tr: "Akıllı sorular sor. Kimliğini tahmin et.", ar: "اسأل أسئلة ذكية. خمّن هويتك.", ku: "پرسیاری زیرەکانە بکە. ناسنامەکەت مەنزوور بکە." }
   },
-  detailBackground:   "/assets/world-bg/who-am-i-detail.webp",
-  sectionsBackground: "/assets/world-bg/who-am-i-sections-bg.webp",
-  ctaBackground:      "/assets/world-bg/who-am-i-cta-bg.webp",
+  detailBackground:   worldBackground("who-am-i-detail"),
+  sectionsBackground: worldBackground("who-am-i-sections-bg"),
+  ctaBackground:      worldBackground("who-am-i-cta-bg"),
   categories: [
     /* ── Basic categories ─────────────────────────────────────── */
     { key: "animals",       icon: "paw-print", difficulty: "Easy",   description: "Wild and domestic animals from around the world.", exampleWords: ["Lion","Cat","Eagle","Shark"],
@@ -357,9 +358,6 @@ const WHO_AM_I: WorldDetail = {
   ]
 }
 
-/* No cover or background art yet — the page falls back to the plain hero,
-   which is why every image field is left off rather than pointed at a file
-   that is not there. */
 const MOST_LIKELY_TO: WorldDetail = {
   slogan: "ONE QUESTION. EVERY FINGER POINTS.",
   description: {
@@ -394,6 +392,12 @@ const MOST_LIKELY_TO: WorldDetail = {
       ku: "بە نهێنی دەنگ بدە. پێکەوە بیکەنەوە. پاشان دەمەقاڵێ بکەن."
     }
   },
+  detailBackground:       worldBackground("most-likely-to-detail"),
+  detailBackgroundMobile: worldBackground("most-likely-to-detail-mobile"),
+  // Its own art rather than the hero's: the terrace is painted dark and empty
+  // down the middle, which is where the closing question sits.
+  ctaBackground:          worldBackground("most-likely-to-cta-bg"),
+  ctaBackgroundMobile:    worldBackground("most-likely-to-cta-bg-mobile"),
   categories: [
     { key: "funny",      icon: "smile",  difficulty: "Quick",  description: "The questions nobody can answer with a straight face.",
       title: { en: "Funny",       tr: "Komik",      ar: "مضحك",        ku: "پێکەنیناوی" } },
