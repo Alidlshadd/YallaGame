@@ -7,7 +7,6 @@ import { dismissLayer, pushLayer, type LayerHandle } from "../services/navigatio
 import { emit } from "../services/socket.js"
 import * as session from "../services/session.js"
 import { hostSetupDialog } from "../ui/hostSetup.js"
-import { showToast } from "../ui/toast.js"
 import { getGames } from "./home.js"
 import { applyTheme, clearTheme } from "../themes/loader.js"
 import { worldCoverPath } from "../data/assets.js"
@@ -613,21 +612,28 @@ export const gameInfoView = {
       // The host is a player too now, so the room cannot be opened before we
       // know what to call them — and while we are asking, we may as well ask
       // who is allowed to find the room.
-      const setup = await hostSetupDialog()
-      if (!setup) return
-      const r = await emit("admin:create-room", {
-        gameId: game.id,
-        hostName: setup.hostName,
-        hostCharacter: setup.hostCharacter,
-        hostAccessory: setup.hostAccessory,
-        isPublic: setup.isPublic,
-        requireApproval: setup.requireApproval
+      let data: CreateRoomData | undefined
+      const setup = await hostSetupDialog(async setup => {
+        const r = await emit("admin:create-room", {
+          gameId: game.id,
+          hostName: setup.hostName,
+          hostCharacter: setup.hostCharacter,
+          hostAccessory: setup.hostAccessory,
+          isPublic: setup.isPublic,
+          requireApproval: setup.requireApproval
+        })
+        if (!r.ok) {
+          if (r.error === "REQUEST_TIMEOUT") return t("errorRequestTimeout")
+          if (r.error === "SERVER_BUSY") return t("errorServerBusy")
+          if (r.error === "RATE_LIMITED") return t("errorRateLimited")
+          return t("errorGeneric")
+        }
+        data = r.data as CreateRoomData
+        return null
       })
-      if (!r.ok) { showToast(t("errorGeneric")); return }
-      const data = r.data as CreateRoomData
+      if (!setup || !data) return
       session.save({ kind: "admin", code: data.code, adminSecret: data.adminSecret })
-      await applyTheme(game.theme)
-      void setView("adminView", { initial: data.room })
+      await setView("adminView", { initial: data.room })
     }
 
     // Back to Worlds

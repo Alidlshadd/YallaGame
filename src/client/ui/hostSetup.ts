@@ -37,11 +37,12 @@ function loadPrefs(): { isPublic: boolean; requireApproval: boolean } {
  * sees as "created by"), whether the room is listed publicly, and whether each
  * join waits for their approval. Resolves null when the host backs out.
  */
-export function hostSetupDialog(): Promise<HostSetup | null> {
+export function hostSetupDialog(onSubmit: (setup: HostSetup) => Promise<string | null>): Promise<HostSetup | null> {
   if (document.getElementById("hostSetupOverlay")) return Promise.resolve(null)
 
   return new Promise<HostSetup | null>(resolve => {
     let settled = false
+    let submitting = false
     let handle: LayerHandle | null = null
     const previouslyFocused = document.activeElement as HTMLElement | null
 
@@ -73,9 +74,9 @@ export function hostSetupDialog(): Promise<HostSetup | null> {
     const cancelBtn = el("button", { class: "btn btn-ghost", type: "button" }, [t("cancel")])
 
     const finish = (result: HostSetup | null): void => {
-      if (settled) return
+      if (settled || submitting) return
       settled = true
-      applyCharacterTheme()
+      applyCharacterTheme(result?.hostCharacter)
       dismissLayer(handle)
       overlay.removeAttribute("id")
       overlay.classList.remove("visible")
@@ -85,7 +86,8 @@ export function hostSetupDialog(): Promise<HostSetup | null> {
       resolve(result)
     }
 
-    const submit = (): void => {
+    const submit = async (): Promise<void> => {
+      if (settled || submitting) return
       const hostName = nameInput.value.trim()
       if (!hostName) {
         error.textContent = t("errorNameRequired")
@@ -109,7 +111,31 @@ export function hostSetupDialog(): Promise<HostSetup | null> {
       localStorage.setItem(PREFS_KEY, JSON.stringify({
         isPublic: setup.isPublic, requireApproval: setup.requireApproval
       }))
-      finish(setup)
+      submitting = true
+      error.hidden = true
+      panel.setAttribute("aria-busy", "true")
+      const controls = Array.from(panel.querySelectorAll<HTMLInputElement | HTMLButtonElement>("input, button"))
+      const disabledStates = controls.map(control => control.disabled)
+      controls.forEach(control => { control.disabled = true })
+      createBtn.textContent = t("creatingRoom")
+      try {
+        const message = await onSubmit(setup)
+        if (message) {
+          error.textContent = message
+          error.hidden = false
+        } else {
+          submitting = false
+          finish(setup)
+        }
+      } catch {
+        error.textContent = t("errorGeneric")
+        error.hidden = false
+      } finally {
+        submitting = false
+        panel.removeAttribute("aria-busy")
+        controls.forEach((control, index) => { control.disabled = disabledStates[index] ?? false })
+        createBtn.textContent = t("createRoomConfirm")
+      }
     }
 
     createBtn.addEventListener("click", submit)
@@ -173,7 +199,11 @@ export function hostSetupDialog(): Promise<HostSetup | null> {
     overlay.addEventListener("click", e => { if (e.target === overlay) finish(null) })
 
     document.body.appendChild(overlay)
-    handle = pushLayer(() => finish(null), "host-setup")
+    const onBack = (): void => {
+      if (submitting) handle = pushLayer(onBack, "host-setup")
+      else finish(null)
+    }
+    handle = pushLayer(onBack, "host-setup")
     requestAnimationFrame(() => {
       overlay.classList.add("visible")
       nameInput.focus()

@@ -1,6 +1,8 @@
 import type { Translations } from "./en.js"
 
 const ar: Translations = {
+  creatingRoom: "جارٍ إنشاء الغرفة…",
+  errorRequestTimeout: "لم يستجب الخادم. تحقق من اتصالك وحاول مرة أخرى.",
   brand: "Yalla Game",
   brandSub: "منصة ألعاب متعددة",
   liveRoom: "نظام الغرف المباشر",

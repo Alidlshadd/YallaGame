@@ -31,6 +31,7 @@ test("Morinji's purple theme stays personal through approval, reload and leaving
     await player.reload()
     await expect(player.locator("#playerWelcome .avatar")).toHaveAttribute("data-avatar", "morinji")
     await expect(player.locator("html")).toHaveAttribute("data-character-theme", "morinji")
+    await expect(player.locator("#playerRoleCard .role-card-info")).toHaveCSS("background-color", "rgba(40, 22, 61, 0.8)")
     await player.screenshot({ path: ".playwright-mcp/morinji-room-mobile.png", animations: "disabled" })
     await player.click("#playerLeaveBtn")
     await player.locator(".confirm-ok").click()
@@ -41,6 +42,30 @@ test("Morinji's purple theme stays personal through approval, reload and leaving
     await playerContext.close()
   }
 })
+
+for (const theme of ["vampire-village", "mafia-classic", "spy-game", "who-am-i", "football-player-guess"]) {
+  test(`Morinji overrides the whole ${theme} interface and room`, async ({ page }) => {
+    await page.goto("/")
+    await page.click(".cta-create")
+    await page.locator(`.create-picker-option[data-theme="${theme}"]`).click()
+    await page.locator(".gi-hero .gi-cta-primary").click()
+    await page.fill("#hostNameInput", "Purple Host")
+    await page.locator('[data-character="morinji"]').click()
+    // This nested game scope used to override the character palette inherited from html.
+    await expect(page.locator("#createSelectedRoomBtn")).toHaveCSS("background-color", "rgb(196, 154, 255)")
+    await expect(page.locator("#gameInfoContent")).toHaveCSS("--theme-accent", "#c49aff")
+    await page.locator(".host-setup-actions .btn-primary").click()
+    await expect(page.locator("#adminView.active-view")).toBeVisible()
+    await expect(page.locator("html")).toHaveAttribute("data-theme", theme)
+    await expect(page.locator("#assignRolesBtn")).toHaveCSS("background-color", "rgb(196, 154, 255)")
+    await expect(page.locator(".room-code-hero")).toHaveCSS("border-top-color", "rgba(189, 138, 245, 0.3)")
+    await expect(page.locator(".app-footer-brand")).toHaveCSS("color", "rgb(222, 196, 255)")
+    await page.click("#adminLeaveBtn")
+    await expect(page.locator(".confirm-panel")).toHaveCSS("border-top-color", "rgba(189, 138, 245, 0.3)")
+    await page.locator(".confirm-ok").click()
+    await expect(page.locator("html")).not.toHaveAttribute("data-character-theme")
+  })
+}
 
 test("Morinji host keeps purple after reload without changing a guest's theme; cancel clears preview", async ({ browser }) => {
   test.setTimeout(60_000)

@@ -5,13 +5,22 @@ type TypedSocket = Socket<ServerToClientEvents, ClientToServerEvents>
 
 export const socket: TypedSocket = io({ reconnection: true, reconnectionAttempts: Infinity })
 
+// A dead WebSocket can otherwise look connected until the heartbeat expires.
+// Release it when the browser goes offline and reconnect as soon as it is back.
+if (typeof window !== "undefined") {
+  window.addEventListener("offline", () => socket.disconnect())
+  window.addEventListener("online", () => socket.connect())
+}
+
 export function emit<E extends keyof ClientToServerEvents>(
   event: E,
   payload: Parameters<ClientToServerEvents[E]>[0]
 ): Promise<AckResult<unknown>> {
   return new Promise(resolve => {
-    type EmitFn = (e: string, p: unknown, cb: (r: AckResult<unknown>) => void) => void
-    const emitAny = (socket.emit as unknown as EmitFn).bind(socket)
-    emitAny(event as string, payload, r => resolve(r))
+    type EmitFn = (e: string, p: unknown, cb: (err: Error | null, r: AckResult<unknown>) => void) => void
+    // Socket.IO also removes timed-out packets from its offline send buffer,
+    // so reconnecting cannot unexpectedly submit an expired room request.
+    const emitAny = (socket.timeout(10_000).emit as unknown as EmitFn).bind(socket)
+    emitAny(event as string, payload, (err, r) => resolve(err ? { ok: false, error: "REQUEST_TIMEOUT" } : r))
   })
 }

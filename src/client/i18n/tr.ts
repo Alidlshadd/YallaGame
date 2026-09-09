@@ -124,6 +124,8 @@ const tr: Translations = {
   errorServerBusy: "Sunucu meşgul, tekrar dene.",
   errorInvalidAdmin: "Bu odanın admini değilsin.",
   errorGeneric: "Bir şeyler ters gitti.",
+  creatingRoom: "Oda oluşturuluyor…",
+  errorRequestTimeout: "Sunucu yanıt vermedi. Bağlantını kontrol edip tekrar dene.",
   copied: "Kopyalandı!",
   shareLink: "Linki Paylaş",
   linkCopied: "Davet linki kopyalandı!",

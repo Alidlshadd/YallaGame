@@ -122,6 +122,8 @@ const en = {
   errorServerBusy: "Server is busy, try again.",
   errorInvalidAdmin: "You are not the admin of this room.",
   errorGeneric: "Something went wrong.",
+  creatingRoom: "Creating room…",
+  errorRequestTimeout: "The server did not respond. Check your connection and try again.",
   copied: "Copied!",
   shareLink: "Share Link",
   linkCopied: "Invite link copied!",

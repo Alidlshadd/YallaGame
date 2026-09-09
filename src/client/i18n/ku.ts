@@ -1,6 +1,8 @@
 import type { Translations } from "./en.js"
 
 const ku: Translations = {
+  creatingRoom: "ژوورەکە دروست دەکرێت…",
+  errorRequestTimeout: "سێرڤەر وەڵامی نەدایەوە. پەیوەندییەکەت بپشکنە و دووبارە هەوڵ بدەوە.",
   brand: "Yalla Game",
   brandSub: "سەکۆی چەند یاری",
   liveRoom: "سیستەمی ژووری ڕاستەوخۆ",

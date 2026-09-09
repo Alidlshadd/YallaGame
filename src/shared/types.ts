@@ -169,6 +169,7 @@ export interface SelfPlayer {
 }
 
 export type ErrorCode =
+  | "REQUEST_TIMEOUT"
   | "INVALID_ADMIN"
   | "ROOM_NOT_FOUND"
   | "NAME_REQUIRED"

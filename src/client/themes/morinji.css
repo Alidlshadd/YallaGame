@@ -1,5 +1,6 @@
 /* Higher specificity than lazy game styles; active only for this local player. */
-html[data-character-theme="morinji"] {
+html[data-character-theme="morinji"],
+html[data-character-theme="morinji"] [data-theme] {
   --bg-void: #10091c;
   --bg-deep: #211132;
   --text-primary: #f5edff;
@@ -10,20 +11,28 @@ html[data-character-theme="morinji"] {
   --theme-accent: #c49aff;
   --theme-glow: #a86af5;
   --theme-surface: #28163dcc;
+  --card-glow: #a86af5;
 }
 
 html[data-character-theme="morinji"] .atmosphere {
   background: var(--theme-bg);
 }
 html[data-character-theme="morinji"] .atmosphere::before {
+  inset: 0;
+  height: auto;
+  animation: none;
   background: radial-gradient(ellipse at 50% 0%, #a855f738, transparent 65%);
 }
 html[data-character-theme="morinji"] .atmosphere::after {
+  inset: 0;
+  height: auto;
+  animation: none;
   background: radial-gradient(ellipse at 10% 90%, #7c3aed24, transparent 60%),
               radial-gradient(ellipse at 95% 55%, #d8b4fe14, transparent 55%);
 }
 
-html[data-character-theme="morinji"] :is(.host-setup-panel, .panel, .confirm-panel, .avatar-stage) {
+html[data-character-theme="morinji"] :is(.host-setup-panel, .panel, .confirm-panel, .avatar-stage,
+  .room-code-hero, .pending-card, .reveal-card, .reveal-dossier, .gi-setup-panel, .toast) {
   background: linear-gradient(145deg, #2e1842f5, #170d25f5);
   border-color: #bd8af54d;
 }
@@ -61,4 +70,78 @@ html[data-character-theme="morinji"] .avatar-preview .avatar {
 html[data-character-theme="morinji"] .main-nav button:is(:hover, [aria-current="true"]) {
   color: var(--theme-accent);
   background: #c49aff18;
+}
+
+/* Shared chrome and controls follow the selected character on every screen. */
+html[data-character-theme="morinji"] :is(.main-nav, .lang-switch, .switch-row, .player-row, .request-row) {
+  background: #211132e6;
+  border-color: #bd8af54d;
+}
+html[data-character-theme="morinji"] :is(.app-footer-brand, .app-footer-mark, .brand-text strong) {
+  color: #dec4ff;
+}
+html[data-character-theme="morinji"] .app-footer {
+  background: linear-gradient(180deg, transparent, #10091ce6);
+}
+html[data-character-theme="morinji"] :is(.btn-secondary, .btn-ghost, .gi-back, .gi-cta-secondary, .gi-cta-ghost) {
+  background: #28163dcc;
+  color: #dec4ff;
+  border-color: #bd8af566;
+}
+html[data-character-theme="morinji"] :is(.btn-primary, .gi-cta-primary) {
+  background: var(--theme-accent);
+  color: var(--bg-void);
+  border-color: var(--theme-accent);
+  box-shadow: 0 8px 28px #a86af533;
+}
+html[data-character-theme="morinji"] :is(.btn, .gi-cta):hover:not(:disabled) {
+  border-color: var(--theme-accent);
+  box-shadow: 0 0 24px #a86af54d;
+}
+html[data-character-theme="morinji"] :focus-visible {
+  outline-color: var(--theme-accent);
+}
+html[data-character-theme="morinji"] input[type="checkbox"] {
+  accent-color: var(--theme-accent);
+}
+html[data-character-theme="morinji"] .lang-switch button[aria-current="true"] {
+  color: #dec4ff;
+  background: #a86af533;
+}
+
+/* Game artwork keeps its identity, with a purple wash over its decoration. */
+html[data-character-theme="morinji"] .character-frame {
+  background: #211132;
+}
+html[data-character-theme="morinji"] .character-frame .spotlight {
+  background: linear-gradient(160deg, #c49aff, #652f96);
+  mix-blend-mode: color;
+  opacity: 0.75;
+}
+html[data-character-theme="morinji"] .role-card-info {
+  width: 100%;
+  padding: var(--s-4);
+  border-radius: 16px;
+  border: 1px solid #bd8af54d;
+  background: var(--theme-surface);
+}
+html[data-character-theme="morinji"] .theme-fx .mist {
+  background: radial-gradient(ellipse at 50% 100%, #a86af566, transparent 70%);
+}
+html[data-character-theme="morinji"] .spy-hud {
+  color: var(--theme-accent);
+  border-color: #bd8af54d;
+}
+
+/* The game page has its own background and nested theme tokens. */
+html[data-character-theme="morinji"] .gi-page {
+  background: var(--theme-bg);
+}
+html[data-character-theme="morinji"] :is(.gi-hero-bg, .gi-sections-wrap--has-image::before, .gi-bottom-bg) {
+  background-color: #522776;
+  background-blend-mode: luminosity;
+}
+html[data-character-theme="morinji"] :is(.gi-title, .gi-section-title, .gi-bottom-title) {
+  color: #dec4ff;
+  background-image: linear-gradient(180deg, #f5edff, #c49aff);
 }
