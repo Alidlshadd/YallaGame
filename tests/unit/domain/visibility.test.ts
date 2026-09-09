@@ -25,7 +25,8 @@ const room: Room = {
   ],
   createdAt: 0, updatedAt: 0,
   hostPlayerId: "p1", isPublic: true, requireApproval: true,
-  pending: [{ id: "req1", name: "D", requestedAt: 0, character: "raven" }]
+  pending: [{ id: "req1", name: "D", requestedAt: 0, character: "raven" }],
+  phase: "idle", phaseSeq: 0, phaseEndsAt: null, round: 0, gameState: {}, scores: {}
 }
 
 const games = new Map([[game.id, game]])

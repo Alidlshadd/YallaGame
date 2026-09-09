@@ -1,6 +1,7 @@
 import type { Server, Socket } from "socket.io"
 import type { ClientToServerEvents, ServerToClientEvents } from "@shared/events.js"
 import type { PendingJoin, Player, SocketData } from "@shared/types.js"
+import { IDLE_PHASE } from "../../shared/types.js"
 import type { RoomStore } from "../store/store.js"
 import type { GameResolver } from "../domain/visibility.js"
 import { bind } from "./bind.js"
@@ -10,6 +11,9 @@ import { characterAccessory } from "../../shared/accessories.js"
 import { makeSecret } from "../domain/codes.js"
 import { fillerRoleId } from "../domain/roles.js"
 import { JoinPayload, CancelRequestPayload } from "./schemas.js"
+import type { EngineResolver } from "../domain/engine.js"
+import { onPlayerLeft, sendPhaseTo } from "../domain/engine.js"
+import { engineDeps } from "./game-handlers.js"
 import type { Config } from "../config.js"
 import { logger } from "../logger.js"
 
@@ -20,7 +24,9 @@ export interface PlayerDeps {
   io: TypedServer
   store: RoomStore
   resolveGame: GameResolver
+  resolveEngine: EngineResolver
   config: Config
+  rng: () => number
 }
 
 export function registerPlayerHandlers(socket: TypedSocket, deps: PlayerDeps): void {
@@ -116,6 +122,12 @@ export function registerPlayerHandlers(socket: TypedSocket, deps: PlayerDeps): v
       })
     }
 
+    // Walked back into a game that is already running: put them straight back
+    // into the live phase instead of the lobby they left.
+    if (updated.phase !== IDLE_PHASE) {
+      void sendPhaseTo(engineDeps(deps), code, me.id)
+    }
+
     const myProjection = projectRoomFor(updated, { kind: "player", playerId: me.id }, deps.resolveGame)
     return {
       status: "joined" as const, room: myProjection,
@@ -161,6 +173,8 @@ export function registerPlayerHandlers(socket: TypedSocket, deps: PlayerDeps): v
       }))
       const adminProjection = projectRoomFor(updated, { kind: "admin", adminSecret: updated.adminSecret }, deps.resolveGame)
       deps.io.to(`admin:${code}`).emit("admin:room-updated", adminProjection)
+      // The phase may have been waiting on the phone that just went dark.
+      await onPlayerLeft(engineDeps(deps), code)
     } catch { /* room may have been deleted; ignore */ }
   })
 }

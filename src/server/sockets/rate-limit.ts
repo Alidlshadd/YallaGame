@@ -14,7 +14,15 @@ const COOLDOWNS_MS: Record<string, number> = {
   "admin:reject-join":     150,
   "admin:update-room":     300,
   "admin:close-room":      500,
-  "player:cancel-request": 300
+  "player:cancel-request": 300,
+  "game:start":            1000,
+  // Changing a vote is a normal thing to do on a phone, and the phase's own
+  // clock is the real limit here — this only stops a stuck finger.
+  "game:action":           150,
+  "game:advance":          300,
+  "game:end":              500,
+  // Three probes back to back is how the clock offset is measured.
+  "time:sync":             40
 }
 
 type Bag = Map<string, number>

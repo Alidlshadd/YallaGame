@@ -8,7 +8,8 @@ function mkRoom(code: string, createdAt = Date.now()): Room {
   return {
     code, gameId: "g", adminSecret: "a", assigned: false,
     settings: {}, players: [], createdAt, updatedAt: createdAt,
-    hostPlayerId: "h", isPublic: false, requireApproval: false, pending: []
+    hostPlayerId: "h", isPublic: false, requireApproval: false, pending: [],
+    phase: "idle", phaseSeq: 0, phaseEndsAt: null, round: 0, gameState: {}, scores: {}
   }
 }
 

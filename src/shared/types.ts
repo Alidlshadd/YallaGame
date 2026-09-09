@@ -31,6 +31,23 @@ export interface Role {
 
 export type Settings = Record<string, number | boolean>
 
+/**
+ * Where a room sits inside its game. "idle" is every room that is not running
+ * a turn-based game — the five role-distribution games never leave it, since
+ * they hand out roles and let the table run the rest.
+ *
+ * Turn-based games name their own phases ("VOTING", "SUBMIT_LIES", ...); the
+ * engine treats them as opaque strings and only ever compares them.
+ */
+export type Phase = string
+export const IDLE_PHASE = "idle"
+
+/** A game's private bookkeeping. Never sent to a client as-is — see `GameEngine.view`. */
+export type GameState = Record<string, unknown>
+
+/** playerId -> points. Games that do not score leave it empty. */
+export type Scores = Record<string, number>
+
 export interface Game {
   id: GameId
   icon: string
@@ -83,6 +100,19 @@ export interface Room {
   /** When on, `player:join` parks newcomers in `pending` for the host to accept. */
   requireApproval: boolean
   pending: PendingJoin[]
+  /** `IDLE_PHASE` until a turn-based game starts. */
+  phase: Phase
+  /**
+   * Bumped on every phase change. The guard that keeps a transition from being
+   * applied twice when the last action and the countdown land together, and
+   * that lets the server reject a tap sent from a screen that has moved on.
+   */
+  phaseSeq: number
+  /** Absolute epoch ms. null means the phase ends when the host says so. */
+  phaseEndsAt: number | null
+  round: number
+  gameState: GameState
+  scores: Scores
 }
 
 export type Viewer =
@@ -156,6 +186,9 @@ export type ErrorCode =
   | "ROOM_FULL"
   | "CHARACTER_TAKEN"
   | "UNKNOWN_CHARACTER"
+  /** The tap arrived from a screen the room has already moved past. */
+  | "PHASE_STALE"
+  | "GAME_NOT_RUNNING"
 
 export interface SocketData {
   roomCode?: string

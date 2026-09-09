@@ -13,6 +13,8 @@ import { SqliteStore } from "./store/sqlite-store.js"
 import type { RoomStore } from "./store/store.js"
 import { registerHandlers } from "./sockets/index.js"
 import { GAME_CATALOG, resolveGame } from "./games/catalog.js"
+import { resolveEngine } from "./games/engines.js"
+import { cancelAllTimers } from "./domain/scheduler.js"
 import type { ClientToServerEvents, ServerToClientEvents } from "@shared/events.js"
 import type { SocketData } from "@shared/types.js"
 
@@ -100,7 +102,7 @@ async function main() {
   })
 
   registerHandlers(io, {
-    io, store, resolveGame, config, rng: Math.random
+    io, store, resolveGame, resolveEngine, config, rng: Math.random
   })
 
   setInterval(() => {
@@ -111,7 +113,11 @@ async function main() {
     logger.info({ port: config.PORT, env: config.NODE_ENV }, "server ready")
   })
 
-  const shutdown = async () => { await store.close(); server.close(() => process.exit(0)) }
+  const shutdown = async () => {
+    cancelAllTimers()
+    await store.close()
+    server.close(() => process.exit(0))
+  }
   process.on("SIGINT",  () => void shutdown())
   process.on("SIGTERM", () => void shutdown())
 }

@@ -3,8 +3,9 @@ import type { ClientToServerEvents, ServerToClientEvents } from "@shared/events.
 import type { SocketData } from "@shared/types.js"
 import { registerAdminHandlers, type AdminDeps } from "./admin-handlers.js"
 import { registerPlayerHandlers, type PlayerDeps } from "./player-handlers.js"
+import { registerGameHandlers, type GameDeps } from "./game-handlers.js"
 
-export type SocketDeps = AdminDeps & PlayerDeps
+export type SocketDeps = AdminDeps & PlayerDeps & GameDeps
 
 export function registerHandlers(
   io: Server<ClientToServerEvents, ServerToClientEvents, never, SocketData>,
@@ -13,5 +14,6 @@ export function registerHandlers(
   io.on("connection", (socket: Socket<ClientToServerEvents, ServerToClientEvents, never, SocketData>) => {
     registerAdminHandlers(socket, deps)
     registerPlayerHandlers(socket, deps)
+    registerGameHandlers(socket, deps)
   })
 }

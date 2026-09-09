@@ -1,6 +1,9 @@
 import type { Server, Socket } from "socket.io"
 import type { ClientToServerEvents, ServerToClientEvents } from "@shared/events.js"
 import type { Player, Room, SocketData } from "@shared/types.js"
+// A value, so it takes the relative path the server build can resolve at
+// runtime — the `@shared` alias only survives in type-only imports.
+import { IDLE_PHASE } from "../../shared/types.js"
 import type { RoomStore } from "../store/store.js"
 import type { GameResolver } from "../domain/visibility.js"
 import { bind } from "./bind.js"
@@ -10,6 +13,9 @@ import { characterAccessory } from "../../shared/accessories.js"
 import { normalizeSettings } from "../domain/settings.js"
 import { buildRolePool, assignRolesToConnected } from "../domain/roles.js"
 import { makeRoomCode, makeSecret } from "../domain/codes.js"
+import { cancelTimer } from "../domain/scheduler.js"
+import { sendPhaseTo, type EngineResolver } from "../domain/engine.js"
+import { engineDeps } from "./game-handlers.js"
 import {
   CreateRoomPayload,
   ReconnectPayload,
@@ -33,6 +39,7 @@ export interface AdminDeps {
   io: TypedServer
   store: RoomStore
   resolveGame: GameResolver
+  resolveEngine: EngineResolver
   config: Config
   rng: () => number
 }
@@ -98,7 +105,9 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
       assigned: false,
       settings: normalizeSettings(game, game.defaultSettings),
       players: [host], createdAt: now, updatedAt: now,
-      hostPlayerId: host.id, isPublic, requireApproval, pending: []
+      hostPlayerId: host.id, isPublic, requireApproval, pending: [],
+      phase: IDLE_PHASE, phaseSeq: 0, phaseEndsAt: null,
+      round: 0, gameState: {}, scores: {}
     }
     await deps.store.create(room)
 
@@ -131,6 +140,11 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
       players: r.players.map(p => p.id === r.hostPlayerId ? { ...p, connected: true } : p)
     }))
     await broadcastRoom(deps, revived)
+    // The host's own screen has to come back to the running turn too, and a
+    // restarted process re-arms the phase clock off the back of this call.
+    if (revived.phase !== IDLE_PHASE) {
+      void sendPhaseTo(engineDeps(deps), code, revived.hostPlayerId)
+    }
     return { room: projectRoomFor(revived, { kind: "admin", adminSecret }, deps.resolveGame) }
   })
 
@@ -139,6 +153,9 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
       if (room.adminSecret !== adminSecret) throw new Error("INVALID_ADMIN")
       const game = deps.resolveGame(room.gameId)
       if (!game) throw new Error("UNKNOWN_GAME")
+      // Settings feed role counts and deck sizes; changing them under a running
+      // turn would leave the game state describing a game nobody is playing.
+      if (room.phase !== IDLE_PHASE) throw new Error("INVALID_INPUT")
       return {
         ...room,
         settings: normalizeSettings(game, settings as Record<string, unknown>),
@@ -156,6 +173,9 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
       if (room.adminSecret !== adminSecret) throw new Error("INVALID_ADMIN")
       const game = deps.resolveGame(room.gameId)
       if (!game) throw new Error("UNKNOWN_GAME")
+      // Turn-based games deal their own roles when the game starts; redealing
+      // mid-round would hand somebody a card the table has already seen played.
+      if (room.phase !== IDLE_PHASE) throw new Error("INVALID_INPUT")
       const connectedCount = room.players.filter(p => p.connected).length
       if (connectedCount < game.minPlayers) throw new Error("NEED_MORE_PLAYERS")
       const pool = buildRolePool(game, room.settings, connectedCount)
@@ -265,6 +285,7 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
   bind(socket, "admin:close-room", CloseRoomPayload, async ({ code, adminSecret }) => {
     const room = await deps.store.get(code)
     if (!room || room.adminSecret !== adminSecret) throw new Error("INVALID_ADMIN")
+    cancelTimer(code)
     await deps.store.delete(code)
     // Without this an abandoned room would sit in the public browser until the
     // TTL sweep hours later, and everyone who clicked it would hit a dead code.

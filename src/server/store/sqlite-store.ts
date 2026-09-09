@@ -16,7 +16,13 @@ CREATE TABLE IF NOT EXISTS rooms (
   host_player_id   TEXT NOT NULL DEFAULT '',
   is_public        INTEGER NOT NULL DEFAULT 0,
   require_approval INTEGER NOT NULL DEFAULT 0,
-  pending_json     TEXT NOT NULL DEFAULT '[]'
+  pending_json     TEXT NOT NULL DEFAULT '[]',
+  phase            TEXT NOT NULL DEFAULT 'idle',
+  phase_seq        INTEGER NOT NULL DEFAULT 0,
+  phase_ends_at    INTEGER,
+  round            INTEGER NOT NULL DEFAULT 0,
+  game_state_json  TEXT NOT NULL DEFAULT '{}',
+  scores_json      TEXT NOT NULL DEFAULT '{}'
 );
 CREATE INDEX IF NOT EXISTS rooms_created_at_idx ON rooms(created_at);
 `
@@ -40,7 +46,14 @@ const ADDED_COLUMNS: Array<[string, string]> = [
   ["host_player_id",   "TEXT NOT NULL DEFAULT ''"],
   ["is_public",        "INTEGER NOT NULL DEFAULT 0"],
   ["require_approval", "INTEGER NOT NULL DEFAULT 0"],
-  ["pending_json",     "TEXT NOT NULL DEFAULT '[]'"]
+  ["pending_json",     "TEXT NOT NULL DEFAULT '[]'"],
+  ["phase",            "TEXT NOT NULL DEFAULT 'idle'"],
+  ["phase_seq",        "INTEGER NOT NULL DEFAULT 0"],
+  // Nullable on purpose: null is "this phase has no deadline", not "unknown".
+  ["phase_ends_at",    "INTEGER"],
+  ["round",            "INTEGER NOT NULL DEFAULT 0"],
+  ["game_state_json",  "TEXT NOT NULL DEFAULT '{}'"],
+  ["scores_json",      "TEXT NOT NULL DEFAULT '{}'"]
 ]
 
 interface RoomRow {
@@ -56,6 +69,12 @@ interface RoomRow {
   is_public: number
   require_approval: number
   pending_json: string
+  phase: string
+  phase_seq: number
+  phase_ends_at: number | null
+  round: number
+  game_state_json: string
+  scores_json: string
 }
 
 function rowToRoom(row: RoomRow): Room {
@@ -71,7 +90,13 @@ function rowToRoom(row: RoomRow): Room {
     hostPlayerId: row.host_player_id,
     isPublic: row.is_public === 1,
     requireApproval: row.require_approval === 1,
-    pending: JSON.parse(row.pending_json)
+    pending: JSON.parse(row.pending_json),
+    phase: row.phase,
+    phaseSeq: row.phase_seq,
+    phaseEndsAt: row.phase_ends_at,
+    round: row.round,
+    gameState: JSON.parse(row.game_state_json),
+    scores: JSON.parse(row.scores_json)
   }
 }
 
@@ -95,9 +120,11 @@ export class SqliteStore implements RoomStore {
 
     this.stmtInsert = this.db.prepare(`
       INSERT INTO rooms (code, game_id, admin_secret, assigned, settings_json, players_json,
-                         created_at, updated_at, host_player_id, is_public, require_approval, pending_json)
+                         created_at, updated_at, host_player_id, is_public, require_approval, pending_json,
+                         phase, phase_seq, phase_ends_at, round, game_state_json, scores_json)
       VALUES (@code, @gameId, @adminSecret, @assigned, @settings, @players,
-              @createdAt, @updatedAt, @hostPlayerId, @isPublic, @requireApproval, @pending)
+              @createdAt, @updatedAt, @hostPlayerId, @isPublic, @requireApproval, @pending,
+              @phase, @phaseSeq, @phaseEndsAt, @round, @gameState, @scores)
     `)
     this.stmtGet = this.db.prepare(`SELECT * FROM rooms WHERE code = ?`)
     this.stmtUpdate = this.db.prepare(`
@@ -105,7 +132,9 @@ export class SqliteStore implements RoomStore {
          SET game_id = @gameId, admin_secret = @adminSecret, assigned = @assigned,
              settings_json = @settings, players_json = @players, updated_at = @updatedAt,
              host_player_id = @hostPlayerId, is_public = @isPublic,
-             require_approval = @requireApproval, pending_json = @pending
+             require_approval = @requireApproval, pending_json = @pending,
+             phase = @phase, phase_seq = @phaseSeq, phase_ends_at = @phaseEndsAt,
+             round = @round, game_state_json = @gameState, scores_json = @scores
        WHERE code = @code
     `)
     this.stmtDelete = this.db.prepare(`DELETE FROM rooms WHERE code = ?`)
@@ -135,7 +164,13 @@ export class SqliteStore implements RoomStore {
       hostPlayerId: room.hostPlayerId,
       isPublic: room.isPublic ? 1 : 0,
       requireApproval: room.requireApproval ? 1 : 0,
-      pending: JSON.stringify(room.pending)
+      pending: JSON.stringify(room.pending),
+      phase: room.phase,
+      phaseSeq: room.phaseSeq,
+      phaseEndsAt: room.phaseEndsAt,
+      round: room.round,
+      gameState: JSON.stringify(room.gameState),
+      scores: JSON.stringify(room.scores)
     })
   }
 
@@ -160,7 +195,13 @@ export class SqliteStore implements RoomStore {
         hostPlayerId: updated.hostPlayerId,
         isPublic: updated.isPublic ? 1 : 0,
         requireApproval: updated.requireApproval ? 1 : 0,
-        pending: JSON.stringify(updated.pending)
+        pending: JSON.stringify(updated.pending),
+        phase: updated.phase,
+        phaseSeq: updated.phaseSeq,
+        phaseEndsAt: updated.phaseEndsAt,
+        round: updated.round,
+        gameState: JSON.stringify(updated.gameState),
+        scores: JSON.stringify(updated.scores)
       })
       return updated
     }).immediate

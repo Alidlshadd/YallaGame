@@ -58,3 +58,25 @@ export const CancelRequestPayload = z.object({
 })
 /** The room browser takes no arguments; the schema exists so bind() can parse it. */
 export const ListRoomsPayload     = z.object({}).strict()
+
+export const GameStartPayload     = ReconnectPayload
+export const GameEndPayload       = ReconnectPayload
+/** Phase counter the caller was looking at. Never negative, never fractional. */
+const PhaseSeq = z.number().int().nonnegative().max(1_000_000)
+export const GameAdvancePayload   = z.object({
+  code: RoomCode,
+  adminSecret: z.string().min(1).max(64),
+  seq: PhaseSeq
+})
+/**
+ * A move. The engine decides what the fields mean, but the shape is pinned
+ * here: flat, and every value bounded. `passthrough()` would let a client post
+ * a deeply nested megabyte that the server then stores in the room row.
+ */
+export const GameActionPayload    = z.object({
+  code: RoomCode,
+  seq: PhaseSeq,
+  action: z.object({ type: z.string().min(1).max(32) })
+    .catchall(z.union([z.string().max(200), z.number().finite(), z.boolean()]))
+})
+export const TimeSyncPayload      = z.object({}).strict()
