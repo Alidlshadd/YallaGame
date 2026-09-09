@@ -50,7 +50,12 @@ html[dir="rtl"] :is(body:has(#gameInfoView.active-view), .gi-page, .gi-setup-ove
   align-items: start;
 }
 .gi-page .gi-poster { grid-area: poster; }
-.gi-page .gi-hero-copy { grid-area: copy; }
+.gi-page .gi-hero-copy {
+  grid-area: copy;
+  /* Center the complete copy group in the row below the hero's header clearance.
+     Keep the poster anchored; tall copy and stacked mobile rows grow naturally. */
+  align-self: safe center;
+}
 
 :is(.gi-page, .gi-setup-overlay) .gi-cta {
   max-width: 100%;
