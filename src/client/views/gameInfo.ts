@@ -13,6 +13,7 @@ import { worldCoverPath } from "../data/assets.js"
 import { getWorldDetail } from "../data/worldDetails.js"
 import type { CategoryDifficulty } from "../data/worldDetails.js"
 import { buildCategoryIconSvg } from "../data/categoryIcons.js"
+import { prefersReducedMotion } from "../ui/motion.js"
 import "../themes/game-info-layout.css"
 
 /* Localized label for a category difficulty enum value. */
@@ -63,7 +64,8 @@ function roleFallbackGlyph(kind: BadgeKind): string {
 const STEP_ICONS = ["I", "II", "III", "IV"] as const
 const STEP_SYMBOLS = ["⬡", "▢", "◈", "▶"] as const   // small premium symbol per step
 const STEP_TITLE_KEYS = ["step1Title", "step2Title", "step3Title", "step4Title"] as const
-type StepTitleKey = typeof STEP_TITLE_KEYS[number]
+const MLT_STEP_TITLE_KEYS = ["mltStep1Title", "mltStep2Title", "mltStep3Title", "mltStep4Title"] as const
+type StepTitleKey = typeof STEP_TITLE_KEYS[number] | typeof MLT_STEP_TITLE_KEYS[number]
 
 /* Premium theme icon for the hero eyebrow. SVG bat for the vampire world,
    clean Unicode geometric symbols for the rest — never emoji. */
@@ -270,10 +272,11 @@ function buildAbout(
 
 function buildHowToPlay(game: Game, lang: ReturnType<typeof getLang>): HTMLElement {
   const stepDescriptions = game.rules[lang]
-  const steps = el("div", { class: "gi-steps" })
+  const titleKeys = game.id === "most-likely-to" ? MLT_STEP_TITLE_KEYS : STEP_TITLE_KEYS
+  const steps = el("div", { class: `gi-steps${game.id === "most-likely-to" ? " mlt-timeline" : ""}` })
 
   for (let i = 0; i < 4; i++) {
-    const titleKey: StepTitleKey = STEP_TITLE_KEYS[i] ?? "step1Title"
+    const titleKey: StepTitleKey = titleKeys[i] ?? titleKeys[0]
     const stepDescText = stepDescriptions[i] ?? ""
     const stepCard = el("div", { class: "gi-step", "data-step": String(i + 1) }, [
       el("div", { class: "gi-step-number", "aria-hidden": "true" }, [STEP_ICONS[i] ?? String(i + 1)]),
@@ -287,7 +290,7 @@ function buildHowToPlay(game: Game, lang: ReturnType<typeof getLang>): HTMLEleme
     }
   }
 
-  return el("section", { class: "gi-section" }, [
+  return el("section", { class: `gi-section${game.id === "most-likely-to" ? " gi-section--how-to-play" : ""}` }, [
     el("header", { class: "gi-section-header" }, [
       el("p", { class: "gi-section-eyebrow" }, [
         el("span", { class: "gi-ornament" }, ["❖"]),
@@ -661,11 +664,14 @@ export const gameInfoView = {
     const openSetup = (): void => openCategorySetup(lang, detail, onCreate)
     const categoriesSection = buildCategories(lang, detail, openSetup)
     const thirdSection = categoriesSection ?? buildRoles(game, lang, detail)
-    const sectionsWrap = el("div", { class: "gi-sections-wrap" }, [
+    const bottom = buildBottomCTA(game, lang, detail, onCreate)
+    const lowerSections: HTMLElement[] = [
       buildAbout(lang, detail, game.subtitle[lang], game.theme),
       buildHowToPlay(game, lang),
       thirdSection
-    ])
+    ]
+    if (game.id === "most-likely-to") lowerSections.push(bottom)
+    const sectionsWrap = el("div", { class: "gi-sections-wrap" }, lowerSections)
     if (detail?.sectionsBackground) {
       const styles = [`--gi-sections-bg-image: url("${detail.sectionsBackground}")`]
       if (detail.sectionsBackgroundMobile) {
@@ -678,11 +684,34 @@ export const gameInfoView = {
     content.append(
       back,
       buildHero(game, lang, detail, onCreate),
-      sectionsWrap,
-      buildBottomCTA(game, lang, detail, onCreate)
+      sectionsWrap
     )
+    if (game.id !== "most-likely-to") content.appendChild(bottom)
+
+    let sectionObserver: IntersectionObserver | null = null
+    if (game.id === "most-likely-to") {
+      const revealTargets = [...content.querySelectorAll<HTMLElement>(
+        ".gi-sections-wrap .gi-about-panel, .gi-sections-wrap .gi-section-header, " +
+        ".gi-sections-wrap .gi-step, .gi-sections-wrap .gi-category"
+      )]
+      revealTargets.forEach(target => target.classList.add("mlt-reveal"))
+      const revealAll = (): void => revealTargets.forEach(target => target.classList.add("mlt-reveal-visible"))
+      if (prefersReducedMotion() || !("IntersectionObserver" in window)) {
+        revealAll()
+      } else {
+        sectionObserver = new IntersectionObserver(entries => {
+          for (const entry of entries) {
+            if (!entry.isIntersecting) continue
+            entry.target.classList.add("mlt-reveal-visible")
+            sectionObserver?.unobserve(entry.target)
+          }
+        }, { threshold: 0.16, rootMargin: "0px 0px -8% 0px" })
+        revealTargets.forEach(target => sectionObserver?.observe(target))
+      }
+    }
 
     return () => {
+      sectionObserver?.disconnect()
       clear(content)
     }
   }

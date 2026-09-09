@@ -28,15 +28,14 @@
   animation: mlt-lights 16s ease-in-out infinite;
 }
 
-/* The middle detail sections share one continuous Erbil evening atmosphere.
-   Keep this scoped to Most Likely To so the other worlds retain their own
-   section art and scrims. */
+/* ─── Most Likely To lower-page experience ──────────────────────────────── */
+
+/* One scene, one scrim: the About, How To Play, Categories and CTA content
+   all sit on the same atmospheric canvas. Section surfaces stay transparent
+   so spacing—not opaque bands—creates the rhythm. */
 [data-theme="most-likely-to"] .gi-sections-wrap--has-image {
   background:
-    linear-gradient(180deg,
-      rgba(5, 3, 10, 0.86) 0%,
-      rgba(8, 4, 14, 0.68) 48%,
-      rgba(5, 3, 10, 0.86) 100%),
+    linear-gradient(180deg, rgba(5, 3, 10, 0.84) 0%, rgba(8, 4, 14, 0.69) 48%, rgba(5, 3, 10, 0.86) 100%),
     var(--gi-sections-bg-image, none) center / cover no-repeat;
   background-color: #05030a;
 }
@@ -45,19 +44,190 @@
   background:
     radial-gradient(ellipse at 18% 28%, rgba(185, 140, 255, 0.08), transparent 54%),
     radial-gradient(ellipse at 82% 68%, rgba(240, 194, 87, 0.07), transparent 58%);
+  filter: blur(20px);
+  opacity: 0.65;
   animation: none;
 }
 
-@media (max-width: 768px) {
-  [data-theme="most-likely-to"] .gi-sections-wrap--has-image {
-    background-image:
-      linear-gradient(180deg,
-        rgba(5, 3, 10, 0.88) 0%,
-        rgba(8, 4, 14, 0.70) 48%,
-        rgba(5, 3, 10, 0.88) 100%),
-      var(--gi-sections-bg-image-mobile, var(--gi-sections-bg-image, none));
-    background-position: center;
-    background-attachment: scroll;
+[data-theme="most-likely-to"] .gi-sections-wrap--has-image .gi-section,
+[data-theme="most-likely-to"] .gi-sections-wrap--has-image .gi-about,
+[data-theme="most-likely-to"] .gi-sections-wrap--has-image .gi-bottom {
+  background: transparent;
+}
+
+[data-theme="most-likely-to"] .gi-sections-wrap--has-image .gi-section::before,
+[data-theme="most-likely-to"] .gi-sections-wrap--has-image .gi-about::before {
+  background: transparent;
+}
+
+[data-theme="most-likely-to"] .gi-sections-wrap--has-image .gi-section::after,
+[data-theme="most-likely-to"] .gi-sections-wrap--has-image .gi-about::after {
+  background: radial-gradient(ellipse at 50% 0%, rgba(185, 140, 255, 0.045), transparent 66%);
+  filter: none;
+  opacity: 0.7;
+  animation: none;
+}
+
+/* Keep the CTA as a foreground panel, while its full-width backdrop remains
+   the same shared section scene. */
+[data-theme="most-likely-to"] .gi-bottom-bg {
+  background: transparent;
+}
+
+[data-theme="most-likely-to"] .gi-bottom--has-image .gi-bottom-panel {
+  background:
+    linear-gradient(180deg, rgba(23, 12, 31, 0.74), rgba(7, 4, 13, 0.78)),
+    radial-gradient(ellipse at 50% 32%, rgba(185, 140, 255, 0.11), transparent 64%);
+}
+
+[data-theme="most-likely-to"] .gi-about-panel,
+[data-theme="most-likely-to"] .gi-stat,
+[data-theme="most-likely-to"] .gi-step,
+[data-theme="most-likely-to"] .gi-category {
+  background:
+    linear-gradient(180deg, rgba(24, 13, 31, 0.72), rgba(8, 5, 14, 0.74)),
+    radial-gradient(ellipse at 50% 0%, rgba(185, 140, 255, 0.045), transparent 68%);
+  backdrop-filter: blur(8px) saturate(120%);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
+}
+
+[data-theme="most-likely-to"] .gi-about-panel {
+  border-color: rgba(185, 140, 255, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045), 0 24px 60px -24px rgba(0, 0, 0, 0.78);
+}
+
+[data-theme="most-likely-to"] .gi-stat {
+  transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease, background 220ms ease;
+}
+
+[data-theme="most-likely-to"] .gi-stat:hover {
+  transform: translateY(-3px);
+  border-color: rgba(240, 194, 87, 0.65);
+  box-shadow: 0 14px 28px -16px rgba(0, 0, 0, 0.85), 0 0 18px rgba(185, 140, 255, 0.14);
+}
+
+[data-theme="most-likely-to"] .gi-stat:hover .gi-stat-icon {
+  box-shadow: 0 0 22px rgba(240, 194, 87, 0.34);
+}
+
+/* Timeline path and card hierarchy. The existing arrows remain the semantic
+   connectors; this line adds the quiet illuminated route behind them. */
+[data-theme="most-likely-to"] .mlt-timeline {
+  position: relative;
+  isolation: isolate;
+}
+
+[data-theme="most-likely-to"] .mlt-timeline::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  left: 9%;
+  right: 9%;
+  top: 50%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(185, 140, 255, 0.7) 15%, rgba(240, 194, 87, 0.62) 50%, rgba(185, 140, 255, 0.7) 85%, transparent);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 720ms cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 0 12px rgba(185, 140, 255, 0.28);
+}
+
+[data-theme="most-likely-to"] .mlt-timeline:has(.gi-step.mlt-reveal-visible)::before {
+  transform: scaleX(1);
+}
+
+[data-theme="most-likely-to"] .mlt-timeline .gi-step,
+[data-theme="most-likely-to"] .mlt-timeline .gi-step-arrow {
+  z-index: 1;
+}
+
+[data-theme="most-likely-to"] .mlt-timeline .gi-step {
+  transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease, background 220ms ease;
+}
+
+[data-theme="most-likely-to"] .mlt-timeline .gi-step:hover {
+  transform: translateY(-3px);
+  border-color: rgba(185, 140, 255, 0.68);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 18px 34px -18px rgba(0, 0, 0, 0.82), 0 0 24px rgba(185, 140, 255, 0.14);
+}
+
+[data-theme="most-likely-to"] .mlt-timeline .gi-step-arrow {
+  color: rgba(240, 194, 87, 0.78);
+  transition: color 220ms ease, text-shadow 220ms ease;
+}
+
+[data-theme="most-likely-to"] .mlt-timeline .gi-step:has(+ .gi-step-arrow:hover) .gi-step-arrow,
+[data-theme="most-likely-to"] .mlt-timeline .gi-step-arrow:hover {
+  color: #f0c257;
+  text-shadow: 0 0 16px rgba(240, 194, 87, 0.42);
+}
+
+[data-theme="most-likely-to"] .gi-category {
+  transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease, background 220ms ease;
+}
+
+[data-theme="most-likely-to"] .gi-category:hover {
+  transform: translateY(-3px);
+  border-color: rgba(240, 194, 87, 0.68);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 16px 30px -16px rgba(0, 0, 0, 0.82), 0 0 20px rgba(185, 140, 255, 0.14);
+}
+
+[data-theme="most-likely-to"] .gi-category:hover .gi-category-icon {
+  transform: translateY(-2px);
+}
+
+[data-theme="most-likely-to"] .gi-category-icon {
+  transition: transform 220ms ease, color 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+}
+
+/* One-shot reveal states; the no-motion rule below makes content immediate. */
+[data-theme="most-likely-to"] .mlt-reveal {
+  opacity: 0;
+  transform: translateY(12px) scale(0.985);
+  transition: opacity 520ms cubic-bezier(0.22, 1, 0.36, 1), transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-theme="most-likely-to"] .mlt-reveal-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+[data-theme="most-likely-to"] .mlt-timeline [data-step="2"].mlt-reveal { transition-delay: 80ms; }
+[data-theme="most-likely-to"] .mlt-timeline [data-step="3"].mlt-reveal { transition-delay: 160ms; }
+[data-theme="most-likely-to"] .mlt-timeline [data-step="4"].mlt-reveal { transition-delay: 240ms; }
+[data-theme="most-likely-to"] .gi-categories .mlt-reveal:nth-child(2) { transition-delay: 60ms; }
+[data-theme="most-likely-to"] .gi-categories .mlt-reveal:nth-child(3) { transition-delay: 120ms; }
+[data-theme="most-likely-to"] .gi-categories .mlt-reveal:nth-child(4) { transition-delay: 180ms; }
+[data-theme="most-likely-to"] .gi-categories .mlt-reveal:nth-child(5) { transition-delay: 240ms; }
+
+@media (max-width: 900px) {
+  [data-theme="most-likely-to"] .mlt-timeline::before {
+    left: 50%;
+    right: auto;
+    top: 7%;
+    bottom: 7%;
+    width: 1px;
+    height: auto;
+    transform: scaleY(0);
+    transform-origin: center top;
+  }
+
+  [data-theme="most-likely-to"] .mlt-timeline:has(.gi-step.mlt-reveal-visible)::before {
+    transform: scaleY(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="most-likely-to"] .mlt-reveal,
+  [data-theme="most-likely-to"] .mlt-reveal-visible {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  [data-theme="most-likely-to"] .mlt-timeline::before {
+    transform: none;
+    transition: none;
   }
 }
 
