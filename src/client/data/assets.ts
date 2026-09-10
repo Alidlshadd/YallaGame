@@ -12,14 +12,21 @@
  * Nothing here needs editing, and the extension no longer needs declaring.
  */
 
-const COVERS: Record<string, string> = Object.fromEntries(
-  Object.entries(
-    import.meta.glob<string>("../assets/worlds/*-cover.*", {
-      eager: true,
-      query: "?url",
-      import: "default"
-    })
-  ).map(([path, url]) => [path.replace(/^.*\/(.+)-cover\.[^.]+$/, "$1"), url])
+/**
+ * Turns a glob of hashed files into a lookup keyed by whatever `keyPattern`
+ * pulls out of each path — the theme for a cover, the bare file name for a
+ * backdrop. One helper so a third hashed-asset category is one call, not a
+ * third copy of the glob plumbing.
+ */
+function hashedAssetMap(files: Record<string, string>, keyPattern: RegExp): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(files).map(([path, url]) => [path.replace(keyPattern, "$1"), url])
+  )
+}
+
+const COVERS: Record<string, string> = hashedAssetMap(
+  import.meta.glob<string>("../assets/worlds/*-cover.*", { eager: true, query: "?url", import: "default" }),
+  /^.*\/(.+)-cover\.[^.]+$/
 )
 
 /**
@@ -37,14 +44,9 @@ export function worldCoverPath(theme: string): string {
  * because a world has several — a hero, a sections panel, a closing CTA — and
  * they were never named to a single pattern.
  */
-const BACKGROUNDS: Record<string, string> = Object.fromEntries(
-  Object.entries(
-    import.meta.glob<string>("../assets/world-bg/*", {
-      eager: true,
-      query: "?url",
-      import: "default"
-    })
-  ).map(([path, url]) => [path.replace(/^.*\/(.+)\.[^.]+$/, "$1"), url])
+const BACKGROUNDS: Record<string, string> = hashedAssetMap(
+  import.meta.glob<string>("../assets/world-bg/*", { eager: true, query: "?url", import: "default" }),
+  /^.*\/(.+)\.[^.]+$/
 )
 
 /** A backdrop by file name, e.g. `worldBackground("spy-game-detail")`. */

@@ -13,7 +13,7 @@ import { worldCoverPath } from "../data/assets.js"
 import { getWorldDetail } from "../data/worldDetails.js"
 import type { CategoryDifficulty } from "../data/worldDetails.js"
 import { buildCategoryIconSvg } from "../data/categoryIcons.js"
-import { prefersReducedMotion } from "../ui/motion.js"
+import { scrollReveal } from "../ui/motion.js"
 import "../themes/game-info-layout.css"
 
 /* Localized label for a category difficulty enum value. */
@@ -64,7 +64,10 @@ function roleFallbackGlyph(kind: BadgeKind): string {
 const STEP_ICONS = ["I", "II", "III", "IV"] as const
 const STEP_SYMBOLS = ["⬡", "▢", "◈", "▶"] as const   // small premium symbol per step
 const STEP_TITLE_KEYS = ["step1Title", "step2Title", "step3Title", "step4Title"] as const
-const MLT_STEP_TITLE_KEYS = ["mltStep1Title", "mltStep2Title", "mltStep3Title", "mltStep4Title"] as const
+// Most Likely To's first two steps — host creates a room, players join with a
+// code — are the same beat as every other world's, so they share copy rather
+// than carrying their own translation that would only drift from it.
+const MLT_STEP_TITLE_KEYS = [STEP_TITLE_KEYS[0], STEP_TITLE_KEYS[1], "mltStep3Title", "mltStep4Title"] as const
 type StepTitleKey = typeof STEP_TITLE_KEYS[number] | typeof MLT_STEP_TITLE_KEYS[number]
 
 /* Premium theme icon for the hero eyebrow. SVG bat for the vampire world,
@@ -176,9 +179,7 @@ function buildHero(
   })
 
   const actions = el("div", { class: "gi-actions" },
-    game.turnBased === true || game.id === "most-likely-to"
-      ? [createBtn, joinBtn]
-      : [createBtn, joinBtn, localBtn]
+    game.turnBased === true ? [createBtn, joinBtn] : [createBtn, joinBtn, localBtn]
   )
 
   const hint = el("p", { class: "gi-hint" }, [
@@ -688,30 +689,17 @@ export const gameInfoView = {
     )
     if (game.id !== "most-likely-to") content.appendChild(bottom)
 
-    let sectionObserver: IntersectionObserver | null = null
+    let stopReveal: (() => void) | null = null
     if (game.id === "most-likely-to") {
       const revealTargets = [...content.querySelectorAll<HTMLElement>(
         ".gi-sections-wrap .gi-about-panel, .gi-sections-wrap .gi-section-header, " +
         ".gi-sections-wrap .gi-step, .gi-sections-wrap .gi-category"
       )]
-      revealTargets.forEach(target => target.classList.add("mlt-reveal"))
-      const revealAll = (): void => revealTargets.forEach(target => target.classList.add("mlt-reveal-visible"))
-      if (prefersReducedMotion() || !("IntersectionObserver" in window)) {
-        revealAll()
-      } else {
-        sectionObserver = new IntersectionObserver(entries => {
-          for (const entry of entries) {
-            if (!entry.isIntersecting) continue
-            entry.target.classList.add("mlt-reveal-visible")
-            sectionObserver?.unobserve(entry.target)
-          }
-        }, { threshold: 0.16, rootMargin: "0px 0px -8% 0px" })
-        revealTargets.forEach(target => sectionObserver?.observe(target))
-      }
+      stopReveal = scrollReveal(revealTargets, { hiddenClass: "mlt-reveal", visibleClass: "mlt-reveal-visible" })
     }
 
     return () => {
-      sectionObserver?.disconnect()
+      stopReveal?.()
       clear(content)
     }
   }

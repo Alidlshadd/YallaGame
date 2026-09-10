@@ -52,8 +52,6 @@ const en = {
   step2Title: "Players Join with Code",
   step3Title: "Roles are Assigned",
   step4Title: "The Game Begins",
-  mltStep1Title: "Host Creates a Room",
-  mltStep2Title: "Players Join with Code",
   mltStep3Title: "Everyone Votes",
   mltStep4Title: "Results Reveal Together",
   badgeEvil: "Evil Side",

@@ -49,3 +49,39 @@ export function animate(
     delay: options.delay ?? 0
   })
 }
+
+export interface ScrollRevealOptions {
+  /** Added to every target up front, so CSS can hide it before it is seen. */
+  hiddenClass: string
+  /** Added once a target crosses the threshold; it is then never re-hidden. */
+  visibleClass: string
+  threshold?: number
+  rootMargin?: string
+}
+
+/**
+ * Reveal elements one at a time as they scroll into view, instead of all at
+ * once with the page. Falls back to revealing everything immediately when
+ * the visitor prefers reduced motion or the browser has no
+ * IntersectionObserver. Returns a cleanup function — call it when the view
+ * that owns these targets is torn down.
+ */
+export function scrollReveal(targets: HTMLElement[], options: ScrollRevealOptions): () => void {
+  const { hiddenClass, visibleClass, threshold = 0.16, rootMargin = "0px 0px -8% 0px" } = options
+  targets.forEach(target => target.classList.add(hiddenClass))
+
+  if (prefersReducedMotion() || !("IntersectionObserver" in window)) {
+    targets.forEach(target => target.classList.add(visibleClass))
+    return () => { /* nothing to disconnect */ }
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue
+      entry.target.classList.add(visibleClass)
+      observer.unobserve(entry.target)
+    }
+  }, { threshold, rootMargin })
+  targets.forEach(target => observer.observe(target))
+  return () => observer.disconnect()
+}

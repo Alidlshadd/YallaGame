@@ -3,6 +3,7 @@ import type {
   MostLikelyToPlayer, MostLikelyToResult, MostLikelyToView
 } from "@shared/most-likely-to.js"
 import type { GameEngine, Transition } from "../domain/engine.js"
+import { resolveGame } from "./catalog.js"
 import { MOST_LIKELY_TO_QUESTIONS, resolveQuestion, type Question } from "./questions/most-likely-to.js"
 
 /**
@@ -31,8 +32,19 @@ export const GAME_OVER = "GAME_OVER"
 /** Reading time before the buttons appear. */
 const READ_MS = 5_000
 
-const DEFAULT_VOTING_SECONDS = 20
-const DEFAULT_ROUNDS = 5
+// The catalogue already carries these under `defaultSettings` — a room's
+// settings are normalized against it before the engine ever sees them — so
+// they are read from there rather than hand-duplicated, to keep one source
+// of truth for what a fresh room starts with.
+const CATALOG_DEFAULTS = resolveGame(MOST_LIKELY_TO_ID)?.defaultSettings ?? {}
+
+function catalogNumber(key: string, fallback: number): number {
+  const value = CATALOG_DEFAULTS[key]
+  return typeof value === "number" ? value : fallback
+}
+
+const DEFAULT_VOTING_SECONDS = catalogNumber("votingSeconds", 20)
+const DEFAULT_ROUNDS = catalogNumber("roundCount", 5)
 
 /**
  * One vote. Flat, and carrying everything a `votes` row would need — round,
@@ -99,35 +111,36 @@ function openRound(asked: readonly string[], rng: () => number): MostLikelyToSta
  */
 export function tally(room: Room): MostLikelyToResult {
   const state = stateOf(room)
-  const counts = new Map<string, number>(room.players.map(p => [p.id, 0]))
-  const voters = new Map<string, string[]>(room.players.map(p => [p.id, []]))
-  const nameOf = new Map(room.players.map(p => [p.id, p.name]))
   // Off by default: a round where the table can see who pointed at whom is a
   // different evening, so the host has to ask for it.
   const named = room.settings["showVoters"] === true
 
+  const byPlayer = new Map<string, { name: string; voteCount: number; voters: string[] }>(
+    room.players.map(p => [p.id, { name: p.name, voteCount: 0, voters: [] }])
+  )
+
   let totalVotes = 0
   for (const vote of state.votes) {
-    const current = counts.get(vote.targetId)
+    const target = byPlayer.get(vote.targetId)
     // The person voted for has left the room since. Their vote is not counted
     // against a seat that is no longer there.
-    if (current === undefined) continue
-    counts.set(vote.targetId, current + 1)
+    if (target === undefined) continue
+    target.voteCount++
     // A voter who has since left is counted but cannot be named.
-    const voterName = nameOf.get(vote.voterId)
-    if (voterName !== undefined) voters.get(vote.targetId)!.push(voterName)
+    const voterName = byPlayer.get(vote.voterId)?.name
+    if (voterName !== undefined) target.voters.push(voterName)
     totalVotes++
   }
 
   const results = room.players
     .map(p => {
-      const voteCount = counts.get(p.id) ?? 0
+      const entry = byPlayer.get(p.id)!
       return {
         playerId: p.id,
         playerName: p.name,
-        voteCount,
-        percentage: totalVotes === 0 ? 0 : Math.round((voteCount / totalVotes) * 100),
-        ...(named ? { voters: voters.get(p.id) ?? [] } : {})
+        voteCount: entry.voteCount,
+        percentage: totalVotes === 0 ? 0 : Math.round((entry.voteCount / totalVotes) * 100),
+        ...(named ? { voters: entry.voters } : {})
       }
     })
     .sort((a, b) => b.voteCount - a.voteCount || a.playerName.localeCompare(b.playerName))
