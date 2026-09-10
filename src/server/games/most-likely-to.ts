@@ -202,11 +202,20 @@ export const mostLikelyToEngine: GameEngine = {
   },
 
   pending(room): string[] {
-    if (room.phase !== VOTING) return []
-    const state = stateOf(room)
-    return room.players
-      .filter(p => p.connected && !state.votes.some(v => v.voterId === p.id))
-      .map(p => p.id)
+    if (room.phase === VOTING) {
+      const state = stateOf(room)
+      return room.players
+        .filter(p => p.connected && !state.votes.some(v => v.voterId === p.id))
+        .map(p => p.id)
+    }
+    // QUESTION_DISPLAY has nothing to act on — it is a reading clock, not a
+    // wait for moves — so it must never report "done" just because a phone
+    // dropped. Reporting every connected player as still pending keeps
+    // closeEarlyIfDone from cutting the reading time short.
+    if (room.phase === QUESTION_DISPLAY) {
+      return room.players.filter(p => p.connected).map(p => p.id)
+    }
+    return []
   },
 
   view(room, playerId): MostLikelyToView {
@@ -231,7 +240,11 @@ export const mostLikelyToEngine: GameEngine = {
         category: question.category,
         roster: roster(room),
         myVote: state.votes.find(v => v.voterId === playerId)?.targetId ?? null,
-        votedCount: state.votes.length,
+        // A vote from a phone that has since dropped still counts toward the
+        // final tally, but the live "X / Y voted" readout is about who is
+        // still in the room right now — counting it here would let the
+        // numerator outrun the denominator.
+        votedCount: state.votes.filter(v => room.players.some(p => p.connected && p.id === v.voterId)).length,
         totalPlayers: room.players.filter(p => p.connected).length
       }
     }

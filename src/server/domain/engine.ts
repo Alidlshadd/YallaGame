@@ -157,6 +157,10 @@ export async function advance(
 export async function startGame(deps: EngineDeps, code: string, adminSecret: string): Promise<Room> {
   const room = await deps.store.update(code, current => {
     if (current.adminSecret !== adminSecret) throw new Error("INVALID_ADMIN")
+    // A round already in flight owns its votes. Restarting it here would
+    // silently wipe them out from under the table — e.g. a reconnecting
+    // host's client re-sending game:start while the round is already live.
+    if (current.phase !== IDLE_PHASE) throw new Error("GAME_ALREADY_RUNNING")
     const engine = deps.resolveEngine(current.gameId)
     if (engine === undefined) throw new Error("UNKNOWN_GAME")
     const fresh = { ...current, round: 1, scores: {}, phaseSeq: current.phaseSeq }

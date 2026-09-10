@@ -4,7 +4,7 @@ import type { Room } from "@shared/types.js"
 import { MemoryStore } from "@server/store/memory-store.js"
 import { cancelAllTimers } from "@server/domain/scheduler.js"
 import {
-  hostAdvance, startGame, submitAction, type EngineDeps
+  hostAdvance, onPlayerLeft, startGame, submitAction, type EngineDeps
 } from "@server/domain/engine.js"
 import { isTurnBased, resolveEngine } from "@server/games/engines.js"
 import { resolveGame } from "@server/games/catalog.js"
@@ -371,5 +371,39 @@ describe("a phone that goes dark", () => {
       ...r, players: r.players.map(p => p.id === "p3" ? { ...p, connected: false } : p)
     }))
     expect(mostLikelyToEngine.pending(await h.room())).toEqual([])
+  })
+
+  it("does not cut the reading clock short when a phone drops before anyone votes", async () => {
+    const h = await harness()
+    await startGame(h.deps, "MLT01", "s3cret")
+    expect((await h.room()).phase).toBe(QUESTION_DISPLAY)
+
+    // One second into the five-second reading clock, a phone drops.
+    await vi.advanceTimersByTimeAsync(1_000)
+    await h.store.update("MLT01", r => ({
+      ...r, players: r.players.map(p => p.id === "p3" ? { ...p, connected: false } : p)
+    }))
+    await onPlayerLeft(h.deps, "MLT01")
+
+    // The grace period alone would have closed it by now; the full reading
+    // clock must not.
+    await vi.advanceTimersByTimeAsync(1_200)
+    expect((await h.room()).phase).toBe(QUESTION_DISPLAY)
+
+    await vi.advanceTimersByTimeAsync(READ_MS - 1_000 - 1_200)
+    expect((await h.room()).phase).toBe(VOTING)
+  })
+
+  it("does not count a vote toward the live readout once its voter has left", async () => {
+    const h = await harness()
+    const seq = await atVoting(h)
+    await submitAction(h.deps, "MLT01", "p1", seq, { type: "vote", target: "p2" })
+
+    await h.store.update("MLT01", r => ({
+      ...r, players: r.players.map(p => p.id === "p1" ? { ...p, connected: false } : p)
+    }))
+
+    const shown = await h.viewFor("p2")
+    expect(shown).toMatchObject({ kind: "voting", votedCount: 0, totalPlayers: 2 })
   })
 })

@@ -195,6 +195,7 @@ export type ErrorCode =
   /** The tap arrived from a screen the room has already moved past. */
   | "PHASE_STALE"
   | "GAME_NOT_RUNNING"
+  | "GAME_ALREADY_RUNNING"
 
 export interface SocketData {
   roomCode?: string

@@ -129,6 +129,20 @@ describe("startGame", () => {
     const room = await startGame(h.deps, "ABCDE", "s3cret")
     expect(room.scores).toEqual({})
   })
+
+  it("refuses to restart a round that is already in flight", async () => {
+    const h = await harness()
+    await startGame(h.deps, "ABCDE", "s3cret")
+    const seq = (await h.store.get("ABCDE"))!.phaseSeq
+    await submitAction(h.deps, "ABCDE", "p1", seq, { type: "vote", target: "p2" })
+
+    // A reconnecting host's client re-sending game:start must not wipe the
+    // vote just cast.
+    await expect(startGame(h.deps, "ABCDE", "s3cret")).rejects.toThrow("GAME_ALREADY_RUNNING")
+    const room = await h.store.get("ABCDE")
+    expect(room?.round).toBe(1)
+    expect(stateOf(room!).votes).toEqual({ p1: "p2" })
+  })
 })
 
 describe("advance", () => {
