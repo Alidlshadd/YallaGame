@@ -4,8 +4,10 @@ import { emit, lastPhase, socket } from "../services/socket.js"
 import { buildAvatar } from "./avatar.js"
 import { showToast } from "./toast.js"
 import { vibrate } from "./haptics.js"
+import { orchestrate, prefersReducedMotion, type MotionStep } from "./motion.js"
 import type { PhaseEvent } from "@shared/events.js"
 import type { MostLikelyToPlayer, MostLikelyToView } from "@shared/most-likely-to.js"
+import type { BluffTriviaView } from "@shared/bluff-trivia.js"
 
 /**
  * The screen a turn-based game is played on.
@@ -37,6 +39,8 @@ export function mountGameStage(opts: GameStageOptions): () => void {
   let clockOffset = 0
   let sending = false
   let clockEl: HTMLElement | null = null
+  /** Cancels the score-reveal stagger a previous render started, if any. */
+  let cancelReveal: (() => void) | null = null
 
   /** The table shares one countdown, so it runs off the server's clock. */
   const serverNow = (): number => Date.now() + clockOffset
@@ -69,6 +73,34 @@ export function mountGameStage(opts: GameStageOptions): () => void {
     sending = false
     if (r.ok) vibrate("tap")
     else showToast(t("errorVoteRejected"))
+  }
+
+  async function submitLie(text: string): Promise<void> {
+    if (phase === null || sending) return
+    const trimmed = text.trim()
+    if (trimmed === "") return
+    sending = true
+    const r = await emit("game:action", {
+      code: opts.code,
+      seq: phase.seq,
+      action: { type: "lie", text: trimmed }
+    })
+    sending = false
+    if (r.ok) vibrate("tap")
+    else showToast(t("errorLieRejected"))
+  }
+
+  async function castGuess(optionId: string): Promise<void> {
+    if (phase === null || sending) return
+    sending = true
+    const r = await emit("game:action", {
+      code: opts.code,
+      seq: phase.seq,
+      action: { type: "guess", optionId }
+    })
+    sending = false
+    if (r.ok) vibrate("tap")
+    else showToast(t("errorGuessRejected"))
   }
 
   async function closePhase(): Promise<void> {
@@ -189,11 +221,142 @@ export function mountGameStage(opts: GameStageOptions): () => void {
     return out
   }
 
+  function buildBluffSubmit(view: Extract<BluffTriviaView, { kind: "bluff-submit" }>): HTMLElement[] {
+    const locked = view.mySubmission !== null
+
+    const input = el("textarea", {
+      class: "bluff-lie-input",
+      maxlength: 80,
+      rows: 2,
+      placeholder: t("bluffLiePlaceholder"),
+      "aria-label": t("bluffLiePlaceholder")
+    }) as HTMLTextAreaElement
+    input.value = view.mySubmission ?? ""
+    input.disabled = locked
+
+    const counter = el("span", { class: "bluff-lie-counter" }, [`${input.value.length}/80`])
+    input.addEventListener("input", () => {
+      counter.textContent = `${input.value.length}/80`
+      counter.classList.toggle("limit", input.value.length >= 80)
+    })
+
+    const submitBtn = el("button", { class: "btn btn-primary bluff-submit", type: "button" }, [t("bluffSubmit")])
+    submitBtn.addEventListener("click", () => void submitLie(input.value))
+    if (locked) (submitBtn as HTMLButtonElement).disabled = true
+
+    return [
+      el("div", { class: "bluff-lie-row" }, [input, counter, submitBtn]),
+      el("p", { class: "mlt-hint" }, [locked ? t("bluffLieLocked") : t("bluffLieHint")]),
+      el("p", { class: "mlt-counter" }, [`${view.submittedCount} / ${view.totalPlayers} ${t("bluffSubmitted")}`])
+    ]
+  }
+
+  function buildBluffGuessing(view: Extract<BluffTriviaView, { kind: "bluff-guessing" }>): HTMLElement[] {
+    const lang = getLang()
+    const locked = view.myGuess !== null
+    const list = el("div", { class: "bluff-options" })
+
+    view.options.forEach((option, index) => {
+      const chosen = view.myGuess === option.optionId
+      const children: Array<Node | string> = [el("span", { class: "bluff-option-text" }, [option.text[lang]])]
+      if (option.isOwn) children.push(el("span", { class: "bluff-reveal-badge" }, [t("bluffOwnOption")]))
+
+      const button = el("button", {
+        class: `bluff-option${chosen ? " chosen" : ""}`,
+        type: "button",
+        style: `--i: ${index}`,
+        "aria-pressed": chosen ? "true" : "false"
+      }, children) as HTMLButtonElement
+      // The server is the one that actually refuses an own lie or a second
+      // guess — this only keeps a thumb from tapping what it already knows
+      // will be rejected.
+      button.disabled = locked || option.isOwn
+      button.addEventListener("click", () => void castGuess(option.optionId))
+      list.appendChild(button)
+    })
+
+    return [
+      list,
+      el("p", { class: "mlt-hint" }, [locked ? t("bluffGuessLocked") : t("bluffGuessHint")]),
+      el("p", { class: "mlt-counter" }, [`${view.guessedCount} / ${view.totalPlayers} ${t("bluffGuessed")}`])
+    ]
+  }
+
+  function buildBluffReveal(view: Extract<BluffTriviaView, { kind: "bluff-reveal" | "bluff-over" }>): HTMLElement[] {
+    const lang = getLang()
+    const nameOf = (id: string): string => view.roster.find(p => p.id === id)?.name ?? ""
+
+    const list = el("div", { class: "bluff-reveal-list" })
+    const rows: HTMLElement[] = []
+
+    for (const option of view.options) {
+      const row = el("div", { class: `bluff-reveal-row ${option.type}` })
+      row.append(el("p", { class: "bluff-reveal-row-text" }, [option.text[lang]]))
+
+      if (option.optionId === view.correctOptionId) {
+        row.append(el("p", { class: "bluff-reveal-meta" }, [t("bluffCorrectAnswer")]))
+      } else if (option.owners.length > 0) {
+        row.append(el("p", { class: "bluff-reveal-meta" }, [`${t("bluffWrittenBy")} ${option.owners.map(nameOf).join(", ")}`]))
+      }
+
+      const pickedNames = option.selectedBy.map(nameOf)
+      row.append(el("p", { class: "bluff-reveal-meta" }, [
+        pickedNames.length === 0 ? t("bluffNobodyFooled") : `${t("bluffPickedBy")} ${pickedNames.join(", ")}`
+      ]))
+
+      list.appendChild(row)
+      rows.push(row)
+    }
+
+    // The server already sent the whole reveal in one payload; this stagger
+    // is purely a local animation, so a refresh mid-sequence just shows it
+    // settled rather than stuck partway through.
+    const steps: MotionStep[] = rows.map((row, index) => ({
+      at: prefersReducedMotion() ? 0 : index * 900,
+      do: () => row.classList.add("shown")
+    }))
+    cancelReveal = orchestrate(steps)
+
+    // Every seat gets a row, not just the ones `totalScores` has an entry
+    // for — a player who scored nothing this game is still in the room.
+    const scoreboard = el("div", { class: "bluff-scoreboard" })
+    const ranked = [...view.roster].sort((a, b) => (view.totalScores[b.id] ?? 0) - (view.totalScores[a.id] ?? 0))
+    for (const player of ranked) {
+      const nameChildren: Array<Node | string> = [player.name]
+      if (view.truthGuesserPlayerIds.includes(player.id)) {
+        nameChildren.push(el("span", { class: "bluff-reveal-badge" }, [t("bluffTruthBonus")]))
+      }
+      scoreboard.appendChild(el("div", { class: `bluff-score-row${player.id === opts.myPlayerId ? " me" : ""}` }, [
+        el("span", { class: "bluff-score-name" }, nameChildren),
+        el("span", { class: "bluff-score-points" }, [`${view.totalScores[player.id] ?? 0} ${t("bluffPts")}`])
+      ]))
+    }
+
+    const out: HTMLElement[] = [
+      el("p", { class: "mlt-eyebrow" }, [view.kind === "bluff-over" ? t("bluffGameOver") : t("bluffReveal")]),
+      list,
+      el("p", { class: "mlt-eyebrow" }, [t("bluffScoreboard")]),
+      scoreboard
+    ]
+
+    if (isHost) {
+      const label = view.kind === "bluff-over" ? t("bluffBackToLobby") : t("bluffNextRound")
+      const button = el("button", { class: "btn btn-primary mlt-advance", type: "button" }, [label])
+      button.addEventListener("click", () => void (view.kind === "bluff-over" ? endGame() : closePhase()))
+      out.push(button)
+    } else {
+      out.push(el("p", { class: "mlt-counter" }, [t("bluffWaitingHost")]))
+    }
+    return out
+  }
+
   function render(): void {
     clear(stage)
     clockEl = null
+    cancelReveal?.()
+    cancelReveal = null
 
-    const view = phase?.view as MostLikelyToView | null | undefined
+    const view = phase?.view as (MostLikelyToView | BluffTriviaView) | null | undefined
     if (phase === null || view === null || view === undefined) {
       stage.hidden = true
       document.body.classList.remove("stage-open")
@@ -214,7 +377,11 @@ export function mountGameStage(opts: GameStageOptions): () => void {
 
     if (view.kind === "question") panel.append(el("p", { class: "mlt-hint" }, [t("mltGetReady")]))
     else if (view.kind === "voting") panel.append(...buildVoting(view))
-    else panel.append(...buildReveal(view))
+    else if (view.kind === "result" || view.kind === "over") panel.append(...buildReveal(view))
+    else if (view.kind === "bluff-question") panel.append(el("p", { class: "mlt-hint" }, [t("bluffGetReady")]))
+    else if (view.kind === "bluff-submit") panel.append(...buildBluffSubmit(view))
+    else if (view.kind === "bluff-guessing") panel.append(...buildBluffGuessing(view))
+    else if (view.kind === "bluff-reveal" || view.kind === "bluff-over") panel.append(...buildBluffReveal(view))
 
     stage.appendChild(panel)
     drawClock()
@@ -253,6 +420,7 @@ export function mountGameStage(opts: GameStageOptions): () => void {
   return () => {
     socket.off("game:phase", onPhase)
     window.clearInterval(ticker)
+    cancelReveal?.()
     clear(stage)
     stage.hidden = true
     document.body.classList.remove("stage-open")

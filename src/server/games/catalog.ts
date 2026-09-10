@@ -566,6 +566,76 @@ export const GAME_CATALOG: readonly Game[] = [
         }
       }
     ]
+  },
+  {
+    id: "bluff-trivia",
+    icon: "🎭",
+    theme: "bluff-trivia",
+    minPlayers: 2,
+    // Same reason as Most Likely To: the server writes the question, collects
+    // everyone's lie, shuffles the guessing pool once, and scores the round —
+    // there is no deal of roles here, only a clock the server keeps.
+    turnBased: true,
+    defaultSettings: { roundCount: 6 },
+    title: {
+      ku: "درۆی زیرەکانە",
+      ar: "خدعة التريفيا",
+      en: "Bluff Trivia",
+      tr: "Blöf Trivia"
+    },
+    subtitle: {
+      ku: "درۆیەک بنووسە، درۆکانی ئەوانی دیکە بخۆیت، ڕاستی بدۆزەرەوە.",
+      ar: "اكتب كذبة، انخدع بكذبات الآخرين، واعثر على الحقيقة.",
+      en: "Write a lie, fall for everyone else's, and try to find the truth.",
+      tr: "Bir yalan yaz, başkalarının yalanına kan, gerçeği bulmaya çalış."
+    },
+    rules: {
+      ku: [
+        "هۆست ژوور دروست دەکات و یاری دەست پێ دەکات.",
+        "هەموو یاریزانێک هەمان پرسیار دەبینێت، وەڵامی ڕاست شاراوەیە.",
+        "هەرکەسێک درۆیەکی باوەڕپێکراو دەنووسێت.",
+        "درۆکان لەگەڵ وەڵامی ڕاست تێکەڵ دەکرێن و هەموو یاریزانێک هەوڵ دەدات ڕاستەکە بدۆزێتەوە.",
+        "کەسێک درۆکەی بەکاربهێنرێت خاڵ وەردەگرێت، دۆزینەوەی ڕاستی خاڵی زیاتر دەدات."
+      ],
+      ar: [
+        "ينشئ المضيف غرفة ويبدأ اللعبة.",
+        "يرى جميع اللاعبين السؤال نفسه، والإجابة الصحيحة تبقى سرية.",
+        "يكتب كل لاعب كذبة مقنعة.",
+        "تُمزج الأكاذيب مع الإجابة الصحيحة، ويحاول الجميع إيجاد الحقيقة.",
+        "من انخدع أحدهم بكذبته يربح نقاطاً، ومن وجد الإجابة الصحيحة يربح أكثر."
+      ],
+      en: [
+        "The host creates a room and starts the game.",
+        "Everybody sees the same question; the real answer stays secret.",
+        "Each player writes one believable lie.",
+        "The lies are mixed in with the real answer, and everyone tries to spot the truth.",
+        "Fooling someone with your lie scores points — finding the truth scores more."
+      ],
+      tr: [
+        "Host oda kurar ve oyunu başlatır.",
+        "Herkes aynı soruyu görür, doğru cevap gizli kalır.",
+        "Her oyuncu inandırıcı bir yalan yazar.",
+        "Yalanlar doğru cevapla karıştırılır, herkes gerçeği bulmaya çalışır.",
+        "Yalanına kananlar puan kazandırır, doğru cevabı bulmak daha çok puan kazandırır."
+      ]
+    },
+    // Nobody is dealt anything: the question is public and the lie is the
+    // only hidden thing, so there are no roles to hand out.
+    roles: [],
+    settings: [
+      {
+        type: "number",
+        key: "roundCount",
+        min: 1,
+        max: 20,
+        label: {
+          ku: "ژمارەی پرسیارەکان",
+          ar: "عدد الأسئلة",
+          en: "Questions",
+          tr: "Soru Sayısı"
+        }
+      }
+    ]
   }
 ] as const
 

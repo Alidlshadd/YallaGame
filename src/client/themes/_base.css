@@ -4592,3 +4592,197 @@ body.stage-open { overflow: hidden; }
   line-height: 1.4;
   color: var(--text-muted);
 }
+
+/* ─── Bluff Trivia — writing and guessing screens ────────────────────────
+   Shares .mlt / .mlt-head / .mlt-round / .mlt-clock / .mlt-question /
+   .mlt-hint / .mlt-counter / .mlt-eyebrow / .mlt-verdict / .mlt-advance /
+   .mlt-end as-is: that chrome was already written theme-agnostic (every
+   color comes from --theme-*), so a second turn-based game reuses it
+   rather than re-declaring the same header, clock and button shapes. */
+
+.bluff-lie-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.bluff-lie-input {
+  width: 100%;
+  min-height: 64px;
+  padding: var(--s-3);
+  border-radius: 14px;
+  border: 1px solid var(--border-faint);
+  background: var(--theme-surface);
+  color: var(--text-primary);
+  font-size: var(--type-base);
+  font-family: inherit;
+  resize: none;
+}
+
+.bluff-lie-input:focus-visible { outline: 2px solid var(--theme-glow); border-color: var(--theme-accent); }
+.bluff-lie-input:disabled { opacity: 0.6; }
+
+.bluff-lie-counter {
+  align-self: flex-end;
+  font-size: var(--type-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.bluff-lie-counter.limit { color: #ff8080; }
+
+.bluff-submit { width: 100%; }
+
+/* One tap target per answer, sized for a thumb rather than a cursor. */
+.bluff-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.bluff-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  min-height: 56px;
+  padding: var(--s-3);
+  border-radius: 14px;
+  border: 1px solid var(--border-faint);
+  background: var(--theme-surface);
+  color: var(--text-primary);
+  font-size: var(--type-base);
+  font-weight: 600;
+  text-align: start;
+  opacity: 0;
+  animation: bluff-option-in var(--motion-ui-duration) var(--ease-out-expo) both;
+  animation-delay: calc(var(--i, 0) * 60ms);
+  transition: transform var(--motion-ui-duration) var(--motion-ui-easing),
+              border-color var(--motion-ui-duration) var(--motion-ui-easing);
+}
+
+@keyframes bluff-option-in {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.bluff-option:hover:not(:disabled) { border-color: var(--theme-accent); }
+.bluff-option:active:not(:disabled) { transform: scale(0.98); }
+
+.bluff-option-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bluff-option.chosen {
+  border-color: var(--theme-accent);
+  box-shadow: 0 0 24px -8px var(--theme-glow);
+}
+
+.bluff-option:disabled { opacity: 0.45; }
+.bluff-option.chosen:disabled { opacity: 1; }
+/* A viewer's own lie — sealed, and dimmer than a merely-locked screen so it
+   reads as "not yours to pick", not as a network hiccup. */
+.bluff-option.own:disabled { opacity: 0.35; }
+
+/* ─── Score reveal ────────────────────────────────────────────────────── */
+
+.bluff-reveal-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.bluff-reveal-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--s-3);
+  border-radius: 14px;
+  border: 1px solid var(--border-faint);
+  background: var(--theme-surface);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 420ms var(--ease-out-expo), transform 420ms var(--ease-out-expo),
+              border-color 420ms ease, box-shadow 420ms ease;
+}
+
+.bluff-reveal-row.shown { opacity: 1; transform: translateY(0); }
+
+.bluff-reveal-row-text {
+  font-size: var(--type-base);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.bluff-reveal-row.lie.shown {
+  border-color: color-mix(in srgb, var(--theme-accent) 45%, transparent);
+}
+
+.bluff-reveal-row.correct.shown {
+  border-color: var(--theme-glow);
+  box-shadow: 0 0 28px -6px var(--theme-glow);
+  animation: bluff-correct-flash 700ms ease-out;
+}
+
+@keyframes bluff-correct-flash {
+  0%   { background: color-mix(in srgb, var(--theme-glow) 55%, var(--theme-surface)); }
+  100% { background: var(--theme-surface); }
+}
+
+.bluff-reveal-meta {
+  font-size: var(--type-xs);
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.bluff-reveal-badge {
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: var(--type-xs);
+  font-weight: 600;
+  color: var(--theme-glow);
+  border: 1px solid color-mix(in srgb, var(--theme-glow) 45%, transparent);
+}
+
+.bluff-scoreboard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  margin-top: var(--s-2);
+}
+
+.bluff-score-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  border-radius: 10px;
+}
+
+.bluff-score-row.me { background: var(--theme-surface); }
+
+.bluff-score-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bluff-score-points {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--theme-accent);
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bluff-option { opacity: 1; animation: none; }
+  .bluff-reveal-row { opacity: 1; transform: none; transition: none; }
+  .bluff-reveal-row.correct.shown { animation: none; }
+}
