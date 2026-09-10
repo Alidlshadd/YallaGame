@@ -48,7 +48,7 @@ describe("avatar customization", () => {
     click('[id$="characters-tab"]')
     document.querySelector('[role="tablist"]')!.dispatchEvent(new KeyboardEvent("keydown", { key: "End", bubbles: true }))
     expect(document.querySelector<HTMLElement>('[id$="accessories"]')!.hidden).toBe(true)
-    expect(document.querySelector(".avatar-preview img")?.getAttribute("src")).toBe("/assets/characters/ali.png")
+    expect(document.querySelector(".avatar-preview img")?.getAttribute("src")).toBe("/assets/characters/ali.webp")
     click('[data-character="ruby"]')
     expect(tab.disabled).toBe(false)
     click('.accessory-tile[data-accessory="crown"]')

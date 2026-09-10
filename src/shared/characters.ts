@@ -61,17 +61,17 @@ export const CHARACTERS: CharacterDef[] = [
 
 CHARACTERS.push({
   id: "ali", name: { en: "Ali", tr: "Ali", ar: "علي", ku: "علي" },
-  image: "/assets/characters/ali.png", accessories: false
+  image: "/assets/characters/ali.webp", accessories: false
 })
 
 CHARACTERS.push({
   id: "mahmud", name: { en: "Mahmud", tr: "Mahmud", ar: "محمود", ku: "مەحموود" },
-  image: "/assets/characters/mahmud.png", accessories: false
+  image: "/assets/characters/mahmud.webp", accessories: false
 })
 
 CHARACTERS.push({
   id: "morinji", name: { en: "Morinji", tr: "Morinji", ar: "مورينجي", ku: "مۆرینجی" },
-  image: "/assets/characters/morinji.png", accessories: false
+  image: "/assets/characters/morinji.webp", accessories: false
 })
 
 export const CHARACTER_IDS: readonly string[] = [...CHARACTERS, ...LEGACY_CHARACTERS].map(c => c.id)

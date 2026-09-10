@@ -3,7 +3,7 @@ import * as session from "./services/session.js"
 import { refreshCurrentView, register, registerLazy, setView } from "./router.js"
 import { initNavigation } from "./services/navigation.js"
 import { prefetchOfflineBundles, registerServiceWorker } from "./services/pwa.js"
-import { homeView, loadCatalog } from "./views/home.js"
+import { homeView, loadCatalog, getGames } from "./views/home.js"
 import { applyTheme, clearTheme } from "./themes/loader.js"
 import { ensureAtmosphere, applyPerformanceProfile } from "./ui/atmosphere.js"
 import { initLazyImageFade } from "./ui/lazyImage.js"
@@ -91,6 +91,7 @@ async function bootstrap() {
 
   const existing = session.load()
   const catalogPromise = loadCatalog()
+  const initialCatalog = JSON.stringify(getGames())
 
   // Shared invite links: /?join=CODE opens the join view with the code
   // prefilled. The param is consumed (removed from the URL) so reloads
@@ -104,7 +105,6 @@ async function bootstrap() {
     return
   }
   if (existing?.kind === "admin") {
-    await catalogPromise
     const { emit } = await import("./services/socket.js")
     const r = await emit("admin:reconnect", { code: existing.code, adminSecret: existing.adminSecret })
     if (r.ok) {
@@ -116,7 +116,6 @@ async function bootstrap() {
     session.clear()
   }
   if (existing?.kind === "player") {
-    await catalogPromise
     const { emit } = await import("./services/socket.js")
     const r = await emit("player:join", { code: existing.code, name: existing.name, playerId: existing.playerId })
     if (r.ok) {
@@ -140,7 +139,7 @@ async function bootstrap() {
   prefetchOfflineBundles()
   await catalogPromise
   const active = document.querySelector<HTMLElement>("section.view.active-view")
-  if (active?.id === "homeView") await refreshCurrentView()
+  if (active?.id === "homeView" && (getGames().length === 0 || initialCatalog !== JSON.stringify(getGames()))) await refreshCurrentView()
 }
 
 void bootstrap()

@@ -33,6 +33,8 @@ test("joining straight from a room browser row seats the player", async ({ brows
   const hostCtx = await browser.newContext()
   const host = await hostCtx.newPage()
   const code = await createRoom(host, { hostName: "Zeynep", isPublic: true })
+  // A player joining must not rebuild the host's unsaved settings form.
+  await host.locator("#setting-vampireCount").fill("2")
 
   const playerCtx = await browser.newContext()
   const player = await playerCtx.newPage()
@@ -50,6 +52,10 @@ test("joining straight from a room browser row seats the player", async ({ brows
 
   await expect(player.locator("#playerWelcome")).toContainText("Ada")
   await expect(host.locator("#adminPlayersList")).toContainText("Ada")
+  await expect(host.locator("#setting-vampireCount")).toHaveValue("2")
+  await host.locator("#setting-vampireCount").fill("0")
+  await host.click("#saveSettingsBtn")
+  await expect(host.locator("#setting-vampireCount")).toHaveValue("1")
 
   await hostCtx.close(); await playerCtx.close()
 })

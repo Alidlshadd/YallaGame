@@ -1,5 +1,8 @@
 import { defineConfig, devices } from "@playwright/test"
 
+const port = process.env.PORT ?? "3000"
+const baseURL = `http://localhost:${port}`
+
 export default defineConfig({
   testDir: "tests/e2e",
   fullyParallel: false,
@@ -8,15 +11,15 @@ export default defineConfig({
   retries: 0,
   reporter: "list",
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL,
     trace: "retain-on-failure"
   },
   webServer: {
     command: "npm run build && npm start",
-    url: "http://localhost:3000",
+    url: baseURL,
     timeout: 60_000,
     reuseExistingServer: !process.env.CI,
-    env: { NODE_ENV: "production", DB_PATH: ":memory:" }
+    env: { NODE_ENV: "production", DB_PATH: ":memory:", PORT: port }
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }]
 })

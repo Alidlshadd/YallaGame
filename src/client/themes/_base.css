@@ -4786,3 +4786,131 @@ body.stage-open { overflow: hidden; }
   .bluff-reveal-row { opacity: 1; transform: none; transition: none; }
   .bluff-reveal-row.correct.shown { animation: none; }
 }
+
+/* ─── Secret Politician ───────────────────────────────────────────────────
+   Reuses .mlt / .mlt-head / .mlt-round / .mlt-clock / .mlt-question /
+   .mlt-hint / .mlt-counter / .mlt-eyebrow / .mlt-verdict / .mlt-advance /
+   .mlt-end for the same reason Bluff Trivia does — that chrome was already
+   theme-agnostic. Player-picking screens (nominate, investigate, special
+   election, execute) reuse .mlt-targets / .mlt-target as-is: "tap the one
+   person you mean" is the same interaction Most Likely To already built.
+   A hand of two or three cards reuses .bluff-options / .bluff-option, and
+   yes/no choices (the vote, the veto decision) use the same component with
+   exactly two entries. Only the pieces with no earlier equivalent — the law
+   board, the role badge, the final role list — are new below. */
+
+.politician-board {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+}
+
+.politician-track {
+  display: flex;
+  gap: 5px;
+}
+
+.politician-pip {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1px solid var(--border-faint);
+  background: transparent;
+}
+
+.politician-pip.filled.good { background: #4f9d6e; border-color: #4f9d6e; }
+.politician-pip.filled.bad  { background: #b5454a; border-color: #b5454a; }
+
+.politician-track-label {
+  font-size: var(--type-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-inline-end: var(--s-1);
+}
+
+.politician-tracker {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-inline-start: auto;
+}
+
+.politician-tracker .politician-pip { width: 10px; height: 10px; border-radius: 999px; }
+.politician-tracker .politician-pip.filled { background: var(--theme-accent); border-color: var(--theme-accent); }
+
+.politician-role-badge {
+  padding: var(--s-4);
+  border-radius: 16px;
+  border: 1px solid var(--border-faint);
+  background: var(--theme-surface);
+  text-align: center;
+}
+
+.politician-role-name {
+  margin: 0;
+  font-family: var(--theme-display);
+  font-size: clamp(24px, 7vw, 34px);
+  font-weight: 700;
+  color: var(--theme-glow);
+}
+
+.politician-role-side {
+  margin: var(--s-1) 0 0;
+  font-size: var(--type-sm);
+  color: var(--text-muted);
+}
+
+.politician-allies {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.politician-ally-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--s-2) var(--s-3);
+  border-radius: 10px;
+  background: var(--theme-surface);
+  font-weight: 600;
+}
+
+.politician-ally-row .badge { font-size: var(--type-xs); color: var(--theme-glow); }
+
+.politician-summary {
+  padding: var(--s-3);
+  border-radius: 12px;
+  background: var(--theme-surface);
+  font-size: var(--type-sm);
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.politician-roles-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.politician-role-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--s-2) var(--s-3);
+  border-radius: 10px;
+  border: 1px solid var(--border-faint);
+}
+
+.politician-role-row .politician-role-tag {
+  font-family: var(--font-mono);
+  font-size: var(--type-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--theme-glow);
+}
+
+.politician-watching {
+  opacity: 0.55;
+}

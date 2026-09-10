@@ -1681,6 +1681,14 @@ img.hero-emblem-mark {
 }
 
 /* Low-end perf profile from atmosphere.ts */
+.home-slide[data-offscreen="true"] *,
+.home-slide[data-offscreen="true"] *::before,
+.home-slide[data-offscreen="true"] *::after,
+.home-slide[data-offscreen="true"]::before,
+.home-slide[data-offscreen="true"]::after {
+  animation-play-state: paused !important;
+}
+
 .atmosphere[data-perf="low"] ~ .shell .home-slide .center-particles,
 .atmosphere[data-perf="low"] ~ .shell .home-slide .center-fog,
 .atmosphere[data-perf="low"] ~ .shell .hero-embers {

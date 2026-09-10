@@ -23,7 +23,7 @@
  * shows the old cover until the visit after next. Changing the version drops
  * both caches on activate, which is the only thing that fixes it that visit.
  */
-const VERSION = "v2"
+const VERSION = "v3"
 const SHELL_CACHE = `yalla-shell-${VERSION}`
 const ASSET_CACHE = `yalla-assets-${VERSION}`
 const SHELL_URL = "/"
@@ -54,7 +54,8 @@ async function precacheShellAssets() {
     const manifest = await fetch("/asset-manifest.json", { cache: "reload" })
     if (manifest.ok) {
       for (const entry of Object.values(await manifest.json())) {
-        if (entry.file) assets.add(`/${entry.file}`)
+        // Offline play needs code and styles, not every world's poster art.
+        if (entry.file && /\.(js|css|woff2?)$/.test(entry.file)) assets.add(`/${entry.file}`)
         for (const css of entry.css ?? []) assets.add(`/${css}`)
       }
     }
@@ -64,7 +65,14 @@ async function precacheShellAssets() {
 
   if (assets.size > 0) {
     const assetCache = await caches.open(ASSET_CACHE)
-    await Promise.allSettled([...assets].map(url => assetCache.add(url)))
+    const queue = [...assets]
+    // Keep bandwidth available for the page the player is actually opening.
+    await Promise.all(Array.from({ length: 2 }, async () => {
+      while (queue.length > 0) {
+        const url = queue.shift()
+        await assetCache.add(url).catch(() => {})
+      }
+    }))
   }
   await shellCache.add("/manifest.webmanifest").catch(() => {})
 }

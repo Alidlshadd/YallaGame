@@ -48,6 +48,19 @@ describe("game catalog offline fallback", () => {
     expect(getGames()).toEqual([])
   })
 
+  it("exposes the stored catalog while a slow refresh is still pending", async () => {
+    localStorage.setItem("role-room:catalog", JSON.stringify(CATALOG))
+    let respond!: (response: Response) => void
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(resolve => { respond = resolve })))
+    const { loadCatalog, getGames } = await freshHome()
+    const loading = loadCatalog()
+
+    expect(getGames().map(g => g.id)).toEqual(["spy-game", "who-am-i"])
+    respond(new Response(JSON.stringify(CATALOG.slice(0, 1))))
+    await loading
+    expect(getGames().map(g => g.id)).toEqual(["spy-game"])
+  })
+
   it("ignores a corrupted or empty stored catalog", async () => {
     localStorage.setItem("role-room:catalog", "[]")
     vi.stubGlobal("fetch", vi.fn(async () => { throw new TypeError("Failed to fetch") }))
@@ -57,5 +70,25 @@ describe("game catalog offline fallback", () => {
     await loadCatalog()
 
     expect(getGames()).toEqual([])
+  })
+
+  it("aborts a stalled refresh and preserves the cached catalog", async () => {
+    vi.useFakeTimers()
+    try {
+      localStorage.setItem("role-room:catalog", JSON.stringify(CATALOG))
+      const fetchMock = vi.fn((_url: string, init: RequestInit) => new Promise<Response>((_resolve, reject) => {
+        init.signal!.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")), { once: true })
+      }))
+      vi.stubGlobal("fetch", fetchMock)
+      const { loadCatalog, getGames } = await freshHome()
+      const loading = loadCatalog()
+      await vi.advanceTimersByTimeAsync(5000)
+      await loading
+      expect(fetchMock.mock.calls[0]![1].signal?.aborted).toBe(true)
+      expect(getGames()).toEqual(CATALOG)
+      expect(vi.getTimerCount()).toBe(0)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

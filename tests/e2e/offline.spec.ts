@@ -31,8 +31,8 @@ test("Local Play works with the network cut after one visit", async ({ browser }
   // so a navigation would still hit the dead network.
   await page.waitForFunction(async () => {
     if (!navigator.serviceWorker.controller) return false
-    const cache = await caches.open("yalla-assets-v1")
-    const keys = await cache.keys()
+    const names = (await caches.keys()).filter(name => name.startsWith("yalla-assets-"))
+    const keys = (await Promise.all(names.map(async name => (await caches.open(name)).keys()))).flat()
     return keys.some(request => /localPlay.*\.js$/.test(new URL(request.url).pathname))
   }, undefined, { timeout: 20_000 })
 
@@ -69,5 +69,26 @@ test("the home screen is installable as an app", async ({ page }) => {
   for (const icon of manifest.icons as Array<{ src: string }>) {
     const response = await page.request.get(icon.src)
     expect(response.status(), icon.src).toBe(200)
+  }
+})
+
+test("a cached catalog opens immediately while the refresh is slow", async ({ browser }) => {
+  const context = await browser.newContext({ serviceWorkers: "block" })
+  const page = await context.newPage()
+  await page.goto("/")
+  await expect(page.locator(".shelf-card")).not.toHaveCount(0)
+  let release!: () => void
+  const gate = new Promise<void>(resolve => { release = resolve })
+  await page.route("**/api/games", async route => {
+    await gate
+    await route.continue()
+  })
+  try {
+    await page.reload({ waitUntil: "domcontentloaded" })
+    await expect(page.locator(".shelf-card")).not.toHaveCount(0, { timeout: 2000 })
+  } finally {
+    release()
+    await page.unrouteAll({ behavior: "wait" })
+    await context.close()
   }
 })

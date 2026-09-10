@@ -7,7 +7,7 @@ import type { LangCode } from "@shared/types.js"
 
 export function characterImagePath(id: string): string {
   const def = findCharacter(id)
-  return def?.image ?? (def?.portrait !== undefined ? "/assets/characters/avatar-atlas.png" : `/assets/characters/${id}.webp`)
+  return def?.image ?? (def?.portrait !== undefined ? "/assets/characters/avatar-atlas.webp" : `/assets/characters/${id}.webp`)
 }
 export function characterName(id: string, lang: LangCode): string { return findCharacter(id)?.name[lang] ?? "" }
 export interface AvatarOptions { size?: number; class?: string; lazy?: boolean; accessory?: string | undefined }

@@ -25,7 +25,7 @@ function hashedAssetMap(files: Record<string, string>, keyPattern: RegExp): Reco
 }
 
 const COVERS: Record<string, string> = hashedAssetMap(
-  import.meta.glob<string>("../assets/worlds/*-cover.*", { eager: true, query: "?url", import: "default" }),
+  import.meta.glob<string>(["../assets/worlds/*-cover.*", "!../assets/worlds/football-player-guess-cover.png"], { eager: true, query: "?url", import: "default" }),
   /^.*\/(.+)-cover\.[^.]+$/
 )
 
@@ -35,6 +35,11 @@ const COVERS: Record<string, string> = hashedAssetMap(
  * a request at a path that was never there.
  */
 export function worldCoverPath(theme: string): string {
+  // Newly added worlds use the existing brand mark until dedicated art lands.
+  // Never give the browser an empty image URL for a playable world.
+  if (!COVERS[theme] && (theme === "bluff-trivia" || theme === "secret-politician")) {
+    return "/assets/logo/yalla-game-mark.webp"
+  }
   return COVERS[theme] ?? ""
 }
 
@@ -45,7 +50,7 @@ export function worldCoverPath(theme: string): string {
  * they were never named to a single pattern.
  */
 const BACKGROUNDS: Record<string, string> = hashedAssetMap(
-  import.meta.glob<string>("../assets/world-bg/*", { eager: true, query: "?url", import: "default" }),
+  import.meta.glob<string>(["../assets/world-bg/*", "!../assets/world-bg/football-*.png"], { eager: true, query: "?url", import: "default" }),
   /^.*\/(.+)\.[^.]+$/
 )
 

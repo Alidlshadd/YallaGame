@@ -185,8 +185,20 @@ export const adminView = {
 
     const onUpdated = (next: VisibleRoom) => {
       const dealt = !room?.assigned && next.assigned
+      const previous = room
       room = next
-      renderAll()
+      if (!previous || previous.gameId !== next.gameId) renderAll()
+      else {
+        if (JSON.stringify(previous.settings) !== JSON.stringify(next.settings)) renderSettings()
+        if (previous.assigned !== next.assigned || previous.hostPlayerId !== next.hostPlayerId
+          || JSON.stringify(previous.players) !== JSON.stringify(next.players)) {
+          renderHeader()
+          renderPlayers()
+        }
+        if (previous.requireApproval !== next.requireApproval
+          || JSON.stringify(previous.pending) !== JSON.stringify(next.pending)) renderRequests()
+        if (previous.isPublic !== next.isPublic || previous.requireApproval !== next.requireApproval) renderPrivacy()
+      }
       if (dealt) vibrate("reveal")
     }
     socket.on("admin:room-updated", onUpdated)
@@ -238,6 +250,9 @@ export const adminView = {
       }
       const r = await emit("admin:update-settings", { code: room.code, adminSecret: s.adminSecret, settings: incoming })
       if (!r.ok) showToast(t("errorGeneric"))
+      // A clamped value can equal the previous server value, so the room
+      // update intentionally left this form alone. Reconcile after saving.
+      else renderSettings()
     }
 
     const onAssign = async () => {

@@ -6,8 +6,9 @@ import { showToast } from "./toast.js"
 import { vibrate } from "./haptics.js"
 import { orchestrate, prefersReducedMotion, type MotionStep } from "./motion.js"
 import type { PhaseEvent } from "@shared/events.js"
-import type { MostLikelyToPlayer, MostLikelyToView } from "@shared/most-likely-to.js"
+import type { MostLikelyToView } from "@shared/most-likely-to.js"
 import type { BluffTriviaView } from "@shared/bluff-trivia.js"
+import type { PoliticianPlayer, PoliticianView } from "@shared/secret-politician.js"
 
 /**
  * The screen a turn-based game is played on.
@@ -30,6 +31,24 @@ export interface GameStageOptions {
 
 /** Under this many seconds left, the clock starts asking for attention. */
 const URGENT_SECONDS = 5
+type StageView = MostLikelyToView | BluffTriviaView | PoliticianView
+
+// Progress from another player should not replace buttons, restart reveals,
+// or destroy the textarea under somebody's fingers.
+function contentKey(view: unknown): string | undefined {
+  if (view === null || typeof view !== "object") return JSON.stringify(view)
+  const content = { ...view } as Record<string, unknown>
+  for (const key of ["votedCount", "submittedCount", "guessedCount", "totalPlayers", "totalVoters"]) delete content[key]
+  return JSON.stringify(content)
+}
+
+function progressText(view: StageView | null | undefined): string | null {
+  if (view?.kind === "voting") return `${view.votedCount} / ${view.totalPlayers} ${t("mltVoted")}`
+  if (view?.kind === "bluff-submit") return `${view.submittedCount} / ${view.totalPlayers} ${t("bluffSubmitted")}`
+  if (view?.kind === "bluff-guessing") return `${view.guessedCount} / ${view.totalPlayers} ${t("bluffGuessed")}`
+  if (view?.kind === "politician-vote") return `${view.votedCount} / ${view.totalVoters} ${t("politicianVoted")}`
+  return null
+}
 
 export function mountGameStage(opts: GameStageOptions): () => void {
   const stage = $<HTMLElement>("#gameStage")
@@ -56,7 +75,7 @@ export function mountGameStage(opts: GameStageOptions): () => void {
     // measured offset leaves a few milliseconds over the nominal length.
     const seconds = Math.max(0, Math.ceil((left - 250) / 1000))
     clockEl.hidden = false
-    clockEl.textContent = String(seconds)
+    if (clockEl.textContent !== String(seconds)) clockEl.textContent = String(seconds)
     clockEl.classList.toggle("urgent", seconds <= URGENT_SECONDS)
   }
 
@@ -103,6 +122,19 @@ export function mountGameStage(opts: GameStageOptions): () => void {
     else showToast(t("errorGuessRejected"))
   }
 
+  /** Every Secret Politician move shares the same shape of round-trip; only the action body and the toast differ. */
+  async function politicianAct(
+    action: { type: string } & Record<string, string | number | boolean | undefined>,
+    errorKey: Parameters<typeof t>[0]
+  ): Promise<void> {
+    if (phase === null || sending) return
+    sending = true
+    const r = await emit("game:action", { code: opts.code, seq: phase.seq, action })
+    sending = false
+    if (r.ok) vibrate("tap")
+    else showToast(t(errorKey))
+  }
+
   async function closePhase(): Promise<void> {
     if (phase === null || opts.adminSecret === undefined) return
     const r = await emit("game:advance", { code: opts.code, adminSecret: opts.adminSecret, seq: phase.seq })
@@ -115,7 +147,7 @@ export function mountGameStage(opts: GameStageOptions): () => void {
     if (!r.ok) showToast(t("errorGeneric"))
   }
 
-  function avatarOf(person: MostLikelyToPlayer | undefined, name: string, size: number): HTMLElement {
+  function avatarOf(person: { character: string; accessory: string } | undefined, name: string, size: number): HTMLElement {
     return buildAvatar(person?.character ?? "", name, getLang(), {
       size,
       lazy: false,
@@ -350,13 +382,278 @@ export function mountGameStage(opts: GameStageOptions): () => void {
     return out
   }
 
+  function politicianRoleLabel(role: string | undefined): string {
+    if (role === "leader") return t("politicianRoleLeader")
+    if (role === "traitor") return t("politicianRoleTraitor")
+    return t("politicianRoleInnocent")
+  }
+
+  function politicianPowerLabel(power: string): string {
+    if (power === "investigate") return t("politicianPowerInvestigate")
+    if (power === "specialElection") return t("politicianPowerSpecialElection")
+    if (power === "peek") return t("politicianPowerPeek")
+    return t("politicianPowerExecute")
+  }
+
+  /** The board, and — only during a vote — the three-strike election tracker beside it. */
+  function buildPoliticianBoard(board: { good: number; bad: number }, tracker?: number): HTMLElement {
+    const goodPips = el("div", { class: "politician-track" },
+      Array.from({ length: 5 }, (_, i) => el("span", { class: `politician-pip good${i < board.good ? " filled" : ""}` })))
+    const badPips = el("div", { class: "politician-track" },
+      Array.from({ length: 6 }, (_, i) => el("span", { class: `politician-pip bad${i < board.bad ? " filled" : ""}` })))
+    const row = el("div", { class: "politician-board" }, [goodPips, badPips])
+    if (tracker !== undefined) {
+      row.appendChild(el("div", { class: "politician-tracker" },
+        Array.from({ length: 3 }, (_, i) => el("span", { class: `politician-pip${i < tracker ? " filled" : ""}` }))))
+    }
+    return row
+  }
+
+  /** "Tap the one person you mean" — the same interaction Most Likely To already built, reused as-is. */
+  function buildPoliticianTargets(
+    ids: string[], roster: PoliticianPlayer[], onPick: (id: string) => void,
+    locked = false, chosenId: string | null = null
+  ): HTMLElement {
+    const grid = el("div", { class: "mlt-targets" })
+    for (const id of ids) {
+      const person = roster.find(p => p.id === id)
+      const chosen = id === chosenId
+      const button = el("button", { class: `mlt-target${chosen ? " chosen" : ""}`, type: "button" }, [
+        avatarOf(person, person?.name ?? "", 52),
+        el("span", { class: "mlt-target-name" }, [person?.name ?? ""])
+      ]) as HTMLButtonElement
+      // A phase's broadcast lands a little before it actually turns over —
+      // locking on the acted-upon state (not just the button click) keeps a
+      // repeat broadcast from leaving a second, still-live "pick again" screen.
+      button.disabled = locked
+      button.addEventListener("click", () => onPick(id))
+      grid.appendChild(button)
+    }
+    return grid
+  }
+
+  function buildPoliticianRoleReveal(view: Extract<PoliticianView, { kind: "politician-role-reveal" }>): HTMLElement[] {
+    const badge = el("div", { class: "politician-role-badge" }, [
+      el("p", { class: "politician-role-name" }, [politicianRoleLabel(view.myRole)]),
+      el("p", { class: "politician-role-side" }, [
+        view.myRole === "innocent" ? t("politicianSideInnocents") : t("politicianSideTraitors")
+      ])
+    ])
+    const out: HTMLElement[] = [badge]
+
+    if (view.allies.length > 0) {
+      out.push(
+        el("p", { class: "mlt-eyebrow" }, [t("politicianAlliesTitle")]),
+        el("div", { class: "politician-allies" }, view.allies.map(a => el("div", { class: "politician-ally-row" }, [
+          el("span", {}, [a.name]),
+          ...(a.isLeader ? [el("span", { class: "badge" }, [t("politicianRoleLeader")])] : [])
+        ])))
+      )
+    } else if (view.myRole !== "innocent") {
+      out.push(el("p", { class: "mlt-hint" }, [t("politicianNoAllies")]))
+    }
+
+    if (isHost) {
+      const button = el("button", { class: "btn btn-primary mlt-advance", type: "button" }, [t("politicianContinue")])
+      button.addEventListener("click", () => void closePhase())
+      out.push(button)
+    } else {
+      out.push(el("p", { class: "mlt-counter" }, [t("bluffWaitingHost")]))
+    }
+    return out
+  }
+
+  function buildPoliticianNomination(view: Extract<PoliticianView, { kind: "politician-nomination" }>): HTMLElement[] {
+    const out: HTMLElement[] = [buildPoliticianBoard(view.board, view.tracker)]
+
+    if (view.lastVote !== null) {
+      out.push(el("p", { class: "politician-summary" }, [
+        view.lastVote.approved ? t("politicianLastVoteApproved") : t("politicianLastVoteRejected")
+      ]))
+    }
+    if (view.lastExecutive !== null) {
+      const targetName = view.lastExecutive.targetId !== null
+        ? view.roster.find(p => p.id === view.lastExecutive!.targetId)?.name ?? ""
+        : ""
+      const label = politicianPowerLabel(view.lastExecutive.power)
+      out.push(el("p", { class: "politician-summary" }, [targetName ? `${label}: ${targetName}` : label]))
+    }
+
+    if (opts.myPlayerId === view.presidentId) {
+      const locked = view.chancellorNomineeId !== null
+      out.push(
+        el("p", { class: "mlt-hint" }, [t("politicianNominateHint")]),
+        buildPoliticianTargets(
+          view.eligibleIds, view.roster,
+          id => void politicianAct({ type: "nominate", targetId: id }, "errorNominateRejected"),
+          locked, view.chancellorNomineeId
+        )
+      )
+    } else {
+      out.push(el("p", { class: "mlt-hint" }, [t("politicianWaitingNomination")]))
+    }
+    return out
+  }
+
+  function buildPoliticianVote(view: Extract<PoliticianView, { kind: "politician-vote" }>): HTMLElement[] {
+    const nomineeName = view.roster.find(p => p.id === view.chancellorNomineeId)?.name ?? ""
+    const locked = view.myVote !== null
+
+    const yesBtn = el("button", { class: "bluff-option", type: "button" }, [t("politicianVoteYes")]) as HTMLButtonElement
+    const noBtn = el("button", { class: "bluff-option", type: "button" }, [t("politicianVoteNo")]) as HTMLButtonElement
+    yesBtn.disabled = locked
+    noBtn.disabled = locked
+    if (view.myVote === true) yesBtn.classList.add("chosen")
+    if (view.myVote === false) noBtn.classList.add("chosen")
+    yesBtn.addEventListener("click", () => void politicianAct({ type: "vote", approve: true }, "errorVoteRejected"))
+    noBtn.addEventListener("click", () => void politicianAct({ type: "vote", approve: false }, "errorVoteRejected"))
+
+    return [
+      buildPoliticianBoard(view.board),
+      el("p", { class: "politician-summary" }, [`${t("politicianNomineeLabel")}: ${nomineeName}`]),
+      el("p", { class: "mlt-hint" }, [locked ? t("politicianVoteLocked") : t("politicianVoteHint")]),
+      el("div", { class: "bluff-options" }, [yesBtn, noBtn]),
+      el("p", { class: "mlt-counter" }, [`${view.votedCount} / ${view.totalVoters} ${t("politicianVoted")}`])
+    ]
+  }
+
+  function buildPoliticianLegislative(view: Extract<PoliticianView, { kind: "politician-legislative" }>): HTMLElement[] {
+    const out: HTMLElement[] = [buildPoliticianBoard(view.board)]
+
+    if (view.hand === null) {
+      out.push(el("p", { class: "mlt-hint" }, [
+        t(view.actingRole === "president" ? "politicianWaitingPresident" : "politicianWaitingChancellor")
+      ]))
+      if (view.vetoOffered) out.push(el("p", { class: "politician-summary" }, [t("politicianVetoOffered")]))
+      return out
+    }
+
+    // A successful discard/enact shrinks the hand but the phase itself does
+    // not turn over for another ~1.2s — without this, the actor's own next
+    // broadcast would show the same "pick one" screen with fresh indices,
+    // still live to tap again.
+    const locked = view.hand.length !== (view.actingRole === "president" ? 3 : 2)
+    const cardLabel = (card: string): string => card === "good" ? t("politicianCardGood") : t("politicianCardBad")
+    const list = el("div", { class: "bluff-options" })
+    view.hand.forEach((card, index) => {
+      const button = el("button", { class: `bluff-option ${card}`, type: "button" }, [cardLabel(card)]) as HTMLButtonElement
+      button.disabled = locked
+      button.addEventListener("click", () => void politicianAct(
+        { type: view.actingRole === "president" ? "discard" : "enact", index },
+        "errorHandRejected"
+      ))
+      list.appendChild(button)
+    })
+
+    out.push(
+      el("p", { class: "mlt-hint" }, [t(view.actingRole === "president" ? "politicianHandDiscardHint" : "politicianHandEnactHint")]),
+      list
+    )
+
+    if (view.actingRole === "chancellor" && view.vetoAvailable) {
+      const vetoBtn = el("button", { class: "btn btn-ghost", type: "button" }, [t("politicianVetoOffer")])
+      vetoBtn.addEventListener("click", () => void politicianAct({ type: "veto" }, "errorVetoRejected"))
+      out.push(vetoBtn)
+    }
+    return out
+  }
+
+  function buildPoliticianVetoConfirm(view: Extract<PoliticianView, { kind: "politician-veto-confirm" }>): HTMLElement[] {
+    const out: HTMLElement[] = [buildPoliticianBoard(view.board), el("p", { class: "politician-summary" }, [t("politicianVetoOffered")])]
+
+    if (opts.myPlayerId === view.presidentId) {
+      const locked = view.myDecision !== null
+      const approveBtn = el("button", { class: "bluff-option", type: "button" }, [t("politicianVetoApprove")]) as HTMLButtonElement
+      const rejectBtn = el("button", { class: "bluff-option", type: "button" }, [t("politicianVetoReject")]) as HTMLButtonElement
+      approveBtn.disabled = locked
+      rejectBtn.disabled = locked
+      if (view.myDecision === true) approveBtn.classList.add("chosen")
+      if (view.myDecision === false) rejectBtn.classList.add("chosen")
+      approveBtn.addEventListener("click", () => void politicianAct({ type: "vetoDecision", approve: true }, "errorVetoRejected"))
+      rejectBtn.addEventListener("click", () => void politicianAct({ type: "vetoDecision", approve: false }, "errorVetoRejected"))
+      out.push(el("div", { class: "bluff-options" }, [approveBtn, rejectBtn]))
+    } else {
+      out.push(el("p", { class: "mlt-hint" }, [t("politicianVetoWaitingPresident")]))
+    }
+    return out
+  }
+
+  function buildPoliticianBoardUpdate(view: Extract<PoliticianView, { kind: "politician-board-update" }>): HTMLElement[] {
+    return [
+      buildPoliticianBoard(view.board),
+      el("p", { class: "mlt-eyebrow" }, [view.enacted === "good" ? t("politicianBoardUpdateGood") : t("politicianBoardUpdateBad")])
+    ]
+  }
+
+  function buildPoliticianExecutiveAction(view: Extract<PoliticianView, { kind: "politician-executive-action" }>): HTMLElement[] {
+    const out: HTMLElement[] = [buildPoliticianBoard(view.board), el("p", { class: "mlt-eyebrow" }, [politicianPowerLabel(view.power)])]
+
+    if (opts.myPlayerId !== view.presidentId) {
+      out.push(el("p", { class: "mlt-hint" }, [t("politicianWaitingPower")]))
+      return out
+    }
+
+    if (view.power === "peek") {
+      const cardLabel = (card: string): string => card === "good" ? t("politicianCardGood") : t("politicianCardBad")
+      const list = el("div", { class: "bluff-options" },
+        (view.peekCards ?? []).map(card => el("div", { class: `bluff-option ${card}` }, [cardLabel(card)])))
+      const ackBtn = el("button", { class: "btn btn-primary mlt-advance", type: "button" }, [t("politicianPeekAck")]) as HTMLButtonElement
+      ackBtn.disabled = view.resolved
+      ackBtn.addEventListener("click", () => void politicianAct({ type: "peekAck" }, "errorPowerRejected"))
+      out.push(list, ackBtn)
+      return out
+    }
+
+    if (view.power === "investigate" && view.investigationResult !== null) {
+      const targetName = view.roster.find(p => p.id === view.investigationResult!.targetId)?.name ?? ""
+      const resultLabel = view.investigationResult.side === "innocent"
+        ? t("politicianInvestigationResultInnocent") : t("politicianInvestigationResultTraitor")
+      out.push(el("p", { class: "politician-summary" }, [`${targetName}: ${resultLabel}`]))
+      return out
+    }
+
+    const hintKey = view.power === "investigate" ? "politicianPowerHintInvestigate"
+      : view.power === "specialElection" ? "politicianPowerHintSpecialElection"
+      : "politicianPowerHintExecute"
+    out.push(
+      el("p", { class: "mlt-hint" }, [t(hintKey)]),
+      buildPoliticianTargets(
+        view.eligibleIds, view.roster,
+        id => void politicianAct({ type: view.power, targetId: id }, "errorPowerRejected"),
+        view.resolved
+      )
+    )
+    return out
+  }
+
+  function buildPoliticianOver(view: Extract<PoliticianView, { kind: "politician-over" }>): HTMLElement[] {
+    const list = el("div", { class: "politician-roles-list" }, view.roster.map(p => el("div", { class: "politician-role-row" }, [
+      el("span", {}, [p.name]),
+      el("span", { class: "politician-role-tag" }, [politicianRoleLabel(view.roles[p.id])])
+    ])))
+
+    const out: HTMLElement[] = [
+      el("p", { class: "mlt-eyebrow" }, [t("politicianGameOver")]),
+      el("p", { class: "mlt-verdict" }, [view.winner === "innocents" ? t("politicianWinInnocents") : t("politicianWinTraitors")]),
+      el("p", { class: "mlt-eyebrow" }, [t("politicianRolesReveal")]),
+      list
+    ]
+
+    if (isHost) {
+      const button = el("button", { class: "btn btn-primary mlt-advance", type: "button" }, [t("politicianBackToLobby")])
+      button.addEventListener("click", () => void endGame())
+      out.push(button)
+    }
+    return out
+  }
+
   function render(): void {
     clear(stage)
     clockEl = null
     cancelReveal?.()
     cancelReveal = null
 
-    const view = phase?.view as (MostLikelyToView | BluffTriviaView) | null | undefined
+    const view = phase?.view as (MostLikelyToView | BluffTriviaView | PoliticianView) | null | undefined
     if (phase === null || view === null || view === undefined) {
       stage.hidden = true
       document.body.classList.remove("stage-open")
@@ -373,7 +670,15 @@ export function mountGameStage(opts: GameStageOptions): () => void {
     }
 
     panel.append(buildHead(view.roundNumber))
-    panel.append(el("p", { class: "mlt-question" }, [view.question[lang]]))
+    // Only Most Likely To and Bluff Trivia carry a question to show up here —
+    // Secret Politician's screens build their own heading out of the board.
+    if (
+      view.kind === "question" || view.kind === "voting" || view.kind === "result" || view.kind === "over" ||
+      view.kind === "bluff-question" || view.kind === "bluff-submit" || view.kind === "bluff-guessing" ||
+      view.kind === "bluff-reveal" || view.kind === "bluff-over"
+    ) {
+      panel.append(el("p", { class: "mlt-question" }, [view.question[lang]]))
+    }
 
     if (view.kind === "question") panel.append(el("p", { class: "mlt-hint" }, [t("mltGetReady")]))
     else if (view.kind === "voting") panel.append(...buildVoting(view))
@@ -382,6 +687,14 @@ export function mountGameStage(opts: GameStageOptions): () => void {
     else if (view.kind === "bluff-submit") panel.append(...buildBluffSubmit(view))
     else if (view.kind === "bluff-guessing") panel.append(...buildBluffGuessing(view))
     else if (view.kind === "bluff-reveal" || view.kind === "bluff-over") panel.append(...buildBluffReveal(view))
+    else if (view.kind === "politician-role-reveal") panel.append(...buildPoliticianRoleReveal(view))
+    else if (view.kind === "politician-nomination") panel.append(...buildPoliticianNomination(view))
+    else if (view.kind === "politician-vote") panel.append(...buildPoliticianVote(view))
+    else if (view.kind === "politician-legislative") panel.append(...buildPoliticianLegislative(view))
+    else if (view.kind === "politician-veto-confirm") panel.append(...buildPoliticianVetoConfirm(view))
+    else if (view.kind === "politician-board-update") panel.append(...buildPoliticianBoardUpdate(view))
+    else if (view.kind === "politician-executive-action") panel.append(...buildPoliticianExecutiveAction(view))
+    else if (view.kind === "politician-over") panel.append(...buildPoliticianOver(view))
 
     stage.appendChild(panel)
     drawClock()
@@ -393,8 +706,31 @@ export function mountGameStage(opts: GameStageOptions): () => void {
     // A packet that overtook a newer one must not drag the room backwards.
     if (phase !== null && payload.seq < phase.seq) return
     const moved = phase === null || payload.seq !== phase.seq
+    const unchanged = !moved && contentKey(phase?.view) === contentKey(payload.view)
+    const input = !moved ? stage.querySelector<HTMLTextAreaElement>(".bluff-lie-input:not(:disabled)") : null
+    const draft = input ? {
+      text: input.value, focused: document.activeElement === input,
+      start: input.selectionStart, end: input.selectionEnd, direction: input.selectionDirection
+    } : null
     phase = payload
-    render()
+    if (unchanged) {
+      const counter = stage.querySelector<HTMLElement>(".mlt-counter")
+      const text = progressText(payload.view as StageView | null)
+      if (counter && text !== null && counter.textContent !== text) counter.textContent = text
+      drawClock()
+    } else {
+      render()
+      // Roster changes can still require a rebuild within the submission phase.
+      const nextInput = draft ? stage.querySelector<HTMLTextAreaElement>(".bluff-lie-input:not(:disabled)") : null
+      if (nextInput && draft) {
+        nextInput.value = draft.text
+        nextInput.dispatchEvent(new Event("input"))
+        if (draft.focused) {
+          nextInput.focus({ preventScroll: true })
+          nextInput.setSelectionRange(draft.start, draft.end, draft.direction)
+        }
+      }
+    }
     if (moved && payload.view !== null) vibrate("tap")
   }
 

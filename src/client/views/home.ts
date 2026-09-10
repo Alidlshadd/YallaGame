@@ -28,14 +28,21 @@ function readCachedCatalog(): readonly Game[] | null {
 }
 
 export async function loadCatalog(): Promise<void> {
+  // Make the last catalog usable before the network responds.
+  const cached = readCachedCatalog()
+  if (cached) {
+    games = cached
+    catalogLoadFailed = false
+  }
+  const controller = new AbortController()
+  const timeout = window.setTimeout(() => controller.abort(), 5000)
   try {
-    const res = await fetch("/api/games")
+    const res = await fetch("/api/games", { signal: controller.signal })
     if (!res.ok) throw new Error(`Game catalog request failed: ${res.status}`)
     games = await res.json()
     catalogLoadFailed = false
     try { localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(games)) } catch { /* quota */ }
   } catch (error) {
-    const cached = readCachedCatalog()
     if (cached) {
       games = cached
       catalogLoadFailed = false
@@ -44,6 +51,8 @@ export async function loadCatalog(): Promise<void> {
     console.error("Unable to load game catalog", error)
     games = []
     catalogLoadFailed = true
+  } finally {
+    window.clearTimeout(timeout)
   }
 }
 
@@ -445,7 +454,15 @@ export const homeView = {
       stage.appendChild(msg)
     }
 
+    const observer = typeof IntersectionObserver === "undefined" ? null : new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        (entry.target as HTMLElement).dataset.offscreen = String(!entry.isIntersecting)
+      }
+    })
+    for (const slide of stage.querySelectorAll(".home-slide")) observer?.observe(slide)
+
     return () => {
+      observer?.disconnect()
       clear(stage)
       document.getElementById("createPickerOverlay")?.remove()
     }

@@ -636,6 +636,79 @@ export const GAME_CATALOG: readonly Game[] = [
         }
       }
     ]
+  },
+  {
+    id: "secret-politician",
+    icon: "🗳️",
+    theme: "secret-politician",
+    minPlayers: 5,
+    // A secret hand, a shared deck, and a board only the server may touch —
+    // the heaviest reason yet to run this on the turn engine rather than a
+    // deal of roles.
+    turnBased: true,
+    defaultSettings: { leaderKnowsAllies: false },
+    title: {
+      ku: "سیاسەتمەدارە نهێنییەکە",
+      ar: "السياسي السري",
+      en: "Secret Politician",
+      tr: "Gizli Siyasetçi"
+    },
+    subtitle: {
+      ku: "دەستێکی نهێنی، دەستەیەکی هاوبەش، و دەسەڵاتێک کە دەتوانێت یاری بگۆڕێت.",
+      ar: "يد سرية، مجموعة أوراق مشتركة، وسلطة قد تقلب اللعبة رأساً على عقب.",
+      en: "A secret hand, a shared deck, and a power that can turn the whole table.",
+      tr: "Gizli bir el, ortak bir deste ve masayı bir anda çevirebilecek bir güç."
+    },
+    rules: {
+      ku: [
+        "هۆست ژوور دروست دەکات و یاری دەست پێ دەکات؛ هەریەکە ڕۆڵی خۆی بە نهێنی دەبینێت.",
+        "هەر خولێک: میوانداری ئێستا سەرۆک وەزیرانێک دیاری دەکات، هەمووان بە نهێنی دەنگ دەدەن.",
+        "ئەگەر حکومەت پەسند بکرێت، میوانداره کارتێک لە سێیان لادەبات، سەرۆک وەزیرانیش کارتێک لە دووانی دیکە لادەبات.",
+        "کارتی کۆتایی خۆی یاسا دەبێت — ژمارەی یاسا خراپەکان دەسەڵاتی تایبەت بۆ میوانداره دەکاتەوە.",
+        "یاریزانان بە پەسەندکردنی ٥ یاسای باش، ٦ یاسای خراپ، یان بە دۆزینەوە و لابردنی لیدەری نهێنی دەبەنەوە."
+      ],
+      ar: [
+        "ينشئ المضيف غرفة ويبدأ اللعبة؛ كل لاعب يرى دوره سراً.",
+        "كل جولة: الرئيس الحالي يرشح رئيس وزراء، ثم يصوّت الجميع سراً بنعم أو لا.",
+        "إذا وافقت الحكومة، يستبعد الرئيس بطاقة من ثلاث، ثم يستبعد رئيس الوزراء بطاقة من اثنتين.",
+        "البطاقة الأخيرة المتبقية تصبح القانون — عدد القوانين السيئة يفتح قوى خاصة للرئيس.",
+        "يفوز اللاعبون بتمرير 5 قوانين جيدة، أو 6 سيئة، أو بكشف وإعدام الزعيم السري."
+      ],
+      en: [
+        "The host creates a room and starts the game; everybody sees their own role privately.",
+        "Each round: the sitting president nominates a chancellor, then everybody votes yes or no in secret.",
+        "If the government is approved, the president discards one of three cards, then the chancellor discards one of the remaining two.",
+        "The last card becomes law — enough bad laws unlock a special power for the president.",
+        "The table wins by passing 5 good laws, 6 bad laws, or by finding and executing the secret leader."
+      ],
+      tr: [
+        "Host oda kurar ve oyunu başlatır; herkes kendi rolünü gizlice görür.",
+        "Her tur: oturan başkan bir başbakan aday gösterir, sonra herkes gizlice evet ya da hayır oyu verir.",
+        "Hükümet onaylanırsa başkan üç karttan birini eler, ardından başbakan kalan iki karttan birini eler.",
+        "Kalan son kart yasa olur — yeterince kötü yasa başkana özel bir güç açar.",
+        "Masa 5 iyi yasa geçirerek, 6 kötü yasa geçirerek ya da gizli lideri bulup infaz ederek kazanır."
+      ]
+    },
+    // The engine deals roles itself inside ROLE_REVEAL; the generic
+    // role-dealing flow (and its "Assign Roles" button) is for the five
+    // games that are not turn-based, so this stays empty like the other
+    // two turn-based games.
+    roles: [],
+    settings: [
+      {
+        // The spec asked for the leader to always be blind to their allies.
+        // Kept as the default, but a 5-6 player table plays better with it
+        // on — a blind leader in that small a room can barely win.
+        type: "boolean",
+        key: "leaderKnowsAllies",
+        label: {
+          ku: "لیدەر هاوپەیمانەکانی بناسێت",
+          ar: "الزعيم يعرف حلفاءه",
+          en: "Leader Knows Allies",
+          tr: "Lider Müttefiklerini Tanır"
+        }
+      }
+    ]
   }
 ] as const
 

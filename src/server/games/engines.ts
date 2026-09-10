@@ -1,6 +1,7 @@
 import type { GameEngine } from "../domain/engine.js"
 import { mostLikelyToEngine } from "./most-likely-to.js"
 import { bluffTriviaEngine } from "./bluff-trivia.js"
+import { secretPoliticianEngine } from "./secret-politician.js"
 
 /**
  * Games the server runs turn by turn.
@@ -10,7 +11,7 @@ import { bluffTriviaEngine } from "./bluff-trivia.js"
  * rooms stay on `IDLE_PHASE` forever. A game only appears here once the server
  * has to keep time, collect answers, or hold something secret between phases.
  */
-const ENGINES: readonly GameEngine[] = [mostLikelyToEngine, bluffTriviaEngine]
+const ENGINES: readonly GameEngine[] = [mostLikelyToEngine, bluffTriviaEngine, secretPoliticianEngine]
 
 const byId = new Map(ENGINES.map(e => [e.gameId, e]))
 
