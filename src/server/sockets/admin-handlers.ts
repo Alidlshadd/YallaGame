@@ -11,7 +11,8 @@ import { projectRoomFor, summarizeRoom, takenCharacters } from "../domain/visibi
 import { isCharacterId } from "../../shared/characters.js"
 import { characterAccessory } from "../../shared/accessories.js"
 import { normalizeSettings } from "../domain/settings.js"
-import { buildRolePool, assignRolesToConnected } from "../domain/roles.js"
+import { buildRolePool, assignRolesToConnected, resolveRoleData } from "../domain/roles.js"
+import { pickSpyWord, SPY_GAME_ID } from "../domain/spyWords.js"
 import { makeRoomCode, makeSecret } from "../domain/codes.js"
 import { cancelTimer } from "../domain/scheduler.js"
 import { sendPhaseTo, type EngineResolver } from "../domain/engine.js"
@@ -64,7 +65,7 @@ async function announceApprovals(deps: AdminDeps, room: Room, playerIds: string[
   for (const id of playerIds) {
     const player = room.players.find(p => p.id === id)
     if (!player) continue
-    const roleData = player.role ? (game.roles.find(r => r.id === player.role) ?? null) : null
+    const roleData = resolveRoleData(game, room, player.role)
     deps.io.to(`pending:${room.code}:${id}`).emit("player:join-approved", {
       status: "joined",
       room: projectRoomFor(room, { kind: "player", playerId: id }, deps.resolveGame),
@@ -180,13 +181,18 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
       if (connectedCount < game.minPlayers) throw new Error("NEED_MORE_PLAYERS")
       const pool = buildRolePool(game, room.settings, connectedCount)
       const players = assignRolesToConnected(room.players, pool, deps.rng)
-      return { ...room, players, assigned: true }
+      // Spy Game hides one secret word per round behind the generic role pool —
+      // picked fresh on every deal so a redeal never repeats last round's word.
+      const gameState = game.id === SPY_GAME_ID
+        ? { ...room.gameState, spyWord: pickSpyWord(room.settings, deps.rng) }
+        : room.gameState
+      return { ...room, players, assigned: true, gameState }
     })
     const game = deps.resolveGame(updated.gameId)!
     await broadcastRoom(deps, updated)
     for (const p of updated.players) {
       if (!p.role) continue
-      const role = game.roles.find(r => r.id === p.role)!
+      const role = resolveRoleData(game, updated, p.role)!
       deps.io.to(`p:${code}:${p.id}`).emit("player:role-assigned", {
         role: p.role, roleData: role, name: p.name, code, game
       })

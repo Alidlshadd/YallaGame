@@ -229,7 +229,11 @@ export const GAME_CATALOG: readonly Game[] = [
     icon: "🕶️",
     theme: "spy-game",
     minPlayers: 3,
-    defaultSettings: { spyCount: 1, roundMinutes: 5, guessAttempts: 1 },
+    defaultSettings: {
+      spyCount: 1, roundMinutes: 5, guessAttempts: 1,
+      spyCategories: ["iraq-kurdistan-cities", "food-drinks", "jobs", "objects"],
+      spyCustomWords: ""
+    },
     title: { ku: "سیخوڕ", ar: "الجاسوس", en: "Spy Game", tr: "Casus Oyunu" },
     subtitle: {
       ku: "یارییەکی ساده؛ هەمووان یەک ڕۆڵیان هەیە بەڵام سیخوڕ جیاوازە.",
@@ -241,26 +245,26 @@ export const GAME_CATALOG: readonly Game[] = [
       ku: [
         "سیخوڕ دەبێت خۆی بشارێتەوە.",
         "یاریزانەکانی تر دەبێت سیخوڕ بدۆزنەوە.",
-        "ئەدمین هەموو ڕۆڵەکان دەبینێت.",
-        "ئەم یارییە تەنها ڕۆڵ دابەش دەکات."
+        "یاریزانە ئاساییەکان وشە نهێنییەکە دەبینن؛ سیخوڕ تەنها ئاماژەیەکی پۆل وەردەگرێت.",
+        "ئەدمین هەموو ڕۆڵ و وشە نهێنییەکە دەبینێت."
       ],
       ar: [
         "على الجاسوس إخفاء نفسه.",
         "بقية اللاعبين يحاولون اكتشاف الجاسوس.",
-        "المدير يرى جميع الأدوار.",
-        "هذه اللعبة توزع الأدوار فقط."
+        "اللاعبون العاديون يرون الكلمة السرية؛ الجاسوس يحصل على تلميح الفئة فقط.",
+        "المدير يرى جميع الأدوار والكلمة السرية."
       ],
       en: [
         "The spy must stay hidden.",
         "Other players try to find the spy.",
-        "The admin sees all roles.",
-        "This game only distributes roles."
+        "Normal players see the secret word; the spy only gets a category hint.",
+        "The admin sees every role and the secret word."
       ],
       tr: [
         "Casus kendini gizler.",
         "Diğer oyuncular casusu bulmaya çalışır.",
-        "Admin bütün rolleri görür.",
-        "Bu oyun sadece rol dağıtır."
+        "Normal oyuncular gizli kelimeyi görür; casus sadece kategori ipucu alır.",
+        "Admin bütün rolleri ve gizli kelimeyi görür."
       ]
     },
     roles: [
@@ -310,6 +314,23 @@ export const GAME_CATALOG: readonly Game[] = [
         min: 1,
         max: 4,
         label: { ku: "ژمارەی سیخوڕ", ar: "عدد الجواسيس", en: "Spy Count", tr: "Casus Sayısı" }
+      },
+      {
+        type: "categories",
+        key: "spyCategories",
+        game: "spy-game",
+        label: { ku: "پۆلەکانی وشە", ar: "فئات الكلمات", en: "Word Categories", tr: "Kelime Kategorileri" }
+      },
+      {
+        type: "text",
+        key: "spyCustomWords",
+        label: { ku: "وشەی تایبەت", ar: "كلمات مخصصة", en: "Custom Words", tr: "Özel Kelimeler" },
+        placeholder: {
+          ku: "وشە، بە کۆما یان دێڕی نوێ جیا بکەرەوە",
+          ar: "افصل الكلمات بفاصلة أو سطر جديد",
+          en: "Comma or line separated",
+          tr: "Virgülle veya satırla ayır"
+        }
       }
     ]
   },

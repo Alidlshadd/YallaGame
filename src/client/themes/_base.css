@@ -2833,6 +2833,56 @@ body[data-perf="low"] *::after {
   accent-color: var(--theme-accent);
 }
 
+.settings input[type="text"] {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-faint);
+  border-radius: 8px;
+  color: var(--text-primary);
+}
+
+.settings-categories {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.settings-categories-label {
+  font-size: var(--type-sm);
+  color: var(--text-muted);
+}
+
+.settings-categories-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-2);
+}
+
+@media (max-width: 420px) {
+  .settings-categories-grid { grid-template-columns: 1fr; }
+}
+
+.settings-category-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 8px 12px;
+  border: 1px solid var(--border-faint);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.26);
+  color: var(--text-primary);
+  font-size: var(--type-sm);
+  cursor: pointer;
+}
+
+.settings-category-chip input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--theme-accent);
+}
+
 .button-row {
   display: flex;
   gap: var(--s-2);

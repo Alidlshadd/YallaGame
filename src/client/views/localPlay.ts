@@ -12,7 +12,7 @@ import { getGames } from "./home.js"
 import { worldCoverPath } from "../data/assets.js"
 import { buildRolePool, assignRolesLocally, type LocalAssignment } from "../domain/local-roles.js"
 import { SPY_WORD_CATEGORIES, pickSpyWordWithCategory } from "../domain/spy-data.js"
-import { getCategoryByKey } from "../data/word-categories.js"
+import { getCategoryByKey } from "@shared/word-categories.js"
 import {
   WHO_AM_I_CATEGORIES,
   RANDOM_MIX_KEY,
@@ -78,7 +78,7 @@ interface LocalState {
   step: Step
   gameId: string | null
   playerNames: string[]
-  settings: Record<string, number | boolean>
+  settings: Record<string, number | boolean | string | string[]>
   assignments: LocalAssignment[]
   currentRevealIndex: number
   spyCategoryIds: string[]
@@ -1114,6 +1114,9 @@ function renderSettings(container: HTMLDivElement, lang: LangCode, render: () =>
   }
 
   for (const def of game.settings) {
+    // Local play keeps its own bespoke word/category UI above (renderSpyWordSettings)
+    // rather than the generic online-room widgets these two setting types drive.
+    if (def.type === "categories" || def.type === "text") continue
     const id = `lp-setting-${def.key}`
     const labelText = def.label[lang]
     const value = state.settings[def.key]

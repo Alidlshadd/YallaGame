@@ -2,7 +2,7 @@ import type { LangCode, LocalizedText } from "@shared/types.js"
 import {
   type WordCategory,
   getCategoriesForGame
-} from "../data/word-categories.js"
+} from "@shared/word-categories.js"
 
 /**
  * Spy Game word-category facade. The actual data now lives in

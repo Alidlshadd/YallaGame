@@ -1,4 +1,4 @@
-import { validateWordCategories } from "../src/client/data/word-categories.ts"
+import { validateWordCategories } from "../src/shared/word-categories.ts"
 
 const r = validateWordCategories()
 console.log("ok:", r.ok)

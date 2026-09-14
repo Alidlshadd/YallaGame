@@ -4,7 +4,7 @@ import {
   pickSpyWordWithCategory,
   pickSpyWord
 } from "@client/domain/spy-data.js"
-import { validateWordCategories } from "@client/data/word-categories.js"
+import { validateWordCategories } from "@shared/word-categories.js"
 
 describe("word category data", () => {
   it("passes the built-in validation (all 4 translations, unique keys, 500+ words)", () => {

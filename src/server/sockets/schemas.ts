@@ -22,7 +22,9 @@ export const ReconnectPayload     = z.object({ code: RoomCode, adminSecret: z.st
 export const UpdateSettingsPayload = z.object({
   code: RoomCode,
   adminSecret: z.string().min(1).max(64),
-  settings: z.record(z.string(), z.union([z.number(), z.boolean(), z.string()]))
+  settings: z.record(z.string(), z.union([
+    z.number(), z.boolean(), z.string().max(500), z.array(z.string().max(64)).max(50)
+  ]))
 })
 export const AssignRolesPayload   = ReconnectPayload
 export const ClearRolesPayload    = ReconnectPayload

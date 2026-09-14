@@ -6,7 +6,7 @@ import {
   getCategoriesForGame,
   resolveCategoryLabel,
   RANDOM_MIX_KEY
-} from "../data/word-categories.js"
+} from "@shared/word-categories.js"
 
 /**
  * Who Am I facade. The actual data now lives in

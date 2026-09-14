@@ -17,7 +17,21 @@ export interface SettingBoolean {
   key: string
   label: LocalizedText
 }
-export type SettingDef = SettingNumber | SettingBoolean
+/** A multi-select over a word-category bank (see `shared/word-categories.ts`). `game` names which game's bank to pull options from. */
+export interface SettingCategories {
+  type: "categories"
+  key: string
+  game: string
+  label: LocalizedText
+}
+/** Free-form text, e.g. a host's own custom word list. */
+export interface SettingText {
+  type: "text"
+  key: string
+  label: LocalizedText
+  placeholder?: LocalizedText
+}
+export type SettingDef = SettingNumber | SettingBoolean | SettingCategories | SettingText
 
 export interface Role {
   id: RoleId
@@ -29,7 +43,7 @@ export interface Role {
   desc: LocalizedText
 }
 
-export type Settings = Record<string, number | boolean>
+export type Settings = Record<string, number | boolean | string | string[]>
 
 /**
  * Where a room sits inside its game. "idle" is every room that is not running

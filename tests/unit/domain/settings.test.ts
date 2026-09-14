@@ -15,6 +15,19 @@ const game: Game = {
   ]
 }
 
+const spyGame: Game = {
+  id: "spy-game", icon: "x", theme: "x", minPlayers: 3,
+  defaultSettings: { spyCategories: ["objects", "jobs"], spyCustomWords: "" },
+  title: { ku: "", ar: "", en: "", tr: "" },
+  subtitle: { ku: "", ar: "", en: "", tr: "" },
+  rules: { ku: [], ar: [], en: [], tr: [] },
+  roles: [],
+  settings: [
+    { type: "categories", key: "spyCategories", game: "spy-game", label: { ku: "", ar: "", en: "", tr: "" } },
+    { type: "text", key: "spyCustomWords", label: { ku: "", ar: "", en: "", tr: "" } }
+  ]
+}
+
 describe("normalizeSettings", () => {
   it("clamps number values to [min, max]", () => {
     expect(normalizeSettings(game, { count: 99 }).count).toBe(5)
@@ -42,5 +55,33 @@ describe("normalizeSettings", () => {
     const result = normalizeSettings(game, incoming)
     expect(result).not.toBe(incoming)
     expect(incoming).toEqual({ count: 4 })
+  })
+})
+
+describe("normalizeSettings — categories and text", () => {
+  it("keeps only category keys that exist in that game's word bank", () => {
+    const result = normalizeSettings(spyGame, { spyCategories: ["objects", "not-a-real-category"] })
+    expect(result.spyCategories).toEqual(["objects"])
+  })
+
+  it("falls back to defaultSettings when every chosen category is invalid or the list is empty", () => {
+    expect(normalizeSettings(spyGame, { spyCategories: [] }).spyCategories).toEqual(["objects", "jobs"])
+    expect(normalizeSettings(spyGame, { spyCategories: ["nonsense"] }).spyCategories).toEqual(["objects", "jobs"])
+  })
+
+  it("coerces non-array category input to an empty selection (then falls back to defaults)", () => {
+    expect(normalizeSettings(spyGame, { spyCategories: "objects" as unknown as string[] }).spyCategories)
+      .toEqual(["objects", "jobs"])
+  })
+
+  it("keeps custom words as a trimmed-length string, defaulting to empty", () => {
+    expect(normalizeSettings(spyGame, { spyCustomWords: "banana, kiwi" }).spyCustomWords).toBe("banana, kiwi")
+    expect(normalizeSettings(spyGame, {}).spyCustomWords).toBe("")
+    expect(normalizeSettings(spyGame, { spyCustomWords: 42 as unknown as string }).spyCustomWords).toBe("")
+  })
+
+  it("caps custom words length instead of storing unbounded text", () => {
+    const huge = "a".repeat(10_000)
+    expect(normalizeSettings(spyGame, { spyCustomWords: huge }).spyCustomWords).toHaveLength(500)
   })
 })

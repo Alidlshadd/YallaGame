@@ -1,4 +1,13 @@
-import type { Game, Player, RoleId, Settings } from "@shared/types.js"
+import type { Game, Player, Role, RoleId, Room, Settings } from "@shared/types.js"
+import { injectSpyWord, SPY_GAME_ID } from "./spyWords.js"
+
+/** The role a player was dealt, with the round's secret word folded in for Spy Game. */
+export function resolveRoleData(game: Game, room: Room, roleId: RoleId | null): Role | null {
+  if (!roleId) return null
+  const base = game.roles.find(r => r.id === roleId) ?? null
+  if (!base) return null
+  return game.id === SPY_GAME_ID ? injectSpyWord(base, room.gameState) : base
+}
 
 export function fillerRoleId(game: Game): RoleId {
   const filler = game.roles.find(r => r.filler)

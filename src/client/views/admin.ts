@@ -15,6 +15,7 @@ import { buildAvatar } from "../ui/avatar.js"
 import { mountGameStage } from "../ui/gameStage.js"
 import type { RoleAssignedPayload } from "@shared/events.js"
 import type { VisibleRoom } from "@shared/types.js"
+import { getCategoriesForGame, type SupportedGame } from "@shared/word-categories.js"
 
 export const adminView = {
   id: "adminView" as const,
@@ -48,6 +49,28 @@ export const adminView = {
         const id = `setting-${def.key}`
         const labelText = def.label[lang]
         const value = room.settings[def.key]
+
+        if (def.type === "categories") {
+          const wrap = el("div", { class: "settings-categories" }, [
+            el("span", { class: "settings-categories-label" }, [labelText])
+          ])
+          const grid = el("div", { class: "settings-categories-grid" })
+          const selected = new Set(Array.isArray(value) ? value as string[] : [])
+          for (const category of getCategoriesForGame(def.game as SupportedGame)) {
+            const checkbox = el("input", {
+              type: "checkbox", "data-setting-key": def.key, value: category.key
+            }) as HTMLInputElement
+            checkbox.checked = selected.has(category.key)
+            grid.appendChild(el("label", { class: "settings-category-chip" }, [
+              checkbox,
+              el("span", {}, [category.label[lang]])
+            ]))
+          }
+          wrap.appendChild(grid)
+          settingsEl.appendChild(wrap)
+          continue
+        }
+
         const row = el("label", { for: id })
         row.appendChild(el("span", {}, [labelText]))
         if (def.type === "number") {
@@ -55,6 +78,13 @@ export const adminView = {
             id, type: "number",
             min: String(def.min), max: String(def.max),
             value: String(value ?? def.min)
+          }) as HTMLInputElement
+          row.appendChild(input)
+        } else if (def.type === "text") {
+          const input = el("input", {
+            id, type: "text",
+            placeholder: def.placeholder?.[lang] ?? "",
+            value: typeof value === "string" ? value : ""
           }) as HTMLInputElement
           row.appendChild(input)
         } else {
@@ -242,11 +272,19 @@ export const adminView = {
       if (!room) return
       const s = session.load()
       if (s?.kind !== "admin") return
-      const incoming: Record<string, number | boolean> = {}
+      const incoming: Record<string, number | boolean | string | string[]> = {}
       for (const def of room.game.settings) {
+        if (def.type === "categories") {
+          const checkboxes = Array.from(
+            settingsEl.querySelectorAll<HTMLInputElement>(`input[data-setting-key="${def.key}"]`)
+          )
+          incoming[def.key] = checkboxes.filter(c => c.checked).map(c => c.value)
+          continue
+        }
         const input = document.getElementById(`setting-${def.key}`) as HTMLInputElement
         if (def.type === "number")  incoming[def.key] = Number(input.value)
         if (def.type === "boolean") incoming[def.key] = input.checked
+        if (def.type === "text")    incoming[def.key] = input.value
       }
       const r = await emit("admin:update-settings", { code: room.code, adminSecret: s.adminSecret, settings: incoming })
       if (!r.ok) showToast(t("errorGeneric"))

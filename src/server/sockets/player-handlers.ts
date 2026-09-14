@@ -9,7 +9,7 @@ import { projectRoomFor, takenCharacters } from "../domain/visibility.js"
 import { isCharacterId } from "../../shared/characters.js"
 import { characterAccessory } from "../../shared/accessories.js"
 import { makeSecret } from "../domain/codes.js"
-import { fillerRoleId } from "../domain/roles.js"
+import { fillerRoleId, resolveRoleData } from "../domain/roles.js"
 import { JoinPayload, CancelRequestPayload } from "./schemas.js"
 import type { EngineResolver } from "../domain/engine.js"
 import { onPlayerLeft, sendPhaseTo } from "../domain/engine.js"
@@ -107,7 +107,7 @@ export function registerPlayerHandlers(socket: TypedSocket, deps: PlayerDeps): v
     socket.join(`p:${code}:${me.id}`)
 
     const game = deps.resolveGame(updated.gameId)!
-    const roleData = me.role ? (game.roles.find(r => r.id === me.role) ?? null) : null
+    const roleData = resolveRoleData(game, updated, me.role)
 
     const adminProjection = projectRoomFor(updated, { kind: "admin", adminSecret: updated.adminSecret }, deps.resolveGame)
     deps.io.to(`admin:${code}`).emit("admin:room-updated", adminProjection)

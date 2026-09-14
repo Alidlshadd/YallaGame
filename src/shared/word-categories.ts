@@ -1,4 +1,4 @@
-import type { LangCode, LocalizedText } from "@shared/types.js"
+import type { LangCode, LocalizedText } from "./types.js"
 
 /**
  * Canonical shared word/category database for Spy Game and Who Am I.
