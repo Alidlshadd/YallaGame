@@ -1,4 +1,5 @@
 import { canGoBack, dismissLayer, layerCount, pushLayer, requestBack, resetLayers } from "./services/navigation.js"
+import { trackView } from "./services/analytics.js"
 
 export type ViewId = "homeView" | "gameInfoView" | "joinView" | "joinSetupView" | "pendingView" | "playerRoomView" | "adminView" | "localPlayView"
 
@@ -115,6 +116,7 @@ async function mountView(id: ViewId, ctx: ViewContext, scrollY = 0): Promise<voi
   const view = await resolveView(id)
   if (seq !== viewChangeSeq) return
   currentId = id
+  trackView(id)
   currentCtx = ctx
   for (const section of document.querySelectorAll<HTMLElement>("section.view")) {
     section.classList.toggle("active-view", section.id === id)

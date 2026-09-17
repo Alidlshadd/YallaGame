@@ -43,6 +43,7 @@ export interface AdminDeps {
   resolveEngine: EngineResolver
   config: Config
   rng: () => number
+  canCreateGame?: (id: string) => boolean
 }
 
 async function broadcastRoom(deps: AdminDeps, room: Room): Promise<void> {
@@ -87,6 +88,7 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
   bind(socket, "admin:create-room", CreateRoomPayload, async ({ gameId, hostName, hostCharacter, hostAccessory, isPublic, requireApproval }) => {
     const game = deps.resolveGame(gameId)
     if (!game) throw new Error("UNKNOWN_GAME")
+    if (deps.canCreateGame?.(gameId) === false) throw new Error("UNKNOWN_GAME")
     if (!isCharacterId(hostCharacter)) throw new Error("UNKNOWN_CHARACTER")
 
     const totalRooms = await deps.store.countActiveRooms()
@@ -170,6 +172,7 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
   })
 
   bind(socket, "admin:assign-roles", AssignRolesPayload, async ({ code, adminSecret }) => {
+    let redeal = false
     const updated = await deps.store.update(code, room => {
       if (room.adminSecret !== adminSecret) throw new Error("INVALID_ADMIN")
       const game = deps.resolveGame(room.gameId)
@@ -181,6 +184,7 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
       if (connectedCount < game.minPlayers) throw new Error("NEED_MORE_PLAYERS")
       const pool = buildRolePool(game, room.settings, connectedCount)
       const players = assignRolesToConnected(room.players, pool, deps.rng)
+      redeal = room.assigned
       // Spy Game hides one secret word per round behind the generic role pool —
       // picked fresh on every deal so a redeal never repeats last round's word.
       const gameState = game.id === SPY_GAME_ID
@@ -188,6 +192,7 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
         : room.gameState
       return { ...room, players, assigned: true, gameState }
     })
+    if (redeal) deps.store.recordRoleRedeal?.(updated)
     const game = deps.resolveGame(updated.gameId)!
     await broadcastRoom(deps, updated)
     for (const p of updated.players) {

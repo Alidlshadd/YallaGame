@@ -44,7 +44,7 @@ in `tests/e2e/`:
 
 ## Run (dev)
 
-Needs Node.js 18 or newer.
+Needs Node.js 22.12 or newer.
 
 ```bash
 npm install
@@ -57,16 +57,34 @@ This starts the TS server (port 3000) and Vite dev server (port 5173) together. 
 
 ```bash
 npm run build
-DB_PATH=./data/rooms.db NODE_ENV=production npm start
+export DB_PATH=/var/lib/yallagame/rooms.db
+export UPLOAD_DIR=/var/lib/yallagame/uploads
+export BACKUP_DIR=/var/backups/yallagame
+node dist/server/control/cli.js migrate
+node dist/server/control/cli.js create operator
+NODE_ENV=production npm start
 ```
 
 PowerShell:
 ```powershell
 npm run build
-$env:NODE_ENV="production"; $env:DB_PATH="./data/rooms.db"; npm start
+$env:DB_PATH = Join-Path $PWD 'data/rooms.db'
+$env:UPLOAD_DIR = Join-Path $PWD 'data/uploads'
+node dist/server/control/cli.js migrate
+node dist/server/control/cli.js create operator
+$env:NODE_ENV = 'production'
+npm start
 ```
 
 Open http://localhost:3000.
+
+The private control center is at `/admin`. There is no default administrator or password.
+The CLI prompts for passwords without terminal echo. Migration backs up an existing database
+before adding tables. Production uploads and the database must use absolute persistent paths;
+for release-directory deployments keep both outside the release tree. Public production traffic
+needs HTTPS and `ALLOWED_ORIGIN` set to its exact origin. `npm start` runs an isolated smoke
+test before the production entrypoint. Full setup, security decisions, tests and health-gated
+PM2 deployment/rollback commands are in [the Admin Control Center runbook](docs/admin-control-center.md).
 
 ### Environment variables
 
@@ -76,6 +94,10 @@ Open http://localhost:3000.
 | `PORT` | `3000` | |
 | `DB_PATH` | (unset → MemoryStore) | Path to SQLite file. Required in prod. `:memory:` also works. |
 | `ALLOWED_ORIGIN` | unset (all) | CORS origin for Socket.IO |
+| `UPLOAD_DIR` | `data/uploads` (dev) | Absolute persistent directory required in production, outside `dist` |
+| `BACKUP_DIR` | `data/backups` | CLI online backups; must be outside `dist` |
+| `ANALYTICS_RETENTION_DAYS` | `365` | Analytics retention, 1–3650 days |
+| `TRUST_PROXY` | unset | Only trusted proxy addresses, e.g. `loopback` |
 | `ROOM_TTL_HOURS` | `8` | Rooms older than this are GC'd |
 | `LOG_LEVEL` | `info` | pino level |
 | `MAX_ROOMS_PER_SOCKET` | `5` | Anti-abuse per admin socket |
@@ -99,11 +121,14 @@ is nothing listening upstream:
 
 ```bash
 cd /path/to/YallaGame
-git pull
-npm ci            # not optional: new deps land with new features
-npm run build     # server (tsc) + client (vite)
-pm2 restart yalla-game     # or: systemctl restart yalla-game
+npm ci --include=dev
+npm run build     # import guard + server/client build + isolated smoke
+node scripts/health-gate.mjs http://127.0.0.1:3001/health
 ```
+
+Build in a new release directory. Follow the runbook to back up/migrate and start a separate
+candidate on port 3001. Do not stop the running PM2 process before the candidate health gate
+passes; do not load-balance room traffic across independent Socket.IO processes.
 
 When it 502s, the app log says why — nginx only knows the upstream is gone:
 

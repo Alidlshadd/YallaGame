@@ -2,6 +2,8 @@ import { setLang, applyAll } from "./services/i18n.js"
 import * as session from "./services/session.js"
 import { refreshCurrentView, register, registerLazy, setView } from "./router.js"
 import { initNavigation } from "./services/navigation.js"
+import { loadPublicConfiguration } from "./services/publicConfig.js"
+import { initAnalytics } from "./services/analytics.js"
 import { prefetchOfflineBundles, registerServiceWorker } from "./services/pwa.js"
 import { homeView, loadCatalog, getGames } from "./views/home.js"
 import { applyTheme, clearTheme } from "./themes/loader.js"
@@ -14,6 +16,7 @@ import type { LangCode } from "@shared/types.js"
 import type { AdminRoomData, PlayerJoinData } from "@shared/events.js"
 
 async function bootstrap() {
+  initAnalytics()
   // Must run before the first setView so the base history entry is labelled and
   // the hardware/gesture back button is wired up from the very first screen.
   initNavigation()
@@ -90,6 +93,7 @@ async function bootstrap() {
   }
 
   const existing = session.load()
+  await loadPublicConfiguration()
   const catalogPromise = loadCatalog()
   const initialCatalog = JSON.stringify(getGames())
 

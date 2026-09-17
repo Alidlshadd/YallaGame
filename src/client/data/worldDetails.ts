@@ -1,5 +1,6 @@
 import type { LocalizedText } from "@shared/types.js"
 import { worldBackground } from "./assets.js"
+import { gameAsset } from "../services/publicConfig.js"
 
 /* World detail config — augments the server-side Game catalog with the extra
    atmosphere/marketing content the cinematic game-info page renders.
@@ -423,5 +424,11 @@ const WORLDS: Record<string, WorldDetail> = {
 }
 
 export function getWorldDetail(gameId: string): WorldDetail | undefined {
-  return WORLDS[gameId]
+  const original = WORLDS[gameId]
+  const detail = gameAsset(gameId,"detail"), cta = gameAsset(gameId,"cta"), section = gameAsset(gameId,"section")
+  if (!original) return original
+  return { ...original,
+    ...(detail ? { detailBackground:detail, detailBackgroundMobile:detail } : {}),
+    ...(cta ? { ctaBackground:cta, ctaBackgroundMobile:cta } : {}),
+    ...(section ? { sectionsBackground:section, sectionsBackgroundMobile:section } : {}) }
 }

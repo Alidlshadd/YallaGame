@@ -1,5 +1,5 @@
 import type { Game, Settings } from "@shared/types.js"
-import { getCategoriesForGame, type SupportedGame } from "@shared/word-categories.js"
+import { getCategoriesForGame, type SupportedGame } from "../../shared/word-categories.js"
 
 const MAX_CUSTOM_TEXT_LENGTH = 500
 

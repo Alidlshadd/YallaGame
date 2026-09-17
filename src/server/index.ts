@@ -12,9 +12,14 @@ import { MemoryStore } from "./store/memory-store.js"
 import { SqliteStore } from "./store/sqlite-store.js"
 import type { RoomStore } from "./store/store.js"
 import { registerHandlers } from "./sockets/index.js"
-import { GAME_CATALOG, resolveGame } from "./games/catalog.js"
+import { resolveGame } from "./games/catalog.js"
 import { resolveEngine } from "./games/engines.js"
 import { cancelAllTimers } from "./domain/scheduler.js"
+import { openControlDatabase } from "./control/database.js"
+import { Analytics, ObservedStore } from "./control/analytics.js"
+import { mountControl } from "./control/routes.js"
+import { brandedHtml, effectiveCatalog, persistentUploads, publicConfiguration } from "./control/content.js"
+import { readFileSync } from "node:fs"
 import type { ClientToServerEvents, ServerToClientEvents } from "@shared/events.js"
 import type { SocketData } from "@shared/types.js"
 
@@ -37,6 +42,8 @@ function makeStore(): RoomStore {
 
 async function main() {
   const app = express()
+  if (process.env.TRUST_PROXY) app.set("trust proxy", process.env.TRUST_PROXY.split(","))
+  app.disable("x-powered-by")
 
   // Phones on mobile data pay for every byte: the main bundle is ~170 kB raw
   // and ~60 kB gzipped.
@@ -72,17 +79,36 @@ async function main() {
     hsts: config.NODE_ENV === "production" && Boolean(config.ALLOWED_ORIGIN)
   }))
 
-  const store = makeStore()
+  if (config.NODE_ENV === "production" && config.DB_PATH !== ":memory:" &&
+      (!path.isAbsolute(config.DB_PATH!) || !process.env.UPLOAD_DIR || !path.isAbsolute(process.env.UPLOAD_DIR))) {
+    throw new Error("Production requires absolute DB_PATH and UPLOAD_DIR outside release/build directories")
+  }
+  const controlDb = openControlDatabase(config.DB_PATH ?? "data/rooms.db", config.NODE_ENV !== "production" || config.DB_PATH === ":memory:")
+  const analytics = new Analytics(controlDb)
+  const store = new ObservedStore(makeStore(), analytics)
+  const uploadDirectory = persistentUploads(process.env.UPLOAD_DIR ?? "data/uploads")
+  mkdirSync(uploadDirectory, { recursive: true })
+  const staticDir = path.resolve(__dirname, "../../dist/client")
+  const legacyDir = path.resolve(__dirname, "../../public")
+  const version = (JSON.parse(readFileSync(path.resolve(__dirname,"../../package.json"),"utf8")) as {version:string}).version
+  const control = mountControl(app, { db:controlDb, analytics, secure:config.NODE_ENV === "production", uploads:uploadDirectory,
+    clientDir:config.NODE_ENV === "production" ? staticDir : process.cwd(), version, ...(config.ALLOWED_ORIGIN ? {origin:config.ALLOWED_ORIGIN} : {}) })
 
-  app.get("/healthz", async (_req, res) => {
-    try { await store.countActiveRooms(); res.json({ ok: true }) }
+  app.get(["/health", "/healthz"], async (_req, res) => {
+    res.set("Cache-Control","no-store")
+    try { control.health(); await store.countActiveRooms(); res.json({ ok: true }) }
     catch (err) { logger.error({ err }, "healthz failed"); res.status(503).json({ ok: false }) }
   })
 
-  app.get("/api/games", (_req, res) => { res.json(GAME_CATALOG) })
+  app.get("/api/games", (_req, res) => { res.set("Cache-Control","no-store").json(effectiveCatalog(controlDb)) })
 
-  const staticDir = path.resolve(__dirname, "../../dist/client")
-  const legacyDir = path.resolve(__dirname, "../../public")
+  app.get("/control.html", (_req,res) => { res.redirect(303,"/admin") })
+  if (existsSync(path.join(staticDir,"index.html"))) {
+    const publicShell = readFileSync(path.join(staticDir,"index.html"),"utf8")
+    app.get(["/","/index.html"],(_req,res) => {
+      res.set("Cache-Control","no-cache").type("html").send(brandedHtml(publicShell,publicConfiguration(controlDb).branding,config.ALLOWED_ORIGIN ?? ""))
+    })
+  }
   app.use(express.static(existsSync(staticDir) ? staticDir : legacyDir, {
     setHeaders(res, filePath) {
       // Build output carries a content hash, so it can be kept forever.
@@ -102,12 +128,17 @@ async function main() {
   })
 
   registerHandlers(io, {
-    io, store, resolveGame, resolveEngine, config, rng: Math.random
+    io, store, resolveGame, resolveEngine, config, rng: Math.random,
+    canCreateGame: id => (controlDb.prepare("SELECT enabled FROM game_asset_overrides WHERE game_id=?").get(id) as {enabled:number} | undefined)?.enabled !== 0
   })
 
   setInterval(() => {
     void store.deleteOlderThan(Date.now() - config.ROOM_TTL_HOURS * 60 * 60 * 1000)
   }, 20 * 60 * 1000).unref()
+  const retentionDays = Number(process.env.ANALYTICS_RETENTION_DAYS ?? 365)
+  if (!Number.isInteger(retentionDays) || retentionDays < 1 || retentionDays > 3650) throw new Error("Invalid ANALYTICS_RETENTION_DAYS")
+  analytics.retain(retentionDays)
+  setInterval(() => analytics.retain(retentionDays), 3600_000).unref()
 
   server.listen(config.PORT, () => {
     logger.info({ port: config.PORT, env: config.NODE_ENV }, "server ready")
@@ -115,8 +146,10 @@ async function main() {
 
   const shutdown = async () => {
     cancelAllTimers()
-    await store.close()
-    server.close(() => process.exit(0))
+    io.close(() => {
+      void store.close().then(() => { controlDb.close(); process.exit(0) })
+    })
+    setTimeout(() => process.exit(1), 10_000).unref()
   }
   process.on("SIGINT",  () => void shutdown())
   process.on("SIGTERM", () => void shutdown())

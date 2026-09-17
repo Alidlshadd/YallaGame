@@ -6,7 +6,10 @@
   "main": "dist/server/index.js",
   "scripts": {
     "dev": "concurrently -n server,client -c blue,magenta \"tsx watch src/server/index.ts\" \"vite\"",
-    "build": "tsc -p tsconfig.server.json && vite build",
+    "build": "tsc -p tsconfig.server.json && node scripts/verify-server-build.mjs && vite build && node scripts/smoke-production.mjs",
+    "prestart": "node scripts/smoke-production.mjs",
+    "admin:cli": "tsx src/server/control/cli.ts",
+    "test:build-persistence": "node scripts/test-build-persistence.mjs",
     "start": "node dist/server/index.js",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint . --ext .ts,.cjs",
@@ -23,12 +26,13 @@
     "lucide": "^1.20.0",
     "pino": "^9.14.0",
     "pino-pretty": "^11.3.0",
+    "sharp": "^0.35.4",
     "socket.io": "^4.7.5",
     "socket.io-client": "^4.8.3",
     "zod": "^3.25.76"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22.12.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
@@ -38,14 +42,14 @@
     "@types/node": "^20.19.42",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
-    "@vitest/coverage-v8": "^1.6.1",
+    "@vitest/coverage-v8": "^4.1.11",
     "concurrently": "^8.2.2",
     "eslint": "^8.57.1",
     "jsdom": "^29.1.1",
     "prettier": "^3.8.4",
     "tsx": "^4.22.4",
     "typescript": "^5.9.3",
-    "vite": "^5.4.21",
-    "vitest": "^1.6.1"
+    "vite": "^7.3.6",
+    "vitest": "^4.1.11"
   }
 }

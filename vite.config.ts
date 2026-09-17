@@ -14,7 +14,8 @@ export default defineConfig({
     // The service worker reads this to precache every content-hashed chunk,
     // including the lazily imported views. Named without the leading dot of
     // Vite's default path because express.static refuses to serve dotfiles.
-    manifest: "asset-manifest.json"
+    manifest: "asset-manifest.json",
+    rollupOptions: { input: { main: "index.html", control: "control.html" } }
   },
   resolve: {
     alias: {
@@ -26,7 +27,9 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/socket.io": { target: "http://localhost:3000", ws: true },
-      "/api":       { target: "http://localhost:3000" }
+      "/api":       { target: "http://localhost:3000" },
+      "/admin": { target: "http://localhost:3000" },
+      "/uploads": { target: "http://localhost:3000" }
     }
   }
 })

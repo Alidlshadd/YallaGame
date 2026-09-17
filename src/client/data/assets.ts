@@ -18,6 +18,8 @@
  * backdrop. One helper so a third hashed-asset category is one call, not a
  * third copy of the glob plumbing.
  */
+import { gameAsset } from "../services/publicConfig.js"
+
 function hashedAssetMap(files: Record<string, string>, keyPattern: RegExp): Record<string, string> {
   return Object.fromEntries(
     Object.entries(files).map(([path, url]) => [path.replace(keyPattern, "$1"), url])
@@ -35,6 +37,8 @@ const COVERS: Record<string, string> = hashedAssetMap(
  * a request at a path that was never there.
  */
 export function worldCoverPath(theme: string): string {
+  const override = gameAsset(theme,"cover")
+  if (override) return override
   // Newly added worlds use the existing brand mark until dedicated art lands.
   // Never give the browser an empty image URL for a playable world.
   if (!COVERS[theme] && (theme === "bluff-trivia" || theme === "secret-politician")) {

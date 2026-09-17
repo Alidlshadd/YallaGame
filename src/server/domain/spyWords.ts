@@ -1,5 +1,5 @@
 import type { GameState, LocalizedText, Role, Settings } from "@shared/types.js"
-import { getCategoriesForGame } from "@shared/word-categories.js"
+import { getCategoriesForGame } from "../../shared/word-categories.js"
 
 export const SPY_GAME_ID = "spy-game"
 

@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test"
 
-const port = process.env.PORT ?? "3000"
+const port = process.env.E2E_PORT ?? "3100"
 const baseURL = `http://localhost:${port}`
 
 export default defineConfig({
@@ -18,7 +18,8 @@ export default defineConfig({
     command: "npm run build && npm start",
     url: baseURL,
     timeout: 60_000,
-    reuseExistingServer: !process.env.CI,
+    // Never run mutation tests against an existing developer or production database.
+    reuseExistingServer: false,
     env: { NODE_ENV: "production", DB_PATH: ":memory:", PORT: port }
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }]

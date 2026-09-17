@@ -10,6 +10,8 @@ export interface RoomStore {
   /** Rooms flagged public, newest first, for the room browser. */
   listPublic(limit: number): Promise<Room[]>
   close(): Promise<void>
+  /** Optional observational hook for an explicit re-deal while roles are already assigned. */
+  recordRoleRedeal?(room: Room): void
 }
 
 export class RoomNotFoundError extends Error {

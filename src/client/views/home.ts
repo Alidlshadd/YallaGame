@@ -6,6 +6,7 @@ import { dismissLayer, pushLayer, type LayerHandle } from "../services/navigatio
 import { showToast } from "../ui/toast.js"
 import { clearTheme } from "../themes/loader.js"
 import { worldCoverPath } from "../data/assets.js"
+import { brandLogo } from "../services/publicConfig.js"
 // Per-theme CSS is loaded lazily by applyTheme() (themes/loader.ts) when a
 // world is opened — every .theme-fx rule is gated by [data-theme="..."], so
 // nothing visible on the home page depends on them being preloaded.
@@ -122,7 +123,7 @@ function buildHeroEmblemPanel(): HTMLElement {
   panel.appendChild(el("div", { class: "hero-emblem-glow" }))
   panel.appendChild(el("div", { class: "hero-emblem-ring" }))
   panel.appendChild(el("img", {
-    src: "/assets/logo/yalla-game-mark.webp",
+    src: brandLogo(),
     alt: "",
     loading: "eager",
     decoding: "async",
@@ -155,7 +156,7 @@ function buildHeroSlide(lang: ReturnType<typeof getLang>, hasGames: boolean): HT
   /* LEFT column: brand-mark, title, tagline, body, CTAs, hint */
   const brandRow = el("div", { class: "hero-brand-row" }, [
     el("img", {
-      src: "/assets/logo/yalla-game-mark.webp",
+      src: brandLogo(true),
       alt: "",
       loading: "eager",
       decoding: "async",

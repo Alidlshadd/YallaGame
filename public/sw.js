@@ -23,7 +23,7 @@
  * shows the old cover until the visit after next. Changing the version drops
  * both caches on activate, which is the only thing that fixes it that visit.
  */
-const VERSION = "v3"
+const VERSION = "v4"
 const SHELL_CACHE = `yalla-shell-${VERSION}`
 const ASSET_CACHE = `yalla-assets-${VERSION}`
 const SHELL_URL = "/"
@@ -149,7 +149,7 @@ self.addEventListener("fetch", event => {
   if (url.origin !== self.location.origin) return
   // Live data must never come from a cache.
   if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/socket.io/")) return
-  if (url.pathname === "/healthz") return
+  if (url.pathname === "/healthz" || url.pathname === "/health" || url.pathname.startsWith("/admin") || url.pathname === "/control.html") return
 
   if (request.mode === "navigate") { event.respondWith(networkFirst(request)); return }
   if (isBuildAsset(url))           { event.respondWith(cacheFirst(request)); return }

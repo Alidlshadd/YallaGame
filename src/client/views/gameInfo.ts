@@ -11,6 +11,7 @@ import { getGames } from "./home.js"
 import { applyTheme, clearTheme } from "../themes/loader.js"
 import { worldCoverPath } from "../data/assets.js"
 import { getWorldDetail } from "../data/worldDetails.js"
+import { gameAsset } from "../services/publicConfig.js"
 import type { CategoryDifficulty } from "../data/worldDetails.js"
 import { buildCategoryIconSvg } from "../data/categoryIcons.js"
 import { scrollReveal } from "../ui/motion.js"
@@ -205,10 +206,12 @@ function buildHero(
   // When a per-world cinematic backdrop is provided, hand the URL to CSS via
   // a CSS variable so the gi-hero-bg layer can pick it up while still composing
   // its theme gradients on top.
-  if (detail?.detailBackground) {
-    const styles = [`--gi-hero-bg-image: url("${detail.detailBackground}")`]
-    if (detail.detailBackgroundMobile) {
-      styles.push(`--gi-hero-bg-image-mobile: url("${detail.detailBackgroundMobile}")`)
+  const heroBackground = gameAsset(game.id,"detail") ?? detail?.detailBackground
+  if (heroBackground) {
+    const styles = [`--gi-hero-bg-image: url("${heroBackground}")`]
+    const mobileBackground = gameAsset(game.id,"detail") ?? detail?.detailBackgroundMobile
+    if (mobileBackground) {
+      styles.push(`--gi-hero-bg-image-mobile: url("${mobileBackground}")`)
     }
     hero.setAttribute("style", styles.join("; "))
     hero.classList.add("gi-hero--has-image")
@@ -587,8 +590,8 @@ function buildBottomCTA(
     ])
   ])
   // Prefer the dedicated ctaBackground; fall back to detailBackground if absent.
-  const bottomBgImage = detail?.ctaBackground ?? detail?.detailBackground
-  const bottomBgImageMobile = detail?.ctaBackgroundMobile ?? detail?.detailBackgroundMobile
+  const bottomBgImage = gameAsset(game.id,"cta") ?? detail?.ctaBackground ?? detail?.detailBackground
+  const bottomBgImageMobile = gameAsset(game.id,"cta") ?? detail?.ctaBackgroundMobile ?? detail?.detailBackgroundMobile
   if (bottomBgImage) {
     const styles = [`--gi-bottom-bg-image: url("${bottomBgImage}")`]
     if (bottomBgImageMobile) {
@@ -673,10 +676,12 @@ export const gameInfoView = {
     ]
     if (game.id === "most-likely-to") lowerSections.push(bottom)
     const sectionsWrap = el("div", { class: "gi-sections-wrap" }, lowerSections)
-    if (detail?.sectionsBackground) {
-      const styles = [`--gi-sections-bg-image: url("${detail.sectionsBackground}")`]
-      if (detail.sectionsBackgroundMobile) {
-        styles.push(`--gi-sections-bg-image-mobile: url("${detail.sectionsBackgroundMobile}")`)
+    const sectionBackground = gameAsset(game.id,"section") ?? detail?.sectionsBackground
+    if (sectionBackground) {
+      const styles = [`--gi-sections-bg-image: url("${sectionBackground}")`]
+      const mobileSection = gameAsset(game.id,"section") ?? detail?.sectionsBackgroundMobile
+      if (mobileSection) {
+        styles.push(`--gi-sections-bg-image-mobile: url("${mobileSection}")`)
       }
       sectionsWrap.setAttribute("style", styles.join("; "))
       sectionsWrap.classList.add("gi-sections-wrap--has-image")
