@@ -2,6 +2,8 @@
 
 Bu çalışma yalnızca local implementasyon ve izole testlerdir. Production sunucusuna bağlantı, production migration, deploy, PM2 restart veya commit yapılmadı. Başlangıç çalışma ağacı temizdi; `git add -A` kullanılmadı. Mevcut `data/rooms.db` yalnızca salt okunur incelendi; bütünlük kontrolü `ok` döndü. Aşağıdaki production komutları **çalıştırılmadı**.
 
+**19 Eylül 2026 güncellemesi:** Yukarıdaki paragraf ilk local teslimin durumudur. Implementasyon daha sonra kullanıcı onayıyla `c632992` commit'i olarak `origin/master` üzerine gönderildi. İlk Linux CI çalıştırmasında 64/65 E2E geçti; karakter seçimi senaryosundaki 5 saniyelik assertion süresi, uygulamanın 5 saniyelik polling aralığıyla çakışıyordu. Yalnızca bu assertion, iki polling turu ve mesaj teslimi için 12 saniyeye çıkarıldı; kontrol kaldırılmadı, otomatik retry eklenmedi ve oyun kodu değiştirilmedi. Hedef senaryo 5/5 tekrarda, tam E2E paketi 65/65 senaryoda (5.7 dakika), 369 unit testi, typecheck ve lint yeniden başarılı oldu. E2E öncesindeki production build, import kontrolü ve smoke testi de geçti. Production ortamı belirlenemediği için migration, deploy veya canlı süreç değişikliği yapılmadı.
+
 ## İncelenen mimari
 
 - Express ve Socket.IO aynı HTTP server üzerinde çalışıyor. Derlenmiş giriş `node dist/server/index.js` olarak korundu.

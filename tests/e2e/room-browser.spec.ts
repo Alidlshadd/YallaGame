@@ -277,8 +277,9 @@ test("a face taken while the doorstep is open stops being selectable", async ({ 
   const fast = await fastCtx.newPage()
   await joinAs(fast, code, "Bea", "gizmo")
 
-  // The doorstep polls, so the tile greys out and the choice is dropped.
-  await expect(slow.locator('#joinSetupCharacters .char-tile[data-character="gizmo"]')).toBeDisabled()
+  // The view polls every 5 seconds. A 5-second assertion races the next poll
+  // when another player joins just after a refresh; allow two polls plus delivery.
+  await expect(slow.locator('#joinSetupCharacters .char-tile[data-character="gizmo"]')).toBeDisabled({ timeout: 12_000 })
   await expect(slow.locator("#joinSetupSubmit")).toBeDisabled()
 
   // Picking a free one puts them back on track.
