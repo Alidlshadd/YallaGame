@@ -1,7 +1,19 @@
 import { createHash, randomBytes, scrypt, timingSafeEqual } from "node:crypto"
 import type { Request, Response, RequestHandler } from "express"
 import type Database from "better-sqlite3"
+import { z } from "zod"
 import { audit } from "./database.js"
+
+export function normalizeAdminUsername(value: string): string {
+  const username = value.trim()
+  if (
+    username.length < 3 ||
+    username.length > 64 ||
+    (!/^[a-zA-Z0-9_.-]+$/.test(username) && !z.string().email().safeParse(username).success)
+  )
+    throw new Error("Use a username (letters, digits, dot, underscore or dash) or email; 3–64 characters")
+  return username.toLowerCase()
+}
 
 export const hash = (value: string): string => createHash("sha256").update(value).digest("hex")
 export const token = (): string => randomBytes(32).toString("hex")

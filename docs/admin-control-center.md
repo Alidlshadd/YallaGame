@@ -93,6 +93,8 @@ npm run dev
 
 Panel: `http://localhost:5173/admin`. Parola terminalde echo edilmeden iki kez sorulur; argv/env/stdin pipe ile parola verilmesi desteklenmez. Kaynak kod tarafında `.env` otomatik okunmaz; ortam değişkenlerini shell/PM2 üzerinden verin.
 
+Hesap kimliği olarak kullanıcı adı veya e-posta adresi kullanılabilir (3–64 karakter). Baştaki/sondaki boşluklar temizlenir ve kimlik küçük harfe çevrilir. Örnek: `npm run admin:cli -- create operator@example.com`. Bu, e-posta gönderimi veya adres doğrulaması yapmaz; adres yalnızca giriş kimliğidir. Parola alt sınırı 14 karakterdir.
+
 ```powershell
 npm run admin:cli -- password operator
 npm run admin:cli -- disable operator

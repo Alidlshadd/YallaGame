@@ -73,7 +73,7 @@ test.afterAll(async () => {
 })
 async function login(page: Page) {
   await page.goto(base + "/admin/login")
-  await page.getByLabel("Username", { exact: true }).fill("e2e-admin")
+  await page.getByLabel("Username or email", { exact: true }).fill("e2e-admin")
   await page.getByLabel("Password", { exact: true }).fill(password)
   await page.getByRole("button", { name: "Sign in" }).click()
   await expect(page.getByRole("heading", { name: "Workspace overview" })).toBeVisible()

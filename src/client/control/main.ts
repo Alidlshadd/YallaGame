@@ -114,7 +114,7 @@ async function login(): Promise<void> {
     node("p", "Your worlds. One command center.", "muted")
   )
   const form = node("form"),
-    username = field("Username"),
+    username = field("Username or email"),
     password = field("Password", "password"),
     submit = node("button", "Sign in →", "primary")
   username.input.name = "username"

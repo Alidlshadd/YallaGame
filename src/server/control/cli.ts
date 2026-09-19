@@ -3,7 +3,7 @@ import { mkdirSync, existsSync, chmodSync } from "node:fs"
 import path from "node:path"
 import { emitKeypressEvents } from "node:readline"
 import { openControlDatabase, audit } from "./database.js"
-import { hashPassword } from "./auth.js"
+import { hashPassword, normalizeAdminUsername } from "./auth.js"
 import { cleanupUploads, persistentUploads } from "./content.js"
 
 function secretPrompt(label: string): Promise<string> {
@@ -46,7 +46,7 @@ function secretPrompt(label: string): Promise<string> {
   })
 }
 async function main() {
-  const [command, username, ...extra] = process.argv.slice(2)
+  const [command, rawUsername, ...extra] = process.argv.slice(2)
   if (
     extra.length ||
     !["backup", "migrate", "create", "password", "disable", "cleanup", "cleanup-apply"].includes(
@@ -62,7 +62,7 @@ async function main() {
   if (backupDir === path.resolve("dist") || backupDir.startsWith(path.resolve("dist") + path.sep))
     throw new Error("Backups must be outside dist")
   if (command === "backup" || command === "migrate") {
-    if (username) throw new Error("Unexpected argument")
+    if (rawUsername) throw new Error("Unexpected argument")
     if (existsSync(filename)) {
       mkdirSync(backupDir, { recursive: true, mode: 0o700 })
       const source = new Database(filename, { readonly: true })
@@ -103,8 +103,7 @@ async function main() {
       )
       return
     }
-    if (!username || !/^[a-zA-Z0-9_.-]{3,64}$/.test(username))
-      throw new Error("Username must contain 3–64 letters, digits, dot, underscore or dash")
+    const username = normalizeAdminUsername(rawUsername ?? "")
     const user = db.prepare("SELECT id FROM admin_users WHERE username=?").get(username) as
       | { id: number }
       | undefined

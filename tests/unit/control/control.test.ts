@@ -7,7 +7,7 @@ import path from "node:path"
 import sharp from "sharp"
 import type Database from "better-sqlite3"
 import { ADMIN_SCHEMA, openControlDatabase } from "../../../src/server/control/database.js"
-import { hash, hashPassword, verifyPassword, createAuth } from "../../../src/server/control/auth.js"
+import { hash, hashPassword, verifyPassword, createAuth, normalizeAdminUsername } from "../../../src/server/control/auth.js"
 import { Analytics, ObservedStore } from "../../../src/server/control/analytics.js"
 import {
   brandedHtml,
@@ -58,14 +58,14 @@ describe("Control center security and persistence", () => {
     expect(path.dirname(directory)).toBe(path.resolve(tmpdir()))
     await rm(directory, { recursive: true, force: true })
   })
-  async function login(password = "testing-only-long-password") {
+  async function login(password = "testing-only-long-password", username = "operator") {
     const pre = await fetch(base + "/api/auth/csrf")
     csrf = ((await pre.json()) as { csrf: string }).csrf
     const preCookie = pre.headers.get("set-cookie")!.split(";")[0]!
     const result = await fetch(base + "/api/auth/login", {
       method: "POST",
       headers: { Origin: base, Cookie: preCookie, "Content-Type": "application/json", "x-csrf-token": csrf },
-      body: JSON.stringify({ username: "operator", password })
+      body: JSON.stringify({ username, password })
     })
     if (result.ok) {
       cookie = result.headers.get("set-cookie")!.split(";")[0]!
@@ -115,6 +115,17 @@ describe("Control center security and persistence", () => {
     expect(passwordHash).not.toContain("testing-only-long-password")
     expect(await verifyPassword("wrong", passwordHash)).toBe(false)
     expect(await verifyPassword("testing-only-long-password", passwordHash)).toBe(true)
+  })
+  it("accepts email admin identifiers, normalizes case and rejects malformed identifiers", async () => {
+    expect(normalizeAdminUsername(" Legacy.Operator_1 ")).toBe("legacy.operator_1")
+    const email = normalizeAdminUsername(" Admin+Operations@Example.com ")
+    expect(email).toBe("admin+operations@example.com")
+    for (const invalid of ["", "ab", "admin@", "@example.com", "admin name", "a".repeat(65)])
+      expect(() => normalizeAdminUsername(invalid)).toThrow()
+    db.prepare("UPDATE admin_users SET username=? WHERE id=1").run(email)
+    expect((await login("testing-only-long-password", " ADMIN+OPERATIONS@EXAMPLE.COM ")).status).toBe(200)
+    expect((await (await request("/api/admin/session")).json()).username).toBe(email)
+    await expect(hashPassword("short")).rejects.toThrow("14–128")
   })
   it("stores hashed sessions, enforces CSRF, logs out and invalidates the token", async () => {
     const response = await login()
