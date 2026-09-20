@@ -7,6 +7,7 @@ import { showToast } from "../ui/toast.js"
 import { clearTheme } from "../themes/loader.js"
 import { worldCoverPath } from "../data/assets.js"
 import { brandLogo } from "../services/publicConfig.js"
+import { buildBookCover } from "../ui/bookCover.js"
 // Per-theme CSS is loaded lazily by applyTheme() (themes/loader.ts) when a
 // world is opened — every .theme-fx rule is gated by [data-theme="..."], so
 // nothing visible on the home page depends on them being preloaded.
@@ -58,23 +59,11 @@ export async function loadCatalog(): Promise<void> {
 }
 
 export function getGames(): readonly Game[] { return games }
+export function isCatalogLoadFailed(): boolean { return catalogLoadFailed }
 
-function routeToGame(gameId: string): void {
+export function routeToGame(gameId: string): void {
   sessionStorage.setItem("role-room:selectedGame", gameId)
   setView("gameInfoView")
-}
-
-/* Short, dramatic taglines shown on each book cover (poster-style). */
-const GAME_TAGLINES: Record<string, string> = {
-  "vampire-village": "LIE. SEDUCE. SURVIVE.",
-  "mafia-classic":   "TRUST IS A WEAPON.",
-  "spy-game":        "SECRETS. MISSIONS. DECEPTION.",
-  "who-am-i":        "ASK. GUESS. LAUGH.",
-  "football-player-guess": "ASK. DRIBBLE. GUESS."
-}
-
-function taglineFor(game: Game, lang: ReturnType<typeof getLang>): string {
-  return GAME_TAGLINES[game.id] ?? game.subtitle[lang]
 }
 
 /* Build the "5" face die icon for the Local Play card without innerHTML. */
@@ -105,17 +94,10 @@ function buildDiceSvg(): SVGSVGElement {
   return svg
 }
 
-/* ─── Slide 1: BRAND HERO (split layout) ──────────────────── */
-
-function buildFeatureCard(icon: string, title: string, desc: string, accent: string): HTMLElement {
-  return el("div", { class: "feat-card", "data-accent": accent }, [
-    el("div", { class: "feat-icon" }, [icon]),
-    el("div", { class: "feat-text" }, [
-      el("strong", {}, [title]),
-      el("span", {}, [desc])
-    ])
-  ])
-}
+/* ─── HOME PAGE: brand hero only. Worlds / How to Play / Features / About
+   each live on their own routed page now (views/worlds.ts, howToPlay.ts,
+   features.ts, about.ts) so the top nav goes somewhere real instead of
+   scrolling within one long page. ─────────────────────────────────── */
 
 function buildHeroSlide(lang: ReturnType<typeof getLang>, hasGames: boolean): HTMLElement {
   const slide = el("section", { class: "home-slide hero-slide", "data-slide": "hero" })
@@ -201,119 +183,38 @@ function buildHeroSlide(lang: ReturnType<typeof getLang>, hasGames: boolean): HT
 
   const heroGrid = el("div", { class: "hero-grid" }, [heroLeft])
 
-  /* Feature cards row */
-  const featRow = el("div", { class: "feat-row" }, [
-    buildFeatureCard("⬡", t("featRoomCode"),    t("featRoomCodeDesc"),    "violet"),
-    buildFeatureCard("♛", t("featHostControl"), t("featHostControlDesc"), "gold"),
-    buildFeatureCard("◈", t("featSecretRoles"), t("featSecretRolesDesc"), "red"),
-    buildFeatureCard("✦", t("featMultiLang"),   t("featMultiLangDesc"),   "cyan")
-  ])
-
   slide.append(fog, particles, heroGrid)
-  if (hasGames) slide.append(featRow)
   return slide
 }
 
-/* ─── Slide 2: GAMES SHELF (book covers) ─────────────────── */
+/* ─── FEATURED WORLDS teaser — first 3 games in the admin's own display
+   order (the same order the Worlds page uses), with a link to the rest.
+   Keeps the home page from ending abruptly after the hero. ─────────── */
 
-function buildBookCover(game: Game, lang: ReturnType<typeof getLang>, idx: number): HTMLElement {
-  const card = el("button", {
-    class: "shelf-card game-card",
-    type: "button",
-    "data-game": game.id,
-    "data-theme": game.theme,
-    "data-position": String(idx),
-    "aria-label": game.title[lang]
-  })
+function buildFeaturedSlide(lang: ReturnType<typeof getLang>): HTMLElement {
+  const slide = el("section", { class: "home-slide featured-slide", "data-slide": "featured" })
+  const atmosphere = el("div", { class: "how-atmosphere", "aria-hidden": "true" })
 
-  const frame = el("div", { class: "book-frame" })
-
-  // TOP ornament header
-  const top = el("div", { class: "book-top" }, [
-    el("span", { class: "book-ornament" }, ["❖"]),
-    el("span", { class: "book-kicker" }, [t("worldLabel").toUpperCase()]),
-    el("span", { class: "book-ornament" }, ["❖"])
-  ])
-
-  // COVER artwork — only the first cover loads eagerly (LCP candidate);
-  // the rest defer until they're scrolled into view to spare initial bandwidth.
-  const cover = el("div", { class: "book-cover" })
-  const backdrop = el("div", { class: "book-backdrop", "aria-hidden": "true" })
-  const isFirst = idx === 0
-  const img = el("img", {
-    src: worldCoverPath(game.theme),
-    alt: game.title[lang],
-    loading: isFirst ? "eager" : "lazy",
-    decoding: "async",
-    fetchpriority: isFirst ? "high" : "low",
-    width: "320",
-    height: "480",
-    class: "book-image"
-  }) as HTMLImageElement
-  if (img.complete) img.classList.add("loaded")
-  else img.addEventListener("load", () => img.classList.add("loaded"), { once: true })
-  cover.append(backdrop, img)
-  // No per-theme FX layer on shelf cards. The home page never activates a
-  // [data-theme] on <html>, so theme-fx CSS (which is gated by that
-  // selector) wouldn't apply anyway. Worse, spy-game's FX builder emits
-  // raw HUD/binary text nodes that would appear unstyled and leak across
-  // the cover. FX still runs on gameInfo + playerRoom where the theme IS
-  // active.
-
-  // BOTTOM title/tagline — tagline is always English poster art, wrap with
-  // <bdi dir="ltr"> so adjacent RTL glyphs don't interleave with its punctuation.
-  const bottom = el("div", { class: "book-bottom" }, [
-    el("h3", { class: "book-title" }, [game.title[lang]]),
-    el("p", { class: "book-tagline" }, [
-      el("bdi", { dir: "ltr" }, [taglineFor(game, lang)])
+  const header = el("header", { class: "how-header" }, [
+    el("p", { class: "how-eyebrow" }, [
+      el("span", { class: "how-ornament", "aria-hidden": "true" }, ["◆"]),
+      el("span", {}, [t("featuredEyebrow").toUpperCase()]),
+      el("span", { class: "how-ornament", "aria-hidden": "true" }, ["◆"])
     ]),
-    el("span", { class: "book-emblem" }, ["✦"])
+    el("h2", { class: "how-title" }, [t("featuredTitle")]),
+    el("p", { class: "how-sub" }, [t("featuredSub")])
   ])
 
-  frame.append(top, cover, bottom)
-  card.appendChild(frame)
+  const rail = el("div", { class: "featured-rail" })
+  games.slice(0, 3).forEach((g, i) => rail.appendChild(buildBookCover(g, lang, i, routeToGame)))
 
-  card.addEventListener("click", () => {
-    routeToGame(game.id)
-  })
-
-  return card
-}
-
-function buildShelfSlide(lang: ReturnType<typeof getLang>): HTMLElement {
-  const slide = el("section", { class: "home-slide shelf-slide", "data-slide": "shelf" })
-
-  const header = el("header", { class: "shelf-header" }, [
-    el("p", { class: "shelf-eyebrow" }, [
-      el("span", { class: "shelf-ornament" }, ["❖"]),
-      el("span", {}, [t("exploreEyebrow").toUpperCase()]),
-      el("span", { class: "shelf-ornament" }, ["❖"])
-    ]),
-    el("h2", { class: "shelf-title" }, [t("exploreWorlds")]),
-    el("p", { class: "shelf-subtitle" }, [t("exploreWorldsSub")])
+  const viewAll = el("button", { class: "view-all-link", type: "button" }, [
+    el("span", {}, [t("viewAllWorlds")]),
+    el("span", { "aria-hidden": "true" }, ["→"])
   ])
+  viewAll.addEventListener("click", () => { void setView("worldsView") })
 
-  const rail = el("div", { class: "shelf-rail" })
-  games.forEach((g, i) => rail.appendChild(buildBookCover(g, lang, i)))
-
-  const shelfFloor = el("div", { class: "shelf-floor", "aria-hidden": "true" })
-
-  const footer = el("footer", { class: "shelf-footer" }, [
-    el("span", { class: "shelf-footer-star", "aria-hidden": "true" }, ["✦"]),
-    el("h3", { class: "shelf-footer-title" }, [t("moreWorlds")]),
-    el("p", { class: "shelf-footer-sub" }, [t("moreWorldsSub")])
-  ])
-
-  const backTop = el("button", {
-    class: "shelf-back-top",
-    type: "button",
-    "aria-label": "Back to top"
-  }, [el("span", { "aria-hidden": "true" }, ["⌃"]), el("span", {}, [t("brand")])])
-  backTop.addEventListener("click", () => {
-    document.querySelector<HTMLElement>(".hero-slide")?.scrollIntoView({ behavior: "smooth" })
-  })
-
-  slide.append(header, rail, shelfFloor, footer, backTop)
+  slide.append(atmosphere, header, rail, viewAll)
   return slide
 }
 
@@ -414,24 +315,9 @@ export const homeView = {
     const hasGames = games.length > 0
 
     stage.appendChild(buildHeroSlide(lang, hasGames))
-    if (hasGames) {
-      stage.appendChild(buildShelfSlide(lang))
-    } else if (catalogLoadFailed) {
-      const msg = el("section", { class: "home-slide shelf-slide" }, [
-        el("p", { class: "shelf-subtitle" }, [t("catalogUnavailable")])
-      ])
-      stage.appendChild(msg)
-    }
-
-    const observer = typeof IntersectionObserver === "undefined" ? null : new IntersectionObserver(entries => {
-      for (const entry of entries) {
-        (entry.target as HTMLElement).dataset.offscreen = String(!entry.isIntersecting)
-      }
-    })
-    for (const slide of stage.querySelectorAll(".home-slide")) observer?.observe(slide)
+    if (hasGames) stage.appendChild(buildFeaturedSlide(lang))
 
     return () => {
-      observer?.disconnect()
       clear(stage)
       document.getElementById("createPickerOverlay")?.remove()
     }

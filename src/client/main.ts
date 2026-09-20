@@ -1,6 +1,6 @@
 import { setLang, applyAll } from "./services/i18n.js"
 import * as session from "./services/session.js"
-import { refreshCurrentView, register, registerLazy, setView } from "./router.js"
+import { refreshCurrentView, register, registerLazy, setView, type ViewId } from "./router.js"
 import { initNavigation } from "./services/navigation.js"
 import { loadPublicConfiguration } from "./services/publicConfig.js"
 import { initAnalytics } from "./services/analytics.js"
@@ -9,6 +9,7 @@ import { homeView, loadCatalog, getGames } from "./views/home.js"
 import { applyTheme, clearTheme } from "./themes/loader.js"
 import { ensureAtmosphere, applyPerformanceProfile } from "./ui/atmosphere.js"
 import { initLazyImageFade } from "./ui/lazyImage.js"
+import { initSiteHeader } from "./ui/siteHeader.js"
 import "./themes/_base.css"
 import "./themes/home.css"
 import "./themes/morinji.css"
@@ -24,8 +25,13 @@ async function bootstrap() {
   ensureAtmosphere()
   applyPerformanceProfile()
   initLazyImageFade()
+  initSiteHeader()
 
   register(homeView)
+  registerLazy("worldsView", async () => (await import("./views/worlds.js")).worldsView)
+  registerLazy("howToPlayView", async () => (await import("./views/howToPlay.js")).howToPlayView)
+  registerLazy("featuresView", async () => (await import("./views/features.js")).featuresView)
+  registerLazy("aboutView", async () => (await import("./views/about.js")).aboutView)
   registerLazy("joinView", async () => (await import("./views/join.js")).joinView)
   registerLazy("gameInfoView", async () => (await import("./views/gameInfo.js")).gameInfoView)
   registerLazy("joinSetupView", async () => (await import("./views/joinSetup.js")).joinSetupView)
@@ -50,24 +56,20 @@ async function bootstrap() {
     })
   })
 
-  // Top nav: scroll within the home stage to the requested slide.
+  // Top nav: each item is its own routed page, not a scroll anchor. Plain
+  // push navigation, like every other link in the app — the hardware/browser
+  // back button steps back through the pages the visitor actually opened.
+  const NAV_TARGETS: Record<string, ViewId> = {
+    home: "homeView",
+    worlds: "worldsView",
+    how: "howToPlayView",
+    features: "featuresView",
+    about: "aboutView"
+  }
   document.querySelectorAll<HTMLButtonElement>(".main-nav button").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const target = btn.dataset.nav
-      if (target === "home" || target === "worlds" || target === "features" || target === "how") {
-        if (document.querySelector<HTMLElement>("section.view.active-view")?.id !== "homeView") {
-          // Top-nav "home" is a reset, not a step forward: drop the back stack
-          // instead of stacking home on top of whatever view was open.
-          await setView("homeView", {}, { mode: "root" })
-        }
-        const sel =
-          target === "home"     ? ".hero-slide"
-          : target === "worlds" ? ".shelf-slide"
-          : target === "features" ? ".feat-row"
-          /* how */             : ".shelf-slide"
-        document.querySelector<HTMLElement>(sel)?.scrollIntoView({ behavior: "smooth", block: target === "features" ? "center" : "start" })
-      }
-      // about: placeholder (no destination yet — keep as visual presence)
+    btn.addEventListener("click", () => {
+      const target = btn.dataset.nav ? NAV_TARGETS[btn.dataset.nav] : undefined
+      if (target) void setView(target)
     })
   })
 

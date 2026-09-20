@@ -1,7 +1,7 @@
 import { canGoBack, dismissLayer, layerCount, pushLayer, requestBack, resetLayers } from "./services/navigation.js"
 import { trackView } from "./services/analytics.js"
 
-export type ViewId = "homeView" | "gameInfoView" | "joinView" | "joinSetupView" | "pendingView" | "playerRoomView" | "adminView" | "localPlayView"
+export type ViewId = "homeView" | "worldsView" | "howToPlayView" | "featuresView" | "aboutView" | "gameInfoView" | "joinView" | "joinSetupView" | "pendingView" | "playerRoomView" | "adminView" | "localPlayView"
 
 export type ViewContext = Record<string, unknown>
 

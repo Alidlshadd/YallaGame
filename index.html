@@ -22,6 +22,7 @@
 <body>
   <!-- atmosphere injected by atmosphere.ts -->
 
+  <div class="site-header" data-layout="browse">
   <header class="brand" aria-label="Yalla Game">
     <img class="brand-mark" src="/assets/logo/yallagame-mark-2026.webp" alt="" width="40" height="40" decoding="async" fetchpriority="high" />
     <div class="brand-text">
@@ -31,11 +32,11 @@
   </header>
 
   <nav class="main-nav" aria-label="Primary">
-    <button data-nav="home"    data-i18n="navHome">Home</button>
-    <button data-nav="worlds"  data-i18n="navWorlds">Worlds</button>
-    <button data-nav="how"     data-i18n="navHowToPlay">How to Play</button>
-    <button data-nav="features" data-i18n="navFeatures">Features</button>
-    <button data-nav="about"   data-i18n="navAbout">About</button>
+    <button type="button" data-nav="home"><span data-i18n="navHome">Home</span></button>
+    <button type="button" data-nav="worlds"><span data-i18n="navWorlds">Worlds</span></button>
+    <button type="button" data-nav="how"><span data-i18n="navHowToPlay">How to Play</span></button>
+    <button type="button" data-nav="features"><span data-i18n="navFeatures">Features</span></button>
+    <button type="button" data-nav="about"><span data-i18n="navAbout">About</span></button>
   </nav>
 
   <div class="hud">
@@ -46,6 +47,7 @@
       <button data-lang="tr">Türkçe</button>
     </nav>
   </div>
+  </div>
 
   <div class="spy-hud" aria-hidden="true">
     <span id="spyHudClock">--:--:--</span>
@@ -53,9 +55,29 @@
   </div>
 
   <main class="shell">
-    <!-- ─── HOME (Three Worlds + Brand Hub) ───────────────── -->
+    <!-- ─── HOME (Brand Hub) ────────────────────────────────── -->
     <section id="homeView" class="view active-view home-stage">
       <div class="stage" id="gamesStage"></div>
+    </section>
+
+    <!-- ─── WORLDS ─────────────────────────────────────────── -->
+    <section id="worldsView" class="view worlds-page">
+      <div id="worldsStage"></div>
+    </section>
+
+    <!-- ─── HOW TO PLAY ────────────────────────────────────── -->
+    <section id="howToPlayView" class="view how-page">
+      <div id="howStage"></div>
+    </section>
+
+    <!-- ─── FEATURES ───────────────────────────────────────── -->
+    <section id="featuresView" class="view features-page">
+      <div id="featuresStage"></div>
+    </section>
+
+    <!-- ─── ABOUT ──────────────────────────────────────────── -->
+    <section id="aboutView" class="view about-page">
+      <div id="aboutStage"></div>
     </section>
 
     <!-- ─── GAME INFO ─────────────────────────────────────── -->
