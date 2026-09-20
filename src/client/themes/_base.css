@@ -739,13 +739,14 @@ body[data-perf="low"] *::after {
 
 /* 2026 brand kit accents — controlled per-game colors, shared chrome stays
    Midnight/Indigo. Values match yallagame-theme.json's gameAccents map. */
-.game-card[data-theme="vampire-village"] { --card-glow: #ff3d81; }
-.game-card[data-theme="mafia-classic"]   { --card-glow: #ff6b35; }
-.game-card[data-theme="spy-game"]        { --card-glow: #22d3ee; }
-.game-card[data-theme="football-player-guess"] { --card-glow: #22c55e; }
-.game-card[data-theme="who-am-i"] { --card-glow: #fbbf24; }
-/* The gold of the question card on the cover art. */
-.game-card[data-theme="most-likely-to"] { --card-glow: #f0c257; }
+.game-card[data-theme="vampire-village"] { --card-glow: #e4002b; --card-accent: #e4002b; }
+.game-card[data-theme="mafia-classic"]   { --card-glow: #ff6b35; --card-accent: #ff6b35; }
+.game-card[data-theme="spy-game"]        { --card-glow: #22d3ee; --card-accent: #22d3ee; }
+.game-card[data-theme="football-player-guess"] { --card-glow: #22c55e; --card-accent: #22c55e; }
+.game-card[data-theme="who-am-i"] { --card-glow: #fbbf24; --card-accent: #fbbf24; }
+/* Untouched per-game identity — kept explicit so it no longer rides on the
+   shared book-title/-emblem fallback color (which now defaults to brand cyan). */
+.game-card[data-theme="most-likely-to"] { --card-glow: #f0c257; --card-accent: #d4af37; }
 
 .game-icon {
   font-size: 64px;

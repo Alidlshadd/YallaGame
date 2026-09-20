@@ -37,7 +37,7 @@ export async function loadPublicConfiguration(): Promise<void> {
 }
 export function brandLogo(dark = false): string {
   const brand = configuration.branding
-  return (dark ? brand.darkLogo : undefined) ?? brand.logo ?? "/assets/logo/yalla-game-mark.webp"
+  return (dark ? brand.darkLogo : undefined) ?? brand.logo ?? "/assets/logo/yallagame-mark-2026.webp"
 }
 export function gameAsset(gameId: string, slot: string): string | undefined {
   const url = configuration.games[gameId]?.assets[slot]

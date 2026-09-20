@@ -117,35 +117,6 @@ function buildFeatureCard(icon: string, title: string, desc: string, accent: str
   ])
 }
 
-function buildHeroEmblemPanel(): HTMLElement {
-  // Floating transparent-PNG emblem composited over the hero background.
-  const panel = el("div", { class: "hero-emblem-panel", "aria-hidden": "true" })
-  panel.appendChild(el("div", { class: "hero-emblem-glow" }))
-  panel.appendChild(el("div", { class: "hero-emblem-ring" }))
-  panel.appendChild(el("img", {
-    src: brandLogo(),
-    alt: "",
-    loading: "eager",
-    decoding: "async",
-    fetchpriority: "high",
-    class: "hero-emblem-mark"
-  }))
-
-  // 3 banner accents — vampire (red), mafia (gold), spy (cyan)
-  const banners = el("div", { class: "hero-banners" })
-  banners.appendChild(el("div", { class: "hero-banner", "data-theme": "vampire-village" }, ["✶"]))
-  banners.appendChild(el("div", { class: "hero-banner", "data-theme": "mafia-classic" }, ["✦"]))
-  banners.appendChild(el("div", { class: "hero-banner", "data-theme": "spy-game" }, ["✸"]))
-  panel.appendChild(banners)
-
-  // Floating embers
-  const embers = el("div", { class: "hero-embers" })
-  for (let i = 0; i < 10; i++) embers.appendChild(el("span", { class: "hero-ember" }))
-  panel.appendChild(embers)
-
-  return panel
-}
-
 function buildHeroSlide(lang: ReturnType<typeof getLang>, hasGames: boolean): HTMLElement {
   const slide = el("section", { class: "home-slide hero-slide", "data-slide": "hero" })
 
@@ -228,10 +199,7 @@ function buildHeroSlide(lang: ReturnType<typeof getLang>, hasGames: boolean): HT
     noDownload
   ])
 
-  /* RIGHT column: cinematic emblem panel */
-  const heroRight = el("div", { class: "hero-right" }, [buildHeroEmblemPanel()])
-
-  const heroGrid = el("div", { class: "hero-grid" }, [heroLeft, heroRight])
+  const heroGrid = el("div", { class: "hero-grid" }, [heroLeft])
 
   /* Feature cards row */
   const featRow = el("div", { class: "feat-row" }, [

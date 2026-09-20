@@ -53,8 +53,8 @@
   right: -10%;
   height: 60%;
   background:
-    radial-gradient(ellipse at 40% 100%, rgba(212, 175, 55, 0.10), transparent 60%),
-    radial-gradient(ellipse at 60% 100%, rgba(139, 21, 56, 0.08), transparent 60%);
+    radial-gradient(ellipse at 40% 100%, rgba(34, 211, 238, 0.1), transparent 60%),
+    radial-gradient(ellipse at 60% 100%, rgba(124, 58, 237, 0.1), transparent 60%);
   filter: blur(40px);
   pointer-events: none;
   animation: center-fog-flow 15s ease-in-out infinite;
@@ -77,9 +77,9 @@
   position: absolute;
   width: 2px;
   height: 2px;
-  background: rgba(212, 175, 55, 0.5);
+  background: rgba(34, 211, 238, 0.5);
   border-radius: 50%;
-  box-shadow: 0 0 4px rgba(212, 175, 55, 0.8);
+  box-shadow: 0 0 4px rgba(34, 211, 238, 0.8);
   animation: particle-float 12s linear infinite;
 }
 .home-slide .center-particle:nth-child(1)  { left: 8%;  animation-delay: 0s;    }
@@ -104,26 +104,20 @@
 /* ─── SLIDE 1: HERO (split layout, cinematic full-bleed bg) ── */
 
 .hero-slide {
-  /* Cinematic hall art is the actual page background.
-     Bottom of hero fades to the SAME library palette that shelf-slide starts
-     with → no visible seam when the user scrolls across the boundary. */
+  /* 2026 brand: no cinematic photo — a Midnight/Indigo mesh of violet and
+     cyan glows stands in for it. Bottom of hero fades to the SAME mesh
+     palette that shelf-slide starts with → no visible seam on scroll. */
   background:
+    radial-gradient(ellipse 60% 45% at 78% 8%, rgba(124, 58, 237, 0.22), transparent 60%),
+    radial-gradient(ellipse 55% 45% at 8% 30%, rgba(34, 211, 238, 0.14), transparent 60%),
+    radial-gradient(ellipse 50% 40% at 90% 85%, rgba(228, 0, 43, 0.08), transparent 60%),
     linear-gradient(180deg,
-      rgba(5, 3, 10, 0.55) 0%,
-      transparent 14%,
+      rgba(9, 11, 26, 0.2) 0%,
+      transparent 30%,
       transparent 62%,
-      rgba(5, 4, 12, 0.35) 80%,
-      rgba(7, 5, 16, 0.78) 92%,
-      rgba(8, 6, 18, 0.95) 100%),
-    linear-gradient(90deg,
-      rgba(5, 3, 10, 0.92) 0%,
-      rgba(5, 3, 10, 0.62) 22%,
-      rgba(5, 3, 10, 0.18) 42%,
-      rgba(5, 3, 10, 0.05) 58%,
-      rgba(5, 3, 10, 0.18) 88%,
-      rgba(5, 3, 10, 0.45) 100%),
-    url("/assets/hero/hero-bg.webp") center/cover no-repeat;
-  background-color: #050308;
+      rgba(9, 11, 26, 0.55) 88%,
+      rgba(9, 11, 26, 0.92) 100%),
+    #090b1a;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -132,9 +126,8 @@
   gap: var(--s-4);
 }
 
-/* Warm connector glow at the very bottom of hero — rises slightly into hero,
-   visually bridging into the shelf's library hall below. Same warm gold the
-   shelf uses, no hard edge. */
+/* Cyan connector glow at the very bottom of hero — rises slightly into hero,
+   visually bridging into the shelf's mesh below. No hard edge. */
 .hero-slide::after {
   content: "";
   position: absolute;
@@ -143,9 +136,9 @@
   bottom: 0;
   height: 220px;
   background:
-    radial-gradient(ellipse at 50% 110%, rgba(247, 200, 67, 0.14), transparent 65%),
-    radial-gradient(ellipse at 22% 110%, rgba(247, 200, 67, 0.08), transparent 55%),
-    radial-gradient(ellipse at 78% 110%, rgba(247, 200, 67, 0.08), transparent 55%);
+    radial-gradient(ellipse at 50% 110%, rgba(34, 211, 238, 0.14), transparent 65%),
+    radial-gradient(ellipse at 22% 110%, rgba(124, 58, 237, 0.1), transparent 55%),
+    radial-gradient(ellipse at 78% 110%, rgba(124, 58, 237, 0.1), transparent 55%);
   filter: blur(14px);
   pointer-events: none;
   z-index: 4;
@@ -155,7 +148,9 @@
   position: relative;
   z-index: 5;
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  text-align: center;
   gap: clamp(var(--s-5), 4vw, var(--s-9));
   align-items: center;
   flex: 1;
@@ -166,7 +161,9 @@
 .hero-left {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: var(--s-3);
+  max-width: 720px;
   animation: hero-fade-in var(--motion-cinematic) var(--ease-out-expo) 100ms backwards;
 }
 
@@ -181,7 +178,7 @@
   align-items: center;
   gap: var(--s-3);
   max-width: 520px;
-  align-self: flex-start; /* sits at left within hero-left, but children center within it */
+  align-self: center;
 }
 
 .hero-actions .cta-local,
@@ -197,6 +194,7 @@
 .hero-brand-row {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--s-3);
 }
 
@@ -205,38 +203,38 @@ img.hero-brand-mark {
   height: 84px;
   object-fit: contain;
   background: transparent;
-  filter: drop-shadow(0 0 18px rgba(212, 175, 55, 0.35));
+  filter: drop-shadow(0 0 18px rgba(34, 211, 238, 0.35));
   animation: brand-mark-breathe 4s ease-in-out infinite;
 }
 
 @keyframes brand-mark-breathe {
-  0%, 100% { filter: drop-shadow(0 0 18px rgba(212, 175, 55, 0.35)); transform: scale(1); }
-  50%      { filter: drop-shadow(0 0 26px rgba(212, 175, 55, 0.6));  transform: scale(1.02); }
+  0%, 100% { filter: drop-shadow(0 0 18px rgba(34, 211, 238, 0.35)); transform: scale(1); }
+  50%      { filter: drop-shadow(0 0 26px rgba(34, 211, 238, 0.6));  transform: scale(1.02); }
 }
 
 .hero-slide .mega-title {
-  font-family: "Cinzel", serif;
+  font-family: "Sora", serif;
   font-weight: 800;
   font-size: clamp(44px, 5.6vw, 88px);
   letter-spacing: 0.06em;
   line-height: 0.95;
-  background: linear-gradient(180deg, #ffffff 0%, #e8d49a 60%, #8b1538 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #a78bfa 55%, #22d3ee 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 80px rgba(212, 175, 55, 0.3);
+  text-shadow: 0 0 80px rgba(34, 211, 238, 0.3);
   margin: 0;
   text-transform: uppercase;
 }
 
 .hero-tagline {
-  font-family: "Cinzel", serif;
+  font-family: "Sora", serif;
   font-weight: 700;
   font-size: clamp(18px, 1.6vw, 26px);
   letter-spacing: 0.02em;
-  color: #d4af37;
+  color: #22d3ee;
   margin: 0;
-  text-shadow: 0 0 18px rgba(212, 175, 55, 0.35);
+  text-shadow: 0 0 18px rgba(34, 211, 238, 0.35);
 }
 
 .hero-body {
@@ -277,10 +275,10 @@ img.hero-brand-mark {
 }
 
 .hero-slide .cta-create {
-  background: linear-gradient(180deg, #d4af37 0%, #b88a2a 100%);
-  color: #1a0e02;
+  background: linear-gradient(120deg, #7c3aed 0%, #22d3ee 100%);
+  color: #071018;
   box-shadow:
-    0 0 24px rgba(212, 175, 55, 0.5),
+    0 0 24px rgba(34, 211, 238, 0.5),
     inset 0 1px 0 rgba(255, 255, 255, 0.25);
   border-color: rgba(255, 255, 255, 0.2);
 }
@@ -288,7 +286,7 @@ img.hero-brand-mark {
 .hero-slide .cta-create:hover {
   transform: translateY(-2px);
   box-shadow:
-    0 0 36px rgba(212, 175, 55, 0.85),
+    0 0 36px rgba(34, 211, 238, 0.85),
     inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
@@ -321,7 +319,7 @@ img.hero-brand-mark {
   margin: 0;
 }
 
-.hero-hint-icon { color: #d4af37; font-size: 13px; }
+.hero-hint-icon { color: #22d3ee; font-size: 13px; }
 
 /* Premium "Local Play" card — glass surface, gradient gold→cyan stroke, SVG die */
 .hero-slide .cta-local {
@@ -333,7 +331,7 @@ img.hero-brand-mark {
   background: linear-gradient(135deg,
     rgba(12, 8, 18, 0.72) 0%,
     rgba(8, 10, 22, 0.62) 100%);
-  border: 1px solid rgba(212, 175, 55, 0.28);
+  border: 1px solid rgba(124, 58, 237, 0.3);
   border-radius: 14px;
   color: var(--text-primary);
   cursor: pointer;
@@ -358,9 +356,9 @@ img.hero-brand-mark {
   border-radius: inherit;
   padding: 1px;
   background: linear-gradient(135deg,
-    rgba(212, 175, 55, 0.55) 0%,
-    rgba(212, 175, 55, 0.05) 45%,
-    rgba(93, 199, 255, 0.45) 100%);
+    rgba(124, 58, 237, 0.55) 0%,
+    rgba(124, 58, 237, 0.05) 45%,
+    rgba(34, 211, 238, 0.45) 100%);
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
@@ -373,24 +371,24 @@ img.hero-brand-mark {
 
 .hero-slide .cta-local:hover {
   transform: translateY(-2px);
-  border-color: rgba(212, 175, 55, 0.55);
+  border-color: rgba(124, 58, 237, 0.6);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
     inset 0 0 30px rgba(0, 0, 0, 0.5),
-    0 14px 32px -10px rgba(212, 175, 55, 0.35),
-    0 0 24px rgba(93, 199, 255, 0.18);
+    0 14px 32px -10px rgba(124, 58, 237, 0.35),
+    0 0 24px rgba(34, 211, 238, 0.25);
 }
 .hero-slide .cta-local:hover::before { opacity: 1; }
 .hero-slide .cta-local:hover .cta-local-icon {
   transform: rotate(8deg);
-  color: #fce8a8;
+  color: #a5f3fc;
   box-shadow:
-    inset 0 0 0 1px rgba(247, 200, 67, 0.65),
-    0 0 22px rgba(247, 200, 67, 0.35);
+    inset 0 0 0 1px rgba(34, 211, 238, 0.65),
+    0 0 22px rgba(34, 211, 238, 0.35);
 }
 
 .hero-slide .cta-local:focus-visible {
-  outline: 2px solid rgba(212, 175, 55, 0.9);
+  outline: 2px solid rgba(34, 211, 238, 0.9);
   outline-offset: 2px;
 }
 
@@ -403,12 +401,12 @@ img.hero-brand-mark {
   place-items: center;
   border-radius: 10px;
   background:
-    radial-gradient(circle at 50% 30%, rgba(247, 200, 67, 0.22), transparent 70%),
-    linear-gradient(180deg, rgba(40, 28, 8, 0.55) 0%, rgba(8, 4, 2, 0.7) 100%);
-  color: #f3d77a;
+    radial-gradient(circle at 50% 30%, rgba(34, 211, 238, 0.22), transparent 70%),
+    linear-gradient(180deg, rgba(20, 16, 45, 0.55) 0%, rgba(4, 6, 12, 0.7) 100%);
+  color: #22d3ee;
   box-shadow:
-    inset 0 0 0 1px rgba(212, 175, 55, 0.45),
-    0 0 16px rgba(212, 175, 55, 0.22);
+    inset 0 0 0 1px rgba(124, 58, 237, 0.45),
+    0 0 16px rgba(34, 211, 238, 0.22);
   transition:
     transform var(--motion-flow) var(--ease-out-expo),
     color var(--motion-snappy),
@@ -429,7 +427,7 @@ img.hero-brand-mark {
   gap: 2px;
 }
 .hero-slide .cta-local-text strong {
-  font-family: "Cinzel", serif;
+  font-family: "Sora", serif;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -451,8 +449,8 @@ img.hero-brand-mark {
   margin-left: var(--s-3);
   padding: 4px 10px;
   border-radius: 999px;
-  background: rgba(63, 184, 175, 0.10);
-  border: 1px solid rgba(93, 199, 255, 0.32);
+  background: rgba(34, 211, 238, 0.10);
+  border: 1px solid rgba(34, 211, 238, 0.32);
   font-family: var(--font-mono);
   font-size: 8.5px;
   font-weight: 700;
@@ -480,189 +478,7 @@ img.hero-brand-mark {
   .hero-slide .cta-local-tag { display: none; }
 }
 
-/* RIGHT column: cinematic emblem panel */
-
-.hero-right {
-  position: relative;
-  display: grid;
-  place-items: center;
-  animation: hero-fade-in var(--motion-cinematic) var(--ease-out-expo) 300ms backwards;
-}
-
-.hero-emblem-panel {
-  position: relative;
-  width: min(360px, 78%);
-  aspect-ratio: 1 / 1;
-  display: grid;
-  place-items: center;
-  /* No background box, no border — the emblem floats over the hero photo */
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  overflow: visible;
-}
-
-.hero-emblem-glow {
-  position: absolute;
-  inset: 14%;
-  background:
-    radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.30) 0%, transparent 55%),
-    radial-gradient(circle at 50% 50%, rgba(247, 200, 67, 0.12) 0%, transparent 70%);
-  filter: blur(22px);
-  animation: emblem-glow-pulse 5s ease-in-out infinite;
-  pointer-events: none;
-  z-index: 1;
-}
-
-@keyframes emblem-glow-pulse {
-  0%, 100% { transform: scale(1); opacity: 0.7; }
-  50%      { transform: scale(1.05); opacity: 1; }
-}
-
-.hero-emblem-ring {
-  position: absolute;
-  width: 64%;
-  aspect-ratio: 1 / 1;
-  border: 1px solid rgba(212, 175, 55, 0.4);
-  border-radius: 50%;
-  box-shadow:
-    inset 0 0 30px rgba(212, 175, 55, 0.2),
-    0 0 40px rgba(212, 175, 55, 0.3);
-  animation: emblem-ring-spin 30s linear infinite;
-}
-
-.hero-emblem-ring::before,
-.hero-emblem-ring::after {
-  content: "";
-  position: absolute;
-  inset: -12%;
-  border: 1px dashed rgba(212, 175, 55, 0.18);
-  border-radius: 50%;
-}
-.hero-emblem-ring::after {
-  inset: -24%;
-  border-style: dotted;
-  border-color: rgba(212, 175, 55, 0.12);
-}
-
-@keyframes emblem-ring-spin {
-  to { transform: rotate(360deg); }
-}
-
-img.hero-emblem-mark {
-  position: relative;
-  width: clamp(220px, 22vw, 300px);
-  height: clamp(220px, 22vw, 300px);
-  object-fit: contain;
-  background: transparent;
-  filter:
-    drop-shadow(0 0 18px rgba(212, 175, 55, 0.35))
-    drop-shadow(0 12px 24px rgba(0, 0, 0, 0.6));
-  z-index: 2;
-  animation: emblem-mark-float 6s ease-in-out infinite;
-}
-
-@keyframes emblem-mark-float {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50%      { transform: translateY(-8px) scale(1.02); }
-}
-
-.hero-banners {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.hero-banner {
-  position: absolute;
-  width: 36px;
-  height: 60px;
-  display: grid;
-  place-items: center;
-  font-size: 18px;
-  border-radius: 2px 2px 50% 50% / 2px 2px 12px 12px;
-  border: 1px solid currentColor;
-  background: linear-gradient(180deg, currentColor 0%, transparent 90%);
-  background-blend-mode: overlay;
-  opacity: 0.85;
-  animation: banner-sway 5s ease-in-out infinite;
-}
-
-.hero-banner[data-theme="vampire-village"] {
-  color: #c41e3a;
-  left: 8%;
-  top: 30%;
-  background: linear-gradient(180deg, rgba(196, 30, 58, 0.7) 0%, rgba(60, 6, 14, 0.85) 100%);
-  box-shadow: 0 0 18px rgba(196, 30, 58, 0.5);
-  animation-delay: -1s;
-}
-
-.hero-banner[data-theme="mafia-classic"] {
-  color: #d4af37;
-  left: 50%;
-  top: 4%;
-  transform: translateX(-50%);
-  background: linear-gradient(180deg, rgba(212, 175, 55, 0.7) 0%, rgba(40, 28, 8, 0.85) 100%);
-  box-shadow: 0 0 18px rgba(212, 175, 55, 0.55);
-  height: 70px;
-}
-
-.hero-banner[data-theme="spy-game"] {
-  color: #3fb8af;
-  right: 8%;
-  top: 30%;
-  background: linear-gradient(180deg, rgba(63, 184, 175, 0.7) 0%, rgba(6, 30, 36, 0.85) 100%);
-  box-shadow: 0 0 18px rgba(63, 184, 175, 0.55);
-  animation-delay: -2s;
-}
-
-@keyframes banner-sway {
-  0%, 100% { transform: rotate(-2deg) translateY(0); }
-  50%      { transform: rotate(2deg) translateY(2px); }
-}
-
-.hero-banner[data-theme="mafia-classic"] {
-  animation-name: banner-sway-center;
-}
-@keyframes banner-sway-center {
-  0%, 100% { transform: translateX(-50%) rotate(-1.5deg); }
-  50%      { transform: translateX(-50%) rotate(1.5deg); }
-}
-
-.hero-embers {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.hero-ember {
-  position: absolute;
-  bottom: -10%;
-  width: 3px;
-  height: 3px;
-  background: #f7c843;
-  border-radius: 50%;
-  box-shadow: 0 0 6px #f7c843;
-  animation: ember-rise 8s linear infinite;
-}
-.hero-ember:nth-child(1)  { left: 12%; animation-delay: -0.3s; }
-.hero-ember:nth-child(2)  { left: 28%; animation-delay: -1.8s; }
-.hero-ember:nth-child(3)  { left: 44%; animation-delay: -3.2s; }
-.hero-ember:nth-child(4)  { left: 60%; animation-delay: -4.6s; }
-.hero-ember:nth-child(5)  { left: 76%; animation-delay: -5.9s; }
-.hero-ember:nth-child(6)  { left: 88%; animation-delay: -7.1s; }
-.hero-ember:nth-child(7)  { left: 22%; animation-delay: -2.6s; }
-.hero-ember:nth-child(8)  { left: 38%; animation-delay: -4.0s; }
-.hero-ember:nth-child(9)  { left: 56%; animation-delay: -5.4s; }
-.hero-ember:nth-child(10) { left: 80%; animation-delay: -6.7s; }
-
-@keyframes ember-rise {
-  0%   { transform: translateY(0); opacity: 0; }
-  10%  { opacity: 1; }
-  100% { transform: translateY(-110%); opacity: 0; }
-}
+/* Hero is now a single centered column — no right-side emblem panel. */
 
 /* FEATURE CARDS row */
 
@@ -692,7 +508,7 @@ img.hero-emblem-mark {
 
 .feat-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(212, 175, 55, 0.3);
+  border-color: rgba(34, 211, 238, 0.3);
 }
 
 .feat-icon {
@@ -707,9 +523,9 @@ img.hero-emblem-mark {
 }
 
 .feat-card[data-accent="violet"] .feat-icon { color: #a380ff; background: rgba(163, 128, 255, 0.10); box-shadow: 0 0 18px rgba(163, 128, 255, 0.2); }
-.feat-card[data-accent="gold"]   .feat-icon { color: #d4af37; background: rgba(212, 175, 55, 0.10); box-shadow: 0 0 18px rgba(212, 175, 55, 0.25); }
+.feat-card[data-accent="gold"]   .feat-icon { color: #ff6b35; background: rgba(255, 107, 53, 0.10); box-shadow: 0 0 18px rgba(255, 107, 53, 0.25); }
 .feat-card[data-accent="red"]    .feat-icon { color: #ef4444; background: rgba(239, 68, 68, 0.10);  box-shadow: 0 0 18px rgba(239, 68, 68, 0.25); }
-.feat-card[data-accent="cyan"]   .feat-icon { color: #3fb8af; background: rgba(63, 184, 175, 0.10); box-shadow: 0 0 18px rgba(63, 184, 175, 0.25); }
+.feat-card[data-accent="cyan"]   .feat-icon { color: #22d3ee; background: rgba(34, 211, 238, 0.10); box-shadow: 0 0 18px rgba(34, 211, 238, 0.25); }
 
 .feat-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .feat-text strong { font-size: 13px; font-weight: 700; letter-spacing: 0.02em; color: var(--text-primary); }
@@ -719,19 +535,20 @@ img.hero-emblem-mark {
 /* ─── SLIDE 2: SHELF ──────────────────────────────────────── */
 
 .shelf-slide {
-  /* Real library hall image is the section background. Top of shelf starts
-     from the SAME color hero-slide ends with → the seam is invisible. */
+  /* 2026 brand: continues the hero's Midnight/Indigo mesh, no photo. Top of
+     shelf starts from the SAME mesh hero-slide ends with → seamless scroll. */
   background:
+    radial-gradient(ellipse 55% 40% at 15% 6%, rgba(34, 211, 238, 0.12), transparent 60%),
+    radial-gradient(ellipse 60% 45% at 85% 60%, rgba(124, 58, 237, 0.16), transparent 60%),
     linear-gradient(180deg,
-      rgba(8, 6, 18, 0.95) 0%,
-      rgba(6, 5, 14, 0.75) 4%,
-      rgba(4, 4, 10, 0.40) 10%,
+      rgba(9, 11, 26, 0.92) 0%,
+      rgba(9, 11, 26, 0.55) 4%,
+      rgba(9, 11, 26, 0.2) 10%,
       transparent 22%,
       transparent 64%,
-      rgba(2, 4, 8, 0.55) 88%,
-      rgba(8, 4, 2, 0.85) 100%),
-    url("/assets/shelf/shelf-bg.webp") center/cover no-repeat;
-  background-color: #05060c;
+      rgba(9, 11, 26, 0.55) 88%,
+      rgba(9, 11, 26, 0.92) 100%),
+    #090b1a;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -739,8 +556,8 @@ img.hero-emblem-mark {
   gap: var(--s-4);
 }
 
-/* Mirror connector glow at the very top of shelf — picks up the warm gold
-   from hero's bottom so the transition feels like one continuous descent. */
+/* Mirror connector glow at the very top of shelf — picks up the cyan from
+   hero's bottom so the transition feels like one continuous descent. */
 .shelf-slide > .shelf-header::before {
   content: "";
   position: absolute;
@@ -749,23 +566,23 @@ img.hero-emblem-mark {
   top: calc(-1 * clamp(var(--s-6), 6vh, var(--s-7)));
   height: 220px;
   background:
-    radial-gradient(ellipse at 50% 0%, rgba(247, 200, 67, 0.10), transparent 65%),
-    radial-gradient(ellipse at 22% 0%, rgba(247, 200, 67, 0.06), transparent 55%),
-    radial-gradient(ellipse at 78% 0%, rgba(247, 200, 67, 0.06), transparent 55%);
+    radial-gradient(ellipse at 50% 0%, rgba(34, 211, 238, 0.1), transparent 65%),
+    radial-gradient(ellipse at 22% 0%, rgba(124, 58, 237, 0.07), transparent 55%),
+    radial-gradient(ellipse at 78% 0%, rgba(124, 58, 237, 0.07), transparent 55%);
   filter: blur(14px);
   pointer-events: none;
   z-index: 0;
 }
 
-/* Soft smoke layer drifting over the shelf — adds atmosphere without new assets */
+/* Soft drifting glow layer over the shelf — adds atmosphere without new assets */
 .shelf-slide::before {
   content: "";
   position: absolute;
   inset: 30% 0 12% 0;
   background:
-    radial-gradient(ellipse at 18% 100%, rgba(247, 200, 67, 0.10), transparent 45%),
-    radial-gradient(ellipse at 82% 100%, rgba(247, 200, 67, 0.08), transparent 50%),
-    radial-gradient(ellipse at 50% 100%, rgba(212, 175, 55, 0.05), transparent 60%);
+    radial-gradient(ellipse at 18% 100%, rgba(34, 211, 238, 0.1), transparent 45%),
+    radial-gradient(ellipse at 82% 100%, rgba(124, 58, 237, 0.08), transparent 50%),
+    radial-gradient(ellipse at 50% 100%, rgba(34, 211, 238, 0.05), transparent 60%);
   filter: blur(28px);
   pointer-events: none;
   z-index: 1;
@@ -803,11 +620,11 @@ img.hero-emblem-mark {
   font-size: 11px;
   letter-spacing: 0.45em;
   text-transform: uppercase;
-  color: rgba(232, 212, 154, 0.9);
+  color: rgba(199, 233, 245, 0.9);
   margin: 0;
 }
 
-/* Ornate gold line dividers framing the eyebrow */
+/* Cyan line dividers framing the eyebrow */
 .shelf-eyebrow::before,
 .shelf-eyebrow::after {
   content: "";
@@ -815,40 +632,40 @@ img.hero-emblem-mark {
   height: 1px;
   background: linear-gradient(90deg,
     transparent 0%,
-    rgba(212, 175, 55, 0.55) 50%,
-    rgba(212, 175, 55, 0.85) 100%);
+    rgba(34, 211, 238, 0.55) 50%,
+    rgba(34, 211, 238, 0.85) 100%);
 }
 .shelf-eyebrow::after {
   background: linear-gradient(90deg,
-    rgba(212, 175, 55, 0.85) 0%,
-    rgba(212, 175, 55, 0.55) 50%,
+    rgba(34, 211, 238, 0.85) 0%,
+    rgba(34, 211, 238, 0.55) 50%,
     transparent 100%);
 }
 
 .shelf-ornament {
-  color: #f3d77a;
+  color: #22d3ee;
   font-size: 14px;
   line-height: 1;
-  text-shadow: 0 0 12px rgba(212, 175, 55, 0.6);
+  text-shadow: 0 0 12px rgba(34, 211, 238, 0.6);
 }
 
 .shelf-title {
-  font-family: "Cinzel", serif;
+  font-family: "Sora", serif;
   font-weight: 800;
   font-size: clamp(40px, 5.4vw, 70px);
   letter-spacing: 0.07em;
   line-height: 1;
   margin: var(--s-1) 0 0;
-  background: linear-gradient(180deg, #ffffff 0%, #f3d77a 55%, #a87320 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #22d3ee 55%, #7c3aed 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   text-transform: uppercase;
-  filter: drop-shadow(0 0 28px rgba(212, 175, 55, 0.35));
+  filter: drop-shadow(0 0 28px rgba(34, 211, 238, 0.35));
 }
 
 .shelf-subtitle {
-  color: rgba(232, 212, 154, 0.75);
+  color: rgba(199, 210, 230, 0.75);
   font-size: 13px;
   max-width: 56ch;
   line-height: 1.6;
@@ -912,12 +729,12 @@ img.hero-emblem-mark {
   background:
     linear-gradient(90deg,
       rgba(0, 0, 0, 0.95) 0%,
-      rgba(40, 28, 8, 0.85) 50%,
-      rgba(212, 175, 55, 0.35) 100%);
+      rgba(20, 16, 40, 0.85) 50%,
+      rgba(124, 58, 237, 0.35) 100%);
   border-radius: 2px 0 0 2px;
   box-shadow:
     -2px 0 6px rgba(0, 0, 0, 0.6),
-    inset -1px 0 0 rgba(212, 175, 55, 0.25);
+    inset -1px 0 0 rgba(124, 58, 237, 0.25);
   z-index: 0;
   transform: translateX(-100%);
 }
@@ -948,29 +765,29 @@ img.hero-emblem-mark {
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* Theme accents */
+/* Theme accents — match yallagame-theme.json's gameAccents map */
 .shelf-card[data-theme="vampire-village"] {
-  --card-accent: #ff3a52;
-  --card-glow: #c41e3a;
+  --card-accent: #e4002b;
+  --card-glow: #e4002b;
   --card-bg-from: #2a0510;
   --card-bg-to: #08020a;
 }
 .shelf-card[data-theme="mafia-classic"] {
-  --card-accent: #f3c352;
-  --card-glow: #d4af37;
-  --card-bg-from: #2a1d08;
+  --card-accent: #ff6b35;
+  --card-glow: #ff6b35;
+  --card-bg-from: #2a1508;
   --card-bg-to: #08050a;
 }
 .shelf-card[data-theme="spy-game"] {
-  --card-accent: #6fe9df;
-  --card-glow: #3fb8af;
-  --card-bg-from: #042026;
+  --card-accent: #22d3ee;
+  --card-glow: #22d3ee;
+  --card-bg-from: #04222a;
   --card-bg-to: #02080c;
 }
 .shelf-card[data-theme="football-player-guess"] {
-  --card-accent: #39d47a;
-  --card-glow: #f4d06f;
-  --card-bg-from: #10361f;
+  --card-accent: #22c55e;
+  --card-glow: #22c55e;
+  --card-bg-from: #0a3120;
   --card-bg-to: #06130f;
 }
 
@@ -987,17 +804,17 @@ img.hero-emblem-mark {
   border-radius: 4px;
   overflow: hidden;
   box-shadow:
-    inset 0 0 0 1px rgba(212, 175, 55, 0.35),
+    inset 0 0 0 1px rgba(124, 58, 237, 0.35),
     inset 0 0 0 3px rgba(0, 0, 0, 0.7),
-    inset 0 0 0 4px rgba(212, 175, 55, 0.55),
+    inset 0 0 0 4px rgba(124, 58, 237, 0.5),
     0 4px 8px rgba(0, 0, 0, 0.5),
     0 18px 36px -10px rgba(0, 0, 0, 0.85),
     0 28px 50px -24px rgba(0, 0, 0, 0.9),
-    0 2px 0 rgba(212, 175, 55, 0.05);
+    0 2px 0 rgba(34, 211, 238, 0.08);
   transition: box-shadow var(--motion-flow) ease-out;
 }
 
-/* Inner content padding so the gold border has room to breathe */
+/* Inner content padding so the border has room to breathe */
 .book-top,
 .book-cover,
 .book-bottom {
@@ -1012,22 +829,22 @@ img.hero-emblem-mark {
   justify-content: center;
   gap: 10px;
   height: 100%;
-  font-family: "Cinzel", serif;
+  font-family: "Sora", serif;
   letter-spacing: 0.3em;
 }
 
 .book-ornament {
-  color: var(--card-accent, #d4af37);
+  color: var(--card-accent, #22d3ee);
   font-size: 10px;
   line-height: 1;
-  text-shadow: 0 0 8px var(--card-glow, #d4af37);
+  text-shadow: 0 0 8px var(--card-glow, #22d3ee);
 }
 
 .book-kicker {
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.4em;
-  color: rgba(232, 212, 154, 0.85);
+  color: rgba(199, 210, 230, 0.85);
   text-transform: uppercase;
 }
 
@@ -1103,13 +920,13 @@ img.hero-emblem-mark {
 }
 
 .book-title {
-  font-family: "Cinzel", serif;
+  font-family: "Sora", serif;
   font-weight: 800;
   font-size: clamp(20px, 1.8vw, 30px);
   letter-spacing: 0.07em;
-  color: var(--card-accent, #d4af37);
+  color: var(--card-accent, #22d3ee);
   text-shadow:
-    0 0 18px var(--card-glow, #d4af37),
+    0 0 18px var(--card-glow, #22d3ee),
     2px 2px 0 rgba(0, 0, 0, 0.7);
   margin: 0;
   text-transform: uppercase;
@@ -1121,15 +938,15 @@ img.hero-emblem-mark {
   font-size: 8.5px;
   font-weight: 600;
   letter-spacing: 0.3em;
-  color: rgba(232, 212, 154, 0.78);
+  color: rgba(199, 210, 230, 0.78);
   margin: 0;
   text-transform: uppercase;
 }
 
 .book-emblem {
-  color: var(--card-accent, #d4af37);
+  color: var(--card-accent, #22d3ee);
   font-size: 10px;
-  text-shadow: 0 0 8px var(--card-glow, #d4af37);
+  text-shadow: 0 0 8px var(--card-glow, #22d3ee);
   margin-top: 2px;
 }
 
@@ -1146,13 +963,13 @@ img.hero-emblem-mark {
 
 .shelf-card:hover .book-frame {
   box-shadow:
-    inset 0 0 0 1px rgba(255, 230, 150, 0.7),
+    inset 0 0 0 1px rgba(165, 243, 252, 0.7),
     inset 0 0 0 3px rgba(0, 0, 0, 0.7),
-    inset 0 0 0 4px rgba(255, 230, 150, 0.9),
-    0 36px 70px -16px var(--card-glow, rgba(212, 175, 55, 0.7)),
+    inset 0 0 0 4px rgba(165, 243, 252, 0.9),
+    0 36px 70px -16px var(--card-glow, rgba(34, 211, 238, 0.7)),
     0 4px 12px rgba(0, 0, 0, 0.6),
     0 28px 50px -24px rgba(0, 0, 0, 0.9),
-    0 2px 0 rgba(212, 175, 55, 0.08);
+    0 2px 0 rgba(34, 211, 238, 0.1);
 }
 
 .shelf-card:hover .book-image {
@@ -1177,8 +994,8 @@ img.hero-emblem-mark {
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.7),
     inset 0 0 0 3px rgba(0, 0, 0, 0.7),
-    inset 0 0 0 4px var(--card-glow, #d4af37),
-    0 0 0 4px var(--card-glow, rgba(212, 175, 55, 0.6)),
+    inset 0 0 0 4px var(--card-glow, #22d3ee),
+    0 0 0 4px var(--card-glow, rgba(34, 211, 238, 0.6)),
     0 18px 36px -16px rgba(0, 0, 0, 0.8);
 }
 
@@ -1215,7 +1032,7 @@ img.hero-emblem-mark {
 }
 
 .book-coming-soon {
-  font-family: "Cinzel", serif;
+  font-family: "Sora", serif;
   font-weight: 700;
   font-size: clamp(16px, 1.5vw, 22px);
   letter-spacing: 0.1em;
@@ -1255,15 +1072,15 @@ img.hero-emblem-mark {
       #21100a 78%,
       #0e0604 100%);
   box-shadow:
-    inset 0 1px 0 rgba(247, 200, 67, 0.65),       /* gold lit top edge */
-    inset 0 2px 0 rgba(212, 175, 55, 0.35),
-    inset 0 8px 14px rgba(212, 175, 55, 0.08),    /* warm bounce light */
+    inset 0 1px 0 rgba(34, 211, 238, 0.5),        /* cyan lit top edge */
+    inset 0 2px 0 rgba(124, 58, 237, 0.3),
+    inset 0 8px 14px rgba(34, 211, 238, 0.08),    /* cool bounce light */
     inset 0 -8px 20px rgba(0, 0, 0, 0.85),        /* under-shadow */
     0 1px 0 rgba(0, 0, 0, 0.9),
     0 12px 24px -8px rgba(0, 0, 0, 0.85);          /* drop shadow below shelf */
 }
 
-/* Warm rim glow + slight smoke rising from the front of the shelf */
+/* Cyan rim glow + slight haze rising from the front of the shelf */
 .shelf-floor::before {
   content: "";
   position: absolute;
@@ -1272,9 +1089,9 @@ img.hero-emblem-mark {
   top: -32px;
   height: 36px;
   background:
-    radial-gradient(ellipse at 22% 100%, rgba(247, 200, 67, 0.20), transparent 55%),
-    radial-gradient(ellipse at 78% 100%, rgba(247, 200, 67, 0.18), transparent 55%),
-    radial-gradient(ellipse at 50% 100%, rgba(212, 175, 55, 0.10), transparent 70%);
+    radial-gradient(ellipse at 22% 100%, rgba(34, 211, 238, 0.18), transparent 55%),
+    radial-gradient(ellipse at 78% 100%, rgba(34, 211, 238, 0.16), transparent 55%),
+    radial-gradient(ellipse at 50% 100%, rgba(124, 58, 237, 0.1), transparent 70%);
   filter: blur(8px);
   pointer-events: none;
 }
@@ -1306,27 +1123,27 @@ img.hero-emblem-mark {
 }
 
 .shelf-footer-star {
-  color: #f3d77a;
+  color: #22d3ee;
   font-size: 26px;
   line-height: 1;
   text-shadow:
-    0 0 14px rgba(247, 200, 67, 0.7),
-    0 0 28px rgba(212, 175, 55, 0.4);
+    0 0 14px rgba(34, 211, 238, 0.7),
+    0 0 28px rgba(124, 58, 237, 0.4);
   animation: footer-twinkle 3s ease-in-out infinite;
 }
 
 @keyframes footer-twinkle {
-  0%, 100% { transform: scale(1); opacity: 0.9; text-shadow: 0 0 14px rgba(247,200,67,0.7), 0 0 28px rgba(212,175,55,0.4); }
-  50%      { transform: scale(1.15); opacity: 1;  text-shadow: 0 0 20px rgba(247,200,67,0.95), 0 0 40px rgba(212,175,55,0.6); }
+  0%, 100% { transform: scale(1); opacity: 0.9; text-shadow: 0 0 14px rgba(34,211,238,0.7), 0 0 28px rgba(124,58,237,0.4); }
+  50%      { transform: scale(1.15); opacity: 1;  text-shadow: 0 0 20px rgba(34,211,238,0.95), 0 0 40px rgba(124,58,237,0.6); }
 }
 
 .shelf-footer-title {
-  font-family: "Cinzel", serif;
+  font-family: "Sora", serif;
   font-weight: 700;
   font-size: clamp(20px, 1.9vw, 28px);
   letter-spacing: 0.05em;
   margin: 0;
-  background: linear-gradient(180deg, #ffffff 0%, #f3d77a 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #22d3ee 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -1335,7 +1152,7 @@ img.hero-emblem-mark {
 .shelf-footer-sub {
   font-size: 12px;
   letter-spacing: 0.06em;
-  color: rgba(232, 212, 154, 0.55);
+  color: rgba(199, 210, 230, 0.6);
   margin: 0;
 }
 
@@ -1348,9 +1165,9 @@ img.hero-emblem-mark {
   gap: var(--s-2);
   padding: 8px 14px;
   background: rgba(0, 0, 0, 0.55);
-  border: 1px solid rgba(212, 175, 55, 0.25);
+  border: 1px solid rgba(34, 211, 238, 0.25);
   border-radius: 999px;
-  color: rgba(232, 212, 154, 0.7);
+  color: rgba(199, 210, 230, 0.7);
   font-family: var(--font-mono);
   font-size: 9px;
   letter-spacing: 0.3em;
@@ -1363,12 +1180,12 @@ img.hero-emblem-mark {
 }
 
 .shelf-back-top:hover {
-  color: #d4af37;
-  border-color: rgba(212, 175, 55, 0.4);
+  color: #22d3ee;
+  border-color: rgba(34, 211, 238, 0.4);
 }
 
 .shelf-back-top:focus-visible {
-  outline: 2px solid rgba(212, 175, 55, 0.9);
+  outline: 2px solid rgba(34, 211, 238, 0.9);
   outline-offset: 3px;
 }
 
@@ -1413,7 +1230,7 @@ img.hero-emblem-mark {
      area (inset:0 minus padding), which already accounts for safe areas. */
   max-height: 100%;
   background: linear-gradient(180deg, rgba(20, 16, 28, 0.96) 0%, rgba(8, 6, 14, 0.96) 100%);
-  border: 1px solid rgba(212, 175, 55, 0.25);
+  border: 1px solid rgba(34, 211, 238, 0.25);
   border-radius: 16px;
   padding: var(--s-6) var(--s-5);
   display: flex;
@@ -1443,7 +1260,7 @@ img.hero-emblem-mark {
 }
 
 .create-picker-title {
-  font-family: "Cinzel", serif;
+  font-family: "Sora", serif;
   font-weight: 700;
   font-size: clamp(20px, 3vw, 28px);
   letter-spacing: 0.03em;
@@ -1475,11 +1292,11 @@ img.hero-emblem-mark {
   /* A hover lift of -3px must not be clipped by the scroll container. */
   padding-top: 4px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(212, 175, 55, 0.25) transparent;
+  scrollbar-color: rgba(34, 211, 238, 0.25) transparent;
 }
 .create-picker-grid::-webkit-scrollbar { width: 6px; }
 .create-picker-grid::-webkit-scrollbar-thumb {
-  background: rgba(212, 175, 55, 0.25);
+  background: rgba(34, 211, 238, 0.25);
   border-radius: 999px;
 }
 
@@ -1524,8 +1341,8 @@ img.hero-emblem-mark {
 
 .create-picker-option:hover {
   transform: translateY(-3px);
-  border-color: rgba(212, 175, 55, 0.55);
-  box-shadow: 0 12px 36px -12px rgba(212, 175, 55, 0.45);
+  border-color: rgba(34, 211, 238, 0.55);
+  box-shadow: 0 12px 36px -12px rgba(34, 211, 238, 0.45);
 }
 
 .create-picker-option:hover img {
@@ -1534,18 +1351,18 @@ img.hero-emblem-mark {
 }
 
 .create-picker-option[data-theme="vampire-village"]:hover {
-  border-color: rgba(196, 30, 58, 0.6);
-  box-shadow: 0 12px 36px -12px rgba(196, 30, 58, 0.5);
+  border-color: rgba(228, 0, 43, 0.6);
+  box-shadow: 0 12px 36px -12px rgba(228, 0, 43, 0.5);
 }
 
 .create-picker-option[data-theme="spy-game"]:hover {
-  border-color: rgba(63, 184, 175, 0.6);
-  box-shadow: 0 12px 36px -12px rgba(63, 184, 175, 0.5);
+  border-color: rgba(34, 211, 238, 0.6);
+  box-shadow: 0 12px 36px -12px rgba(34, 211, 238, 0.5);
 }
 
 .create-picker-option-text strong {
   display: block;
-  font-family: "Cinzel", serif;
+  font-family: "Sora", serif;
   font-size: 16px;
   letter-spacing: 0.05em;
   color: var(--text-primary);
@@ -1560,7 +1377,7 @@ img.hero-emblem-mark {
 }
 
 .create-picker-option:focus-visible {
-  outline: 2px solid rgba(212, 175, 55, 0.9);
+  outline: 2px solid rgba(34, 211, 238, 0.9);
   outline-offset: 2px;
 }
 
@@ -1586,7 +1403,7 @@ img.hero-emblem-mark {
 }
 
 .create-picker-cancel:focus-visible {
-  outline: 2px solid rgba(212, 175, 55, 0.9);
+  outline: 2px solid rgba(34, 211, 238, 0.9);
   outline-offset: 2px;
 }
 
@@ -1605,9 +1422,6 @@ img.hero-emblem-mark {
   .hero-brand-row { justify-content: center; }
   .hero-body { max-width: none; }
   .hero-slide .mega-title { font-size: clamp(40px, 12vw, 64px); }
-
-  .hero-emblem-panel { width: min(360px, 80%); }
-  .hero-emblem-mark { width: 150px; height: 150px; font-size: 80px; }
 
   .feat-row {
     grid-template-columns: repeat(2, 1fr);
@@ -1639,7 +1453,6 @@ img.hero-emblem-mark {
 
   .home-slide .center-particles { display: none; }
   .home-slide .center-fog { animation: none; filter: blur(20px); opacity: 0.6; }
-  .hero-embers { display: none; }
 
   /* Tighter chrome on phones so more of the 5 worlds sit above the fold
      before the list needs scrolling. */
@@ -1690,8 +1503,7 @@ img.hero-emblem-mark {
 }
 
 .atmosphere[data-perf="low"] ~ .shell .home-slide .center-particles,
-.atmosphere[data-perf="low"] ~ .shell .home-slide .center-fog,
-.atmosphere[data-perf="low"] ~ .shell .hero-embers {
+.atmosphere[data-perf="low"] ~ .shell .home-slide .center-fog {
   display: none;
 }
 
@@ -1701,13 +1513,8 @@ img.hero-emblem-mark {
   .home-stage .stage { scroll-behavior: auto; }
   .home-slide .center-particle,
   .home-slide .center-fog,
-  .hero-ember,
-  .hero-emblem-ring,
-  .hero-emblem-glow,
-  .hero-banner,
   .hero-brand-mark,
   .hero-left,
-  .hero-right,
   .feat-row,
   .shelf-card,
   .shelf-header,
@@ -1768,8 +1575,7 @@ img.hero-emblem-mark {
      first, decorative emblem AFTER the CTAs. Keeps users focused on the
      headline + actions and demotes the emblem to a closing flourish. */
   .hero-grid { gap: var(--s-5); }
-  .hero-left  { order: 1; gap: var(--s-3); }
-  .hero-right { order: 2; }
+  .hero-left { gap: var(--s-3); }
 
   /* Title — drop dramatically. Was clamp(40px,12vw,64px) on ≤900,
      now max ~36px so the headline doesn't dominate the viewport. */
@@ -1829,15 +1635,6 @@ img.hero-emblem-mark {
     backdrop-filter: blur(4px);
   }
 
-  /* Decorative right emblem — keep it but make it a small closing
-     flourish that sits BELOW the CTAs, never competes with the title.
-     Also kill the floating banners + embers on phones to reduce GPU
-     load and visual noise on small screens. */
-  .hero-emblem-panel { width: min(180px, 50%); margin-top: var(--s-2); }
-  .hero-emblem-ring { width: 95%; height: 95%; }
-  .hero-emblem-mark { width: 96px; height: 96px; font-size: 50px; }
-  .hero-banners,
-  .hero-embers { display: none; }
 }
 
 /* Very narrow phones — collapse CTA row to vertical stack so each
