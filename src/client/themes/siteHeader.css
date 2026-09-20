@@ -273,33 +273,65 @@ body[data-header-layout="browse"] .hero-slide {
   .site-header[data-layout="browse"] .language-short {
     display: inline;
   }
-  .site-header[data-layout="browse"] .main-nav {
-    justify-content: start;
-    overflow-x: auto;
-    overscroll-behavior-inline: contain;
-    scrollbar-width: none;
-    padding-block-end: 5px;
-    scroll-padding-inline: 4px;
+  /* Nav becomes a fixed bottom tab bar on phones, like a native app — the
+     brand + language switcher stay in the top card above. A bottom bar is
+     always visible (no scroll-hide) so it can't disappear while someone is
+     mid-navigation, which is also why data-scroll-hidden is neutralized
+     below instead of just on .main-nav: it lives inside .site-header, and
+     .site-header only gets a transform while hidden, which would otherwise
+     turn it into the containing block for this fixed child and drag the
+     tab bar up with it. */
+  .site-header[data-layout="browse"][data-scroll-hidden="true"] {
+    transform: none;
+    opacity: 1;
+    pointer-events: auto;
   }
-  .site-header[data-layout="browse"] .main-nav::-webkit-scrollbar {
-    display: none;
+  .site-header[data-layout="browse"] .main-nav {
+    position: fixed;
+    inset-block: auto 0;
+    inset-inline: 0;
+    z-index: var(--z-hud);
+    display: flex;
+    justify-content: space-around;
+    align-items: stretch;
+    gap: 0;
+    max-width: none;
+    margin: 0;
+    padding: 6px max(6px, env(safe-area-inset-left)) calc(6px + env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-right));
+    border: 0;
+    border-block-start: 1px solid rgba(184, 179, 219, 0.14);
+    border-radius: 0;
+    background: linear-gradient(180deg, rgba(16, 20, 41, 0.94), rgba(8, 10, 22, 0.98));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    overflow: visible;
   }
   .site-header[data-layout="browse"] .main-nav button {
-    flex-shrink: 0;
-    padding: 8px 10px;
-    min-height: 38px;
-    font-size: 11px;
-    gap: 6px;
+    flex: 1 1 0;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 54px;
+    padding: 6px 4px;
+    border-radius: 12px;
+    font-size: 10px;
   }
   .site-header[data-layout="browse"] .header-nav-icon {
-    width: 15px;
-    height: 15px;
+    width: 21px;
+    height: 21px;
+  }
+  .site-header[data-layout="browse"] .main-nav button[aria-current="page"]::after {
+    display: none;
   }
   body[data-header-layout="browse"] .hero-slide {
     padding-block-start: calc(150px + env(safe-area-inset-top));
+    padding-block-end: calc(80px + env(safe-area-inset-bottom));
+  }
+  body[data-header-layout="browse"] .featured-slide {
+    padding-block-end: calc(80px + env(safe-area-inset-bottom));
   }
   body[data-header-layout="browse"] :is(.worlds-page, .how-page, .features-page, .about-page) {
     padding-block-start: 110px;
+    padding-block-end: calc(80px + env(safe-area-inset-bottom));
   }
 }
 @media (max-width: 360px) {
