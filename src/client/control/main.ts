@@ -585,8 +585,8 @@ async function branding(main: HTMLElement): Promise<void> {
   const defaults: Record<string, string> = {
     logo: "/assets/logo/yalla-game-mark.webp",
     darkLogo: "/assets/logo/yalla-game-mark.webp",
-    favicon: "/assets/logo/yalla-game-mark.png",
-    ogImage: "/assets/logo/yalla-game-mark.webp"
+    favicon: "/assets/logo/favicon-2026.png",
+    ogImage: "/assets/logo/yallagame-mark-2026.webp"
   }
   const editors = Object.entries(defaults).map(([key, fallback]) => ({
     key,

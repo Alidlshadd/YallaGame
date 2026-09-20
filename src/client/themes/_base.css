@@ -7,7 +7,7 @@
 
 :root {
   /* Base canvas */
-  --bg-void: #0a0a12;
+  --bg-void: #090b1a;
   --bg-deep: #13131e;
   --text-primary: #f0eee6;
   --text-muted: #8a8a96;
@@ -17,12 +17,15 @@
   --surface-glass: rgba(255, 255, 255, 0.03);
   --surface-blur: blur(16px) saturate(140%);
 
-  /* Theme defaults (overridden by theme files) */
+  /* Theme defaults (overridden by theme files) — 2026 brand: violet -> cyan
+     for shared/untheme surfaces (home nav, join/lobby, admin). Any active
+     per-game theme file still fully overrides these at its own scope. */
   --theme-bg: var(--bg-void);
-  --theme-accent: #c0c0c8;
-  --theme-glow: #f0eee6;
+  --theme-accent: #7c3aed;
+  --theme-glow: #22d3ee;
+  --theme-primary-bg: linear-gradient(120deg, #7c3aed, #22d3ee);
   --theme-surface: var(--surface-glass);
-  --theme-display: "Inter", system-ui, sans-serif;
+  --theme-display: "Sora", "Inter", system-ui, sans-serif;
   --theme-display-tracking: 0;
   --theme-display-transform: none;
 
@@ -302,17 +305,17 @@ body {
 }
 
 .main-nav button:hover {
-  color: #f3d77a;
-  background: rgba(212, 175, 55, 0.08);
+  color: #22d3ee;
+  background: rgba(124, 58, 237, 0.12);
 }
 
 .main-nav button[aria-current="true"] {
-  color: #f3d77a;
-  background: rgba(212, 175, 55, 0.12);
+  color: #22d3ee;
+  background: rgba(124, 58, 237, 0.16);
 }
 
 .main-nav button:focus-visible {
-  outline: 2px solid rgba(212, 175, 55, 0.9);
+  outline: 2px solid rgba(34, 211, 238, 0.9);
   outline-offset: 2px;
 }
 
@@ -343,7 +346,15 @@ body {
   object-fit: contain;
   background: transparent;
   border: 0;
-  filter: drop-shadow(0 0 12px rgba(212, 175, 55, 0.45));
+  filter: drop-shadow(0 0 12px rgba(34, 211, 238, 0.45));
+  /* Header is static markup, never re-mounted by view navigation, so this
+     plays once per session (page load) and never replays on in-app nav. */
+  animation: yg-logo-arrive 720ms var(--ease-out-expo) both;
+}
+
+@keyframes yg-logo-arrive {
+  from { opacity: 0; transform: translateY(6px) scale(0.94); filter: blur(4px) drop-shadow(0 0 12px rgba(34, 211, 238, 0.45)); }
+  to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0) drop-shadow(0 0 12px rgba(34, 211, 238, 0.45)); }
 }
 
 .brand-text strong {
@@ -403,7 +414,7 @@ body {
 }
 
 .btn-primary {
-  background: var(--theme-accent);
+  background: var(--theme-primary-bg, var(--theme-accent));
   color: var(--bg-void);
   box-shadow: 0 0 0 0 var(--theme-glow);
 }
@@ -726,10 +737,13 @@ body[data-perf="low"] *::after {
 
 .game-card:hover::before { opacity: 0.7; }
 
-.game-card[data-theme="vampire-village"] { --card-glow: #8b1538; }
-.game-card[data-theme="mafia-classic"]   { --card-glow: #c9a961; }
-.game-card[data-theme="spy-game"]        { --card-glow: #3fb8af; }
-.game-card[data-theme="football-player-guess"] { --card-glow: #f4d06f; }
+/* 2026 brand kit accents — controlled per-game colors, shared chrome stays
+   Midnight/Indigo. Values match yallagame-theme.json's gameAccents map. */
+.game-card[data-theme="vampire-village"] { --card-glow: #ff3d81; }
+.game-card[data-theme="mafia-classic"]   { --card-glow: #ff6b35; }
+.game-card[data-theme="spy-game"]        { --card-glow: #22d3ee; }
+.game-card[data-theme="football-player-guess"] { --card-glow: #22c55e; }
+.game-card[data-theme="who-am-i"] { --card-glow: #fbbf24; }
 /* The gold of the question card on the cover art. */
 .game-card[data-theme="most-likely-to"] { --card-glow: #f0c257; }
 
