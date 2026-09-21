@@ -3,23 +3,40 @@ import { findCharacter } from "@shared/characters.js"
 import { characterAccessory, findAccessory } from "@shared/accessories.js"
 import { buildAccessory } from "./accessory.js"
 import { portraitGeometry } from "./portraitGeometry.js"
+import { publicAvatars } from "../services/publicConfig.js"
 import type { LangCode } from "@shared/types.js"
 
+/** Admin override (name/image) for a built-in avatar, or the full record for
+ * one the admin created from scratch — undefined if there's no override and
+ * the id isn't a custom avatar. Empty/not-yet-loaded config falls through to
+ * the bundled `CHARACTERS` list, same resilience as the rest of publicConfig. */
+function avatarOverride(id: string) {
+  return publicAvatars().find(a => a.id === id)
+}
 export function characterImagePath(id: string): string {
+  const override = avatarOverride(id)
+  if (override?.image) return override.image
   const def = findCharacter(id)
   return def?.image ?? (def?.portrait !== undefined ? "/assets/characters/avatar-atlas.webp" : `/assets/characters/${id}.webp`)
 }
-export function characterName(id: string, lang: LangCode): string { return findCharacter(id)?.name[lang] ?? "" }
+export function characterName(id: string, lang: LangCode): string {
+  return avatarOverride(id)?.name[lang] ?? findCharacter(id)?.name[lang] ?? ""
+}
 export interface AvatarOptions { size?: number; class?: string; lazy?: boolean; accessory?: string | undefined }
 
 export function buildAvatar(character: string, playerName: string, lang: LangCode, opts: AvatarOptions = {}): HTMLElement {
+  const override = avatarOverride(character)
   const def = findCharacter(character)
   const accessory = findAccessory(characterAccessory(character, opts.accessory))
-  const geometry = def?.portrait !== undefined ? portraitGeometry(def.portrait) : undefined
+  // An avatar with an admin-uploaded image (built-in override or fully
+  // custom) always renders as a plain image, same path as ali/mahmud/morinji
+  // — the atlas crop only applies to an unmodified built-in portrait.
+  const geometry = !override?.image && def?.portrait !== undefined ? portraitGeometry(def.portrait) : undefined
+  const displayName = override?.name[lang] ?? def?.name[lang] ?? playerName
   const wrap = el("span", {
     class: `avatar${opts.class ? ` ${opts.class}` : ""}`,
     style: `--avatar-size:${opts.size ?? 32}px`, role: "img",
-    "aria-label": [def?.name[lang] ?? playerName, accessory?.name[lang]].filter(Boolean).join(" · "),
+    "aria-label": [displayName, accessory?.name[lang]].filter(Boolean).join(" · "),
     "data-avatar": character, "data-accessory": accessory?.id ?? ""
   })
   const face = el("span", { class: "avatar-face", "aria-hidden": "true" })
@@ -29,8 +46,8 @@ export function buildAvatar(character: string, playerName: string, lang: LangCod
     wrap.classList.add("avatar--monogram")
     wrap.querySelector(".avatar-accessory")?.remove()
   }
-  if (!def) { fallback(); return wrap }
-  const img = el("img", { src: characterImagePath(def.id), alt: "", decoding: "async", ...(opts.lazy === false ? {} : { loading: "lazy" }) })
+  if (!def && !override) { fallback(); return wrap }
+  const img = el("img", { src: characterImagePath(character), alt: "", decoding: "async", ...(opts.lazy === false ? {} : { loading: "lazy" }) })
   if (geometry) {
     // Viewports preserve the approved bitmap faces, with a single cached request.
     const [x, y] = geometry.crop

@@ -44,6 +44,7 @@ export interface AdminDeps {
   config: Config
   rng: () => number
   canCreateGame?: (id: string) => boolean
+  isValidCharacter?: (id: string) => boolean
 }
 
 async function broadcastRoom(deps: AdminDeps, room: Room): Promise<void> {
@@ -89,7 +90,7 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
     const game = deps.resolveGame(gameId)
     if (!game) throw new Error("UNKNOWN_GAME")
     if (deps.canCreateGame?.(gameId) === false) throw new Error("UNKNOWN_GAME")
-    if (!isCharacterId(hostCharacter)) throw new Error("UNKNOWN_CHARACTER")
+    if (!(deps.isValidCharacter?.(hostCharacter) ?? isCharacterId(hostCharacter))) throw new Error("UNKNOWN_CHARACTER")
 
     const totalRooms = await deps.store.countActiveRooms()
     if (totalRooms >= deps.config.MAX_TOTAL_ROOMS) throw new Error("SERVER_BUSY")

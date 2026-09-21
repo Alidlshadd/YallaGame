@@ -1,71 +1,75 @@
-/* Aurora: admin-only tokens. No public styles or theme preferences are touched. */
+/* Velocity: admin-only tokens. No public styles or theme preferences are touched.
+   Same architecture as before (light default, opt-in [data-theme="dark"]) — only
+   the palette moved from lavender/violet to the black/lime/coral brand kit. */
 :root,
 .sample-light {
   color-scheme: light;
-  --page: #f3f2fa;
-  --sidebar: #faf9ff;
+  --page: #f4f1e8;
+  --sidebar: #ffffff;
   --surface: #ffffff;
-  --elevated: #f1effb;
-  --glass: #ffffffdf;
-  --text: #20223c;
-  --muted: #61647d;
-  --line: #deddec;
-  --input-border: #8b89a4;
-  --accent: #6441cf;
-  --accent-ink: #fff;
-  --accent-soft: #ede7fc;
-  --blue: #2965cd;
-  --cyan: #087b83;
-  --pink: #b43783;
+  --elevated: #ece7d9;
+  --glass: #ffffffe6;
+  --text: #16171a;
+  --muted: #6d6f66;
+  --line: #1415141f;
+  --input-border: #14151452;
+  --accent: #7a8a00;
+  --accent-ink: #fdfcf6;
+  --accent-soft: #7a8a001c;
+  --blue: #7a8a00;
+  --cyan: #c1440e;
+  --pink: #b03a24;
   --success: #157353;
   --success-soft: #e1f4ed;
-  --warning: #896015;
-  --danger: #b02e4e;
-  --shadow: 0 12px 36px #3932650b, 0 2px 5px #39326505;
-  --focus: #704ae0;
-  --aurora: #9c82f622;
-  --aurora-blue: #64b9f022;
-  --backdrop: #10152a88;
-  --hero-bg: linear-gradient(115deg, #eae3fc, #f1effc 46%, #e1f0fa);
-  --sample-shadow: #664b9222;
+  --warning: #8a6015;
+  --danger: #b03a24;
+  --shadow: 0 12px 36px #1415140f, 0 2px 5px #14151408;
+  --focus: #7a8a00;
+  --aurora: #7a8a001a;
+  --aurora-blue: #c1440e14;
+  --backdrop: #14151480;
+  --hero-bg: linear-gradient(115deg, #f4f1e8, #efece0 46%, #e9e4d2);
+  --sample-shadow: #7a8a0018;
 }
 :root[data-theme="dark"],
 .sample-dark {
   color-scheme: dark;
-  --page: #0b1023;
-  --sidebar: #10152b;
-  --surface: #151c35;
-  --elevated: #1d2541;
-  --glass: #121930eb;
-  --text: #f0f1ff;
-  --muted: #a8b0ce;
-  --line: #2b3454;
-  --input-border: #707a9c;
-  --accent: #bca5ff;
-  --accent-ink: #211144;
-  --accent-soft: #322651;
-  --blue: #81afff;
-  --cyan: #6edddc;
-  --pink: #f3a0d5;
-  --success: #74dec1;
-  --success-soft: #153c3c;
-  --warning: #f0c777;
-  --danger: #ffa9bc;
-  --shadow: 0 12px 36px #03071d35, 0 2px 5px #03071d25;
-  --focus: #c6b3ff;
-  --aurora: #7955da25;
-  --aurora-blue: #2987a917;
-  --backdrop: #06091bc4;
-  --hero-bg: linear-gradient(115deg, #282047, #1b2445 48%, #153344);
-  --sample-shadow: #0005;
+  --page: #090a0c;
+  --sidebar: #111316;
+  --surface: #15171a;
+  --elevated: #1c1f22;
+  --glass: #111316eb;
+  --text: #f4f1e8;
+  --muted: #9a9da3;
+  --line: #f4f1e81f;
+  --input-border: #f4f1e847;
+  --accent: #e2ff39;
+  --accent-ink: #0a0b0d;
+  --accent-soft: #e2ff3924;
+  --blue: #e2ff39;
+  --cyan: #ff5a47;
+  --pink: #ff8066;
+  --success: #6fe6a0;
+  --success-soft: #6fe6a024;
+  --warning: #ffcf5c;
+  --danger: #ff5a47;
+  --shadow: 0 12px 36px #00000073, 0 2px 5px #00000040;
+  --focus: #e2ff39;
+  --aurora: #e2ff391a;
+  --aurora-blue: #ff5a4714;
+  --backdrop: #090a0cd2;
+  --hero-bg: linear-gradient(115deg, #16181b, #111316 50%, #0c0d0f);
+  --sample-shadow: #e2ff391a;
 }
 :root {
-  font-family: "Segoe UI", "Noto Sans Arabic", "Noto Sans", Tahoma, Arial, sans-serif;
+  font-family: var(--font-body);
   color: var(--text);
   background: var(--page);
   font-synthesis: none;
   --radius: 20px;
   --small-radius: 12px;
+  --font-display: "Archivo Black", "Manrope", "Segoe UI", sans-serif;
+  --font-body: "Manrope", "Segoe UI", "Noto Sans Arabic", "Noto Sans", Tahoma, Arial, sans-serif;
 }
 * {
   box-sizing: border-box;
@@ -219,6 +223,7 @@ p {
   margin-block-start: 0;
 }
 h1 {
+  font-family: var(--font-display);
   font-size: clamp(26px, 2.5vw, 40px);
   font-weight: 700;
   letter-spacing: -0.035em;
@@ -285,8 +290,9 @@ h2 {
   grid-row: span 2;
 }
 .sidebar-brand strong {
-  font-size: 21px;
-  letter-spacing: -0.035em;
+  font-family: var(--font-display);
+  font-size: 18px;
+  letter-spacing: -0.01em;
   overflow-wrap: anywhere;
 }
 .sidebar-brand small {
@@ -1096,6 +1102,60 @@ input[type="file"]::file-selector-button {
 form[data-dirty="true"] > .save-status {
   color: var(--warning);
 }
+.avatar-mini {
+  width: 96px;
+  height: 96px;
+  flex-shrink: 0;
+  position: relative;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--elevated);
+  border: 1px solid var(--line);
+}
+.avatar-mini-face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 50%;
+}
+.avatar-mini-face > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.avatar-mini-face > img.avatar-mini-atlas {
+  position: absolute;
+  max-width: none;
+  object-fit: fill;
+}
+.avatar-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  padding: 18px 16px 20px;
+}
+.avatar-card-badge { margin-block: 2px 6px; }
+.avatar-card-names {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+}
+.avatar-card-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  width: 100%;
+}
+.avatar-card form { width: 100%; }
+.avatar-toolbar { display: flex; justify-content: flex-end; margin-block-end: 18px; }
+@media (max-width: 520px) {
+  .avatar-card-names { grid-template-columns: 1fr; }
+}
 .branding-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr);
@@ -1329,10 +1389,11 @@ dialog::backdrop {
   margin-inline: auto;
 }
 .login-story h2 {
+  font-family: var(--font-display);
   white-space: pre-line;
-  font-size: clamp(36px, 4.3vw, 66px);
-  line-height: 1.12;
-  letter-spacing: -0.05em;
+  font-size: clamp(30px, 3.6vw, 54px);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
   margin-block: 22px;
   color: var(--text);
   background: linear-gradient(120deg, var(--text) 25%, var(--accent) 65%, var(--cyan));

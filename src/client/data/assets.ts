@@ -42,7 +42,7 @@ export function worldCoverPath(theme: string): string {
   // Newly added worlds use the existing brand mark until dedicated art lands.
   // Never give the browser an empty image URL for a playable world.
   if (!COVERS[theme] && (theme === "bluff-trivia" || theme === "secret-politician")) {
-    return "/assets/logo/yallagame-mark-2026.webp"
+    return "/assets/logo/yallagame-velocity-icon.svg"
   }
   return COVERS[theme] ?? ""
 }

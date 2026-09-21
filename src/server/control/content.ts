@@ -5,6 +5,8 @@ import { mkdir, writeFile, unlink } from "node:fs/promises"
 import { token } from "./auth.js"
 import { audit } from "./database.js"
 import { GAME_CATALOG } from "../games/catalog.js"
+import { CHARACTERS, isCharacterId } from "../../shared/characters.js"
+import type { LocalizedText } from "../../shared/types.js"
 
 export const assetSlots = ["cover", "detail", "cta", "section"] as const
 export const brandAssets = ["logo", "darkLogo", "favicon", "ogImage"] as const
@@ -21,6 +23,67 @@ export interface GameOverride {
   section: string | null
 }
 export const assetUrl = (id: string | null): string | null => (id ? `/uploads/${id}` : null)
+export interface AvatarOverride {
+  id: string
+  enabled: number
+  sort_order: number
+  name_en: string | null
+  name_tr: string | null
+  name_ar: string | null
+  name_ku: string | null
+  image: string | null
+  created_at: number
+  updated_at: number
+}
+export interface AvatarEntry {
+  id: string
+  name: LocalizedText
+  image: string | null
+  sortOrder: number
+}
+/** Built-in `CHARACTERS` merged with admin overrides, plus any fully
+ * admin-created avatars. Disabled entries are dropped — callers that need
+ * the raw picture (admin UI) should read `avatar_overrides` directly. */
+export function effectiveAvatarCatalog(db: Database.Database): AvatarEntry[] {
+  const overrides = new Map(
+    (db.prepare("SELECT * FROM avatar_overrides").all() as AvatarOverride[]).map(row => [row.id, row])
+  )
+  const merged: AvatarEntry[] = []
+  CHARACTERS.forEach((def, index) => {
+    const o = overrides.get(def.id)
+    if (o?.enabled === 0) return
+    merged.push({
+      id: def.id,
+      name: {
+        en: o?.name_en ?? def.name.en,
+        tr: o?.name_tr ?? def.name.tr,
+        ar: o?.name_ar ?? def.name.ar,
+        ku: o?.name_ku ?? def.name.ku
+      },
+      image: assetUrl(o?.image ?? null),
+      sortOrder: o?.sort_order ?? index
+    })
+  })
+  for (const row of overrides.values()) {
+    if (isCharacterId(row.id) || row.enabled === 0) continue
+    merged.push({
+      id: row.id,
+      name: { en: row.name_en ?? "", tr: row.name_tr ?? "", ar: row.name_ar ?? "", ku: row.name_ku ?? "" },
+      image: assetUrl(row.image),
+      sortOrder: row.sort_order
+    })
+  }
+  return merged.sort((a, b) => a.sortOrder - b.sortOrder)
+}
+/** Db-aware character validity: knows about hidden built-ins and custom
+ * avatars, unlike the pure `isCharacterId` shape check it wraps. */
+export function isSelectableCharacterId(db: Database.Database, id: string): boolean {
+  const row = db.prepare("SELECT enabled FROM avatar_overrides WHERE id=?").get(id) as
+    | { enabled: number }
+    | undefined
+  if (isCharacterId(id)) return (row?.enabled ?? 1) !== 0
+  return row?.enabled === 1
+}
 export function brandedHtml(html: string, branding: Record<string, string>, origin = ""): string {
   const escape = (value: string) =>
     value.replace(
@@ -65,7 +128,7 @@ export function publicConfiguration(db: Database.Database) {
       }
     ])
   )
-  return { branding, games }
+  return { branding, games, avatars: effectiveAvatarCatalog(db) }
 }
 export function effectiveCatalog(db: Database.Database) {
   const { games } = publicConfiguration(db)
@@ -142,6 +205,10 @@ export async function cleanupUploads(
       const referenced = new Set<string>()
       for (const row of db.prepare("SELECT * FROM game_asset_overrides").all() as GameOverride[])
         for (const slot of assetSlots) if (row[slot]) referenced.add(row[slot]!)
+      for (const row of db.prepare("SELECT image FROM avatar_overrides WHERE image IS NOT NULL").all() as Array<{
+        image: string
+      }>)
+        referenced.add(row.image)
       for (const row of db.prepare("SELECT key,value FROM site_settings").all() as Array<{
         key: string
         value: string

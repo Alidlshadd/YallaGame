@@ -1,8 +1,15 @@
+export interface PublicAvatar {
+  id: string
+  name: Record<"en" | "tr" | "ar" | "ku", string>
+  image: string | null
+  sortOrder: number
+}
 export interface PublicConfiguration {
   branding: Record<string, string>
   games: Record<string, { enabled: boolean; order: number; assets: Record<string, string | null> }>
+  avatars: PublicAvatar[]
 }
-let configuration: PublicConfiguration = { branding: {}, games: {} }
+let configuration: PublicConfiguration = { branding: {}, games: {}, avatars: [] }
 export function getPublicConfiguration(): PublicConfiguration {
   return configuration
 }
@@ -37,9 +44,16 @@ export async function loadPublicConfiguration(): Promise<void> {
 }
 export function brandLogo(dark = false): string {
   const brand = configuration.branding
-  return (dark ? brand.darkLogo : undefined) ?? brand.logo ?? "/assets/logo/yallagame-mark-2026.webp"
+  return (dark ? brand.darkLogo : undefined) ?? brand.logo ?? "/assets/logo/yallagame-velocity-icon.svg"
 }
 export function gameAsset(gameId: string, slot: string): string | undefined {
   const url = configuration.games[gameId]?.assets[slot]
   return url && /^\/uploads\/[a-f0-9]{64}\.webp$/.test(url) ? url : undefined
+}
+/** The live avatar catalog (built-ins with admin overrides applied, plus any
+ * fully admin-created avatars) — empty until `loadPublicConfiguration()`
+ * resolves, or if it fails, in which case callers fall back to the bundled
+ * `CHARACTERS` list. */
+export function publicAvatars(): readonly PublicAvatar[] {
+  return configuration.avatars
 }

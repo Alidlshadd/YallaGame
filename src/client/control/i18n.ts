@@ -469,7 +469,45 @@ export const dictionary = {
   loginFailed: ["Sign-in failed", "Giriş başarısız", "فشل تسجيل الدخول", "چوونە ژوورەوە سەرکەوتوو نەبوو"],
   gameUpdated: ["Game updated", "Oyun güncellendi", "تحديث لعبة", "یاری نوێکرایەوە"],
   brandUpdated: ["Brand updated", "Marka güncellendi", "تحديث العلامة", "براند نوێکرایەوە"],
-  imageUploaded: ["Image uploaded", "Görsel yüklendi", "تحميل صورة", "وێنە بارکرا"]
+  imageUploaded: ["Image uploaded", "Görsel yüklendi", "تحميل صورة", "وێنە بارکرا"],
+  avatars: ["Avatars", "Avatarlar", "الصور الرمزية", "ئاڤاتارەکان"],
+  avatarsDesc: [
+    "Add, edit or hide the characters players can pick when they join a room.",
+    "Oyuncuların odaya katılırken seçebileceği karakterleri ekle, düzenle veya gizle.",
+    "أضف الشخصيات التي يختارها اللاعبون عند الانضمام إلى غرفة أو عدّلها أو أخفها.",
+    "ئەو کارەکتەرانەی یاریزانان لە کاتی چوونە ژوورەوەی ژوورێکدا هەڵدەبژێرن زیاد بکە، دەستکاری بکە یان بیشارەوە."
+  ],
+  addAvatar: ["Add avatar", "Avatar ekle", "إضافة صورة رمزية", "زیادکردنی ئاڤاتار"],
+  newAvatar: ["New avatar", "Yeni avatar", "صورة رمزية جديدة", "ئاڤاتاری نوێ"],
+  builtIn: ["Built-in", "Yerleşik", "مدمجة", "بنەڕەتی"],
+  custom: ["Custom", "Özel", "مخصصة", "تایبەت"],
+  nameEn: ["Name (English)", "İsim (İngilizce)", "الاسم (إنجليزي)", "ناو (ئینگلیزی)"],
+  nameTr: ["Name (Turkish)", "İsim (Türkçe)", "الاسم (تركي)", "ناو (تورکی)"],
+  nameAr: ["Name (Arabic)", "İsim (Arapça)", "الاسم (عربي)", "ناو (عەرەبی)"],
+  nameKu: ["Name (Kurdish)", "İsim (Kürtçe)", "الاسم (كردي)", "ناو (کوردی)"],
+  avatarImage: ["Avatar image", "Avatar görseli", "صورة الأفاتار", "وێنەی ئاڤاتار"],
+  saveAvatar: ["Save avatar", "Avatarı kaydet", "حفظ الصورة الرمزية", "پاشەکەوتکردنی ئاڤاتار"],
+  avatarSaved: ["{avatar} saved", "{avatar} kaydedildi", "تم حفظ {avatar}", "{avatar} پاشەکەوت کرا"],
+  avatarCreated: [
+    "Avatar added",
+    "Avatar eklendi",
+    "تمت إضافة الصورة الرمزية",
+    "ئاڤاتار زیاد کرا"
+  ],
+  hideAvatarConfirm: [
+    "Hide {avatar}? Players won't be able to pick it anymore.",
+    "{avatar} gizlensin mi? Oyuncular artık bunu seçemez.",
+    "إخفاء {avatar}؟ لن يتمكن اللاعبون من اختيارها بعد الآن.",
+    "{avatar} بشاردرێتەوە؟ یاریزانان چیتر ناتوانن هەڵیبژێرن."
+  ],
+  deleteAvatar: ["Delete", "Sil", "حذف", "سڕینەوە"],
+  deleteAvatarConfirm: [
+    "Permanently delete {avatar}? This can't be undone.",
+    "{avatar} kalıcı olarak silinsin mi? Bu geri alınamaz.",
+    "حذف {avatar} نهائياً؟ لا يمكن التراجع عن هذا.",
+    "{avatar} بە یەکجاری بسڕدرێتەوە؟ ناتوانرێت بگەڕێندرێتەوە."
+  ],
+  avatarDeleted: ["Avatar deleted", "Avatar silindi", "تم حذف الصورة الرمزية", "ئاڤاتار سڕایەوە"]
 } as const satisfies Record<string, readonly [string, string, string, string]>
 
 export type Key = keyof typeof dictionary

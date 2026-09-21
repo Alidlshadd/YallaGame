@@ -6,26 +6,38 @@
 @import "./avatars.css";
 
 :root {
+  /* ─── Velocity brand tokens (single source of truth) ───────────── */
+  --yg-black: #090a0c;
+  --yg-surface: #111316;
+  --yg-surface-raised: #181b1f;
+  --yg-lime: #e2ff39;
+  --yg-warm-white: #f4f1e8;
+  --yg-coral: #ff5a47;
+  --yg-muted: #9a9da3;
+  --yg-border: rgba(244, 241, 232, 0.12);
+
   /* Base canvas */
-  --bg-void: #090b1a;
-  --bg-deep: #13131e;
-  --text-primary: #f0eee6;
-  --text-muted: #8a8a96;
-  --border-faint: rgba(255, 255, 255, 0.06);
+  --bg-void: var(--yg-black);
+  --bg-deep: var(--yg-surface);
+  --text-primary: var(--yg-warm-white);
+  --text-muted: var(--yg-muted);
+  --border-faint: var(--yg-border);
 
   /* Glass surface */
-  --surface-glass: rgba(255, 255, 255, 0.03);
+  --surface-glass: rgba(244, 241, 232, 0.03);
   --surface-blur: blur(16px) saturate(140%);
 
-  /* Theme defaults (overridden by theme files) — 2026 brand: violet -> cyan
-     for shared/untheme surfaces (home nav, join/lobby, admin). Any active
-     per-game theme file still fully overrides these at its own scope. */
-  --theme-bg: var(--bg-void);
-  --theme-accent: #7c3aed;
-  --theme-glow: #22d3ee;
-  --theme-primary-bg: linear-gradient(120deg, #7c3aed, #22d3ee);
+  /* Theme defaults (overridden by theme files) — Velocity brand: black
+     canvas + lime accent for shared/untheme surfaces (home nav, join/lobby,
+     admin). Any active per-game theme file still fully overrides these at
+     its own scope, so per-game identities (vampire, mafia, spy, ...) are
+     unaffected by this default. */
+  --theme-bg: var(--yg-black);
+  --theme-accent: var(--yg-lime);
+  --theme-glow: var(--yg-lime);
+  --theme-primary-bg: var(--yg-lime);
   --theme-surface: var(--surface-glass);
-  --theme-display: "Sora", "Inter", system-ui, sans-serif;
+  --theme-display: "Archivo Black", "Manrope", "Inter", system-ui, sans-serif;
   --theme-display-tracking: 0;
   --theme-display-transform: none;
 
@@ -71,7 +83,7 @@
   --z-overlay: 100;
 
   /* Fonts (preserved across themes) */
-  --font-body: "Inter", system-ui, sans-serif;
+  --font-body: "Manrope", "Inter", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
   --font-arabic: "Noto Sans Arabic", system-ui, sans-serif;
 }
@@ -305,17 +317,17 @@ body {
 }
 
 .main-nav button:hover {
-  color: #22d3ee;
-  background: rgba(124, 58, 237, 0.12);
+  color: var(--yg-lime);
+  background: rgba(226, 255, 57, 0.10);
 }
 
 .main-nav button[aria-current="true"] {
-  color: #22d3ee;
-  background: rgba(124, 58, 237, 0.16);
+  color: var(--yg-lime);
+  background: rgba(226, 255, 57, 0.14);
 }
 
 .main-nav button:focus-visible {
-  outline: 2px solid rgba(34, 211, 238, 0.9);
+  outline: 2px solid var(--yg-lime);
   outline-offset: 2px;
 }
 
@@ -346,15 +358,15 @@ body {
   object-fit: contain;
   background: transparent;
   border: 0;
-  filter: drop-shadow(0 0 12px rgba(34, 211, 238, 0.45));
   /* Header is static markup, never re-mounted by view navigation, so this
-     plays once per session (page load) and never replays on in-app nav. */
+     plays once per session (page load) and never replays on in-app nav.
+     No glow/effect on the mark itself, per brand-kit usage rules. */
   animation: yg-logo-arrive 720ms var(--ease-out-expo) both;
 }
 
 @keyframes yg-logo-arrive {
-  from { opacity: 0; transform: translateY(6px) scale(0.94); filter: blur(4px) drop-shadow(0 0 12px rgba(34, 211, 238, 0.45)); }
-  to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0) drop-shadow(0 0 12px rgba(34, 211, 238, 0.45)); }
+  from { opacity: 0; transform: translateY(6px) scale(0.94); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .brand-text strong {
@@ -420,8 +432,9 @@ body {
 }
 
 .btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 0 32px -4px var(--theme-glow);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px -10px var(--theme-glow);
+  filter: brightness(1.06);
 }
 
 .btn-primary:active { transform: translateY(0); }
@@ -475,7 +488,7 @@ input, select, textarea { font-size: max(16px, 1em); }
   transform: translateX(-50%);
   padding: var(--s-3) var(--s-5);
   border-radius: 999px;
-  background: rgba(20, 20, 30, 0.9);
+  background: rgba(17, 19, 22, 0.92);
   backdrop-filter: var(--surface-blur);
   -webkit-backdrop-filter: var(--surface-blur);
   border: 1px solid var(--border-faint);
@@ -528,12 +541,12 @@ input, select, textarea { font-size: max(16px, 1em); }
   letter-spacing: 0.14em;
   color: var(--text-muted);
 }
-.app-footer-mark { color: color-mix(in srgb, #d4af37 70%, var(--text-muted)); }
+.app-footer-mark { color: var(--yg-lime); }
 .app-footer-brand {
-  color: color-mix(in srgb, #d4af37 85%, var(--text-primary));
-  font-family: "Cinzel", serif;
+  color: var(--text-primary);
+  font-family: var(--theme-display);
   font-size: 12px;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.04em;
   text-transform: none;
 }
 /* Hide footer on in-game scenes + join card — those screens are

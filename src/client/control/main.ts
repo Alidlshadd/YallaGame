@@ -2,6 +2,7 @@ import type { Game } from "../../shared/types.js"
 import { worldCoverPath } from "../data/assets.js"
 import { getWorldDetail } from "../data/worldDetails.js"
 import type { PublicConfiguration } from "../services/publicConfig.js"
+import { portraitGeometry } from "../ui/portraitGeometry.js"
 import { bind, date, language, number, t, updateTranslations, type Copy, type Key } from "./i18n.js"
 import {
   button,
@@ -30,13 +31,14 @@ const brandName = () => brand.siteName || "YallaGame"
 const brandLogo = () =>
   (document.documentElement.dataset.theme === "dark" ? brand.darkLogo : "") ||
   brand.logo ||
-  "/assets/logo/yallagame-mark-2026.webp"
+  "/assets/logo/yallagame-velocity-icon.svg"
 const navItems: readonly [string, Key, Icon][] = [
   ["/admin", "overview", "LayoutDashboard"],
   ["/admin/analytics", "analytics", "BarChart3"],
   ["/admin/games/history", "history", "Clock3"],
   ["/admin/players", "players", "Users"],
   ["/admin/games", "library", "Gamepad2"],
+  ["/admin/avatars", "avatars", "SmilePlus"],
   ["/admin/settings/branding", "branding", "Palette"],
   ["/admin/settings/system", "system", "Activity"],
   ["/admin/audit-logs", "audit", "ShieldCheck"]
@@ -794,6 +796,156 @@ function imageEditor(label: Key, current: string | null, fallback: string): Asse
     }
   }
 }
+/** Like `imageEditor`, but the "no override yet" state for a built-in avatar
+ * that still uses the sprite atlas shows the atlas sheet cropped to that
+ * character's face (same CSS trick `buildAvatar` uses client-side) instead
+ * of a single fallback image URL — there isn't one, by design (see the
+ * avatar-management spec: slicing the atlas into per-character files was
+ * deliberately out of scope). Once a replacement is uploaded it's always a
+ * plain image, atlas or not. */
+function avatarImageEditor(def: CharacterDefLite | null, current: string | null): AssetEditor {
+  const element = node("fieldset", "", "image-editor"),
+    legend = node("legend", t("avatarImage")),
+    face = node("div", "", "avatar-mini-face"),
+    preview = node("div", "", "avatar-mini"),
+    input = node("input"),
+    status = node("p", t(current ? "uploaded" : "defaultAsset"), "asset-status")
+  preview.append(face)
+  const showDefault = () => {
+    const img = node("img")
+    img.alt = ""
+    if (def?.image) {
+      img.src = def.image
+    } else if (def?.portrait !== undefined) {
+      const [x, y] = portraitGeometry(def.portrait).crop
+      img.src = "/assets/characters/avatar-atlas.webp"
+      img.classList.add("avatar-mini-atlas")
+      img.style.cssText = `width:${(1024 / 204) * 100}%;height:${(1536 / 264) * 100}%;left:${(-x / 204) * 100}%;top:${(-y / 264) * 100}%`
+    } else if (def) {
+      img.src = `/assets/characters/${def.id}.webp`
+    }
+    face.replaceChildren(img)
+  }
+  const showUrl = (url: string) => {
+    const img = node("img")
+    img.alt = ""
+    img.src = url
+    face.replaceChildren(img)
+  }
+  if (current) showUrl(current)
+  else showDefault()
+  input.type = "file"
+  input.accept = "image/jpeg,image/png,image/webp"
+  bind(input, t("upload", { label: t("avatarImage") }), "aria-label")
+  let selected: File | null = null,
+    asset = current?.split("/").pop() ?? null,
+    objectUrl = "",
+    uploading = false
+  const changed = () => element.dispatchEvent(new Event("change", { bubbles: true }))
+  const clearObjectUrl = () => {
+    if (objectUrl) URL.revokeObjectURL(objectUrl)
+    objectUrl = ""
+  }
+  const choose = (file: File | undefined) => {
+    if (!file || uploading) return
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) {
+      toast(t("uploadLimit"), true)
+      input.value = ""
+      return
+    }
+    selected = file
+    clearObjectUrl()
+    objectUrl = URL.createObjectURL(file)
+    showUrl(objectUrl)
+    element.dataset.state = "unsaved"
+    setText(status, t("newPreview"))
+    changed()
+  }
+  input.onchange = () => choose(input.files?.[0])
+  element.addEventListener("dragover", event => {
+    event.preventDefault()
+    if (!uploading) element.classList.add("drag-over")
+  })
+  element.addEventListener("dragleave", () => element.classList.remove("drag-over"))
+  element.addEventListener("drop", event => {
+    event.preventDefault()
+    element.classList.remove("drag-over")
+    choose(event.dataTransfer?.files[0])
+  })
+  const reset = button(
+    t("restore"),
+    () => {
+      void confirmAction(t("restoreConfirm", { label: t("avatarImage") })).then(ok => {
+        if (!ok || uploading) return
+        asset = null
+        selected = null
+        input.value = ""
+        clearObjectUrl()
+        showDefault()
+        element.dataset.state = "unsaved"
+        setText(status, t("defaultSelected"))
+        changed()
+      })
+    },
+    "subtle"
+  )
+  const help = node("label", t("uploadHelp"), "upload-zone")
+  help.prepend(icon("UploadCloud"))
+  help.append(input)
+  // A fully custom avatar has no built-in default to restore, so the button
+  // isn't in the DOM at all — `button { display: ... }` in this stylesheet
+  // would defeat a plain `hidden` attribute on it.
+  element.append(legend, preview, help, ...(def ? [reset] : []), status)
+  status.setAttribute("aria-live", "polite")
+  return {
+    element,
+    preview: () => (objectUrl ? objectUrl : asset ? `/uploads/${asset}` : ""),
+    isDefault: () => !asset && !selected,
+    committed: () => {
+      element.dataset.state = "saved"
+      setText(status, t(asset ? "uploaded" : "defaultAsset"))
+    },
+    value: async () => {
+      if (!selected) return asset
+      uploading = true
+      element.classList.add("uploading")
+      element.setAttribute("aria-busy", "true")
+      input.disabled = true
+      reset.disabled = true
+      setText(status, t("uploading"))
+      try {
+        const response = await fetch("/api/admin/uploads", {
+          method: "POST",
+          headers: { "x-csrf-token": csrf, "Content-Type": selected.type },
+          body: selected,
+          cache: "no-store"
+        })
+        if (response.status === 401) {
+          location.replace("/admin/login")
+          throw new RequestError("expired")
+        }
+        const result = (await response.json()) as { id?: string }
+        if (!response.ok || !result.id) throw new RequestError("uploadFailed")
+        asset = result.id
+        selected = null
+        input.value = ""
+        showUrl(`/uploads/${asset}`)
+        clearObjectUrl()
+        setText(status, t("uploaded"))
+        return asset
+      } catch (err) {
+        setText(status, t("uploadFailed"))
+        throw err
+      } finally {
+        uploading = false
+        input.disabled = false
+        reset.disabled = false
+        element.classList.remove("uploading")
+        element.setAttribute("aria-busy", "false")
+      }
+    }
+  }
+}
 function submitState(form: HTMLFormElement, busy: boolean): void {
   form.inert = busy
   form.setAttribute("aria-busy", String(busy))
@@ -893,6 +1045,187 @@ async function games(main: HTMLElement): Promise<void> {
   }
   loading.replaceWith(grid)
 }
+interface CharacterDefLite {
+  id: string
+  name: Record<"en" | "tr" | "ar" | "ku", string>
+  portrait?: number
+  image?: string
+}
+interface AvatarOverrideRow {
+  id: string
+  enabled: number
+  sort_order: number
+  name_en: string | null
+  name_tr: string | null
+  name_ar: string | null
+  name_ku: string | null
+  image: string | null
+  created_at: number
+  updated_at: number
+}
+function avatarCard(def: CharacterDefLite | null, override: AvatarOverrideRow | null): HTMLElement {
+  const isCustom = !def
+  const card = node("section", "", "panel avatar-card"),
+    form = node("form")
+  const badge = node("span", t(isCustom ? "custom" : "builtIn"), "status-badge avatar-card-badge")
+  const editor = avatarImageEditor(def, override?.image ? `/uploads/${override.image}` : null)
+  const nameEn = field(t("nameEn"), "text", override?.name_en ?? def?.name.en ?? ""),
+    nameTr = field(t("nameTr"), "text", override?.name_tr ?? def?.name.tr ?? ""),
+    nameAr = field(t("nameAr"), "text", override?.name_ar ?? def?.name.ar ?? ""),
+    nameKu = field(t("nameKu"), "text", override?.name_ku ?? def?.name.ku ?? "")
+  for (const f of [nameEn, nameTr, nameAr, nameKu]) {
+    f.input.required = true
+    f.input.maxLength = 40
+  }
+  const names = node("div", "", "avatar-card-names")
+  names.append(nameEn.label, nameTr.label, nameAr.label, nameKu.label)
+  const enabled = field(t("visible"), "checkbox"),
+    order = field(t("order"), "number", String(override?.sort_order ?? 0))
+  enabled.input.checked = override?.enabled !== 0
+  order.input.min = "-10000"
+  order.input.max = "10000"
+  order.input.step = "1"
+  order.input.required = true
+  const settings = node("div", "", "game-settings")
+  settings.append(enabled.label, order.label)
+  const nameOf = () => nameEn.input.value || def?.name.en || override?.id || ""
+  const save = node("button", t("saveAvatar"), "primary")
+  const actions = node("div", "", "avatar-card-row")
+  actions.append(save)
+  if (isCustom) {
+    actions.append(
+      button(t("deleteAvatar"), () => {
+        void confirmAction(t("deleteAvatarConfirm", { avatar: nameOf })).then(ok => {
+          if (!ok) return
+          void api(`/api/admin/avatars/${override!.id}`, "DELETE")
+            .then(() => {
+              dismiss(card, () => card.remove())
+              toast(t("avatarDeleted"))
+            })
+            .catch(err => toast(errorCopy(err), true))
+        })
+      })
+    )
+  }
+  form.append(editor.element, names, settings, actions)
+  const state = trackForm(form)
+  card.append(badge, form)
+  let saving = false
+  form.onsubmit = event => {
+    event.preventDefault()
+    if (saving) return
+    saving = true
+    void (async () => {
+      if (
+        !enabled.input.checked &&
+        override?.enabled !== 0 &&
+        !(await confirmAction(t("hideAvatarConfirm", { avatar: nameOf })))
+      )
+        return
+      submitState(form, true)
+      setText(save, t("saving"))
+      const image = await editor.value()
+      const id = def?.id ?? override!.id
+      await api(`/api/admin/avatars/${id}`, "PUT", {
+        enabled: enabled.input.checked,
+        order: Number(order.input.value),
+        name: { en: nameEn.input.value, tr: nameTr.input.value, ar: nameAr.input.value, ku: nameKu.input.value },
+        image
+      })
+      state.saved()
+      editor.committed()
+      toast(t("avatarSaved", { avatar: nameOf }))
+    })()
+      .catch(err => toast(errorCopy(err), true))
+      .finally(() => {
+        saving = false
+        submitState(form, false)
+        setText(save, t("saveAvatar"))
+      })
+  }
+  return card
+}
+function newAvatarCard(onCreated: (row: AvatarOverrideRow) => void): HTMLElement {
+  const card = node("section", "", "panel avatar-card"),
+    form = node("form")
+  const badge = node("span", t("custom"), "status-badge avatar-card-badge")
+  const editor = avatarImageEditor(null, null)
+  const nameEn = field(t("nameEn")),
+    nameTr = field(t("nameTr")),
+    nameAr = field(t("nameAr")),
+    nameKu = field(t("nameKu"))
+  for (const f of [nameEn, nameTr, nameAr, nameKu]) {
+    f.input.required = true
+    f.input.maxLength = 40
+  }
+  const names = node("div", "", "avatar-card-names")
+  names.append(nameEn.label, nameTr.label, nameAr.label, nameKu.label)
+  const save = node("button", t("addAvatar"), "primary")
+  const actions = node("div", "", "avatar-card-row")
+  actions.append(
+    save,
+    button(t("cancel"), () => dismiss(card, () => card.remove()))
+  )
+  form.append(editor.element, names, actions)
+  card.append(badge, form)
+  let saving = false
+  form.onsubmit = event => {
+    event.preventDefault()
+    if (saving) return
+    saving = true
+    void (async () => {
+      submitState(form, true)
+      setText(save, t("saving"))
+      const image = await editor.value()
+      if (!image) {
+        toast(t("uploadLimit"), true)
+        return
+      }
+      const name = { en: nameEn.input.value, tr: nameTr.input.value, ar: nameAr.input.value, ku: nameKu.input.value }
+      const created = await api<{ id: string }>("/api/admin/avatars", "POST", { name, image })
+      toast(t("avatarCreated"))
+      dismiss(card, () => {
+        card.remove()
+        onCreated({
+          id: created.id,
+          enabled: 1,
+          sort_order: 0,
+          name_en: name.en,
+          name_tr: name.tr,
+          name_ar: name.ar,
+          name_ku: name.ku,
+          image,
+          created_at: Date.now(),
+          updated_at: Date.now()
+        })
+      })
+    })()
+      .catch(err => toast(errorCopy(err), true))
+      .finally(() => {
+        saving = false
+        submitState(form, false)
+        setText(save, t("addAvatar"))
+      })
+  }
+  return card
+}
+async function avatars(main: HTMLElement): Promise<void> {
+  main.append(heading(t("avatars"), t("avatarsDesc")))
+  const loading = skeleton()
+  main.append(loading)
+  const data = await api<{ catalog: CharacterDefLite[]; overrides: AvatarOverrideRow[] }>("/api/admin/avatars")
+  const overridesById = new Map(data.overrides.map(row => [row.id, row]))
+  const builtInIds = new Set(data.catalog.map(def => def.id))
+  const toolbar = node("div", "", "avatar-toolbar"),
+    grid = node("div", "", "game-grid avatar-grid")
+  toolbar.append(
+    button(t("addAvatar"), () => grid.prepend(newAvatarCard(row => grid.prepend(avatarCard(null, row)))), "primary", "SmilePlus")
+  )
+  for (const def of data.catalog) grid.append(avatarCard(def, overridesById.get(def.id) ?? null))
+  for (const row of data.overrides)
+    if (!builtInIds.has(row.id)) grid.append(avatarCard(null, row))
+  loading.replaceWith(toolbar, grid)
+}
 async function branding(main: HTMLElement): Promise<void> {
   main.append(heading(t("brandTitle"), t("brandDesc")))
   const data = await api<Record<string, string>>("/api/admin/branding"),
@@ -906,10 +1239,10 @@ async function branding(main: HTMLElement): Promise<void> {
   name.input.placeholder = "YallaGame"
   form.append(node("h2", t("brandTitle")), name.label, description.label, footer.label)
   const defaults: Record<string, string> = {
-    logo: "/assets/logo/yallagame-mark-2026.webp",
-    darkLogo: "/assets/logo/yallagame-mark-2026.webp",
-    favicon: "/assets/logo/favicon-2026.png",
-    ogImage: "/assets/logo/yallagame-mark-2026.webp"
+    logo: "/assets/logo/yallagame-velocity-icon.svg",
+    darkLogo: "/assets/logo/yallagame-velocity-icon.svg",
+    favicon: "/assets/logo/favicon-velocity.png",
+    ogImage: "/assets/logo/og-velocity.png"
   }
   const assetLabels: Record<string, Key> = {
     logo: "mainLogo",
@@ -1061,6 +1394,9 @@ async function start(): Promise<void> {
       break
     case "/admin/games":
       await games(main)
+      break
+    case "/admin/avatars":
+      await avatars(main)
       break
     case "/admin/games/history":
       await records(main, "history")

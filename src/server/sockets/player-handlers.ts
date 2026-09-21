@@ -27,11 +27,13 @@ export interface PlayerDeps {
   resolveEngine: EngineResolver
   config: Config
   rng: () => number
+  isValidCharacter?: (id: string) => boolean
 }
 
 export function registerPlayerHandlers(socket: TypedSocket, deps: PlayerDeps): void {
   bind(socket, "player:join", JoinPayload, async ({ code, name, character, accessory, playerId }) => {
-    if (character !== undefined && !isCharacterId(character)) throw new Error("UNKNOWN_CHARACTER")
+    if (character !== undefined && !(deps.isValidCharacter?.(character) ?? isCharacterId(character)))
+      throw new Error("UNKNOWN_CHARACTER")
     let bound: Player | null = null
     let queued: PendingJoin | null = null
 

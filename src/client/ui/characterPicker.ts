@@ -2,9 +2,18 @@ import { el, clear } from "./dom.js"
 import { t } from "../services/i18n.js"
 import { buildAvatar } from "./avatar.js"
 import { CHARACTERS } from "@shared/characters.js"
+import { publicAvatars } from "../services/publicConfig.js"
 import { applyCharacterTheme } from "../themes/characterTheme.js"
 import { ACCESSORIES, allowsAccessories, characterAccessory, findAccessory, isAccessoryId } from "@shared/accessories.js"
 import type { LangCode } from "@shared/types.js"
+
+/** Live avatar list (built-ins with admin overrides applied, plus any
+ * admin-created ones) when loaded; the bundled `CHARACTERS` otherwise — same
+ * fallback the rest of the app uses for public config. */
+function pickableCharacters(): readonly { id: string; name: Record<LangCode, string> }[] {
+  const live = publicAvatars()
+  return live.length ? live : CHARACTERS
+}
 
 const LAST_CHARACTER_KEY = "role-room:last-character"
 const LAST_ACCESSORY_KEY = "role-room:last-accessory"
@@ -21,9 +30,10 @@ export interface CharacterPicker {
 
 export function buildCharacterPicker(lang: LangCode, taken: string[], onChange: (id: string) => void): CharacterPicker {
   const id = `avatar-picker-${pickerId++}`
+  const list = pickableCharacters()
   let claimed = new Set(taken)
   const saved = read(LAST_CHARACTER_KEY)
-  let chosen = CHARACTERS.some(c => c.id === saved) && !claimed.has(saved) ? saved : ""
+  let chosen = list.some(c => c.id === saved) && !claimed.has(saved) ? saved : ""
   const savedAccessory = read(LAST_ACCESSORY_KEY)
   let accessory = isAccessoryId(savedAccessory) ? savedAccessory : ""
   let activeTab = "characters"
@@ -33,7 +43,7 @@ export function buildCharacterPicker(lang: LangCode, taken: string[], onChange: 
   const surprise = el("button", { type: "button", class: "avatar-surprise", "aria-label": t("avatarRandom") }, ["⤨", el("span", {}, [t("avatarRandom")])])
   const stage = el("div", { class: "avatar-stage" }, [preview, el("div", { class: "avatar-preview-copy", "aria-live": "polite" }, [previewName, previewDetail]), surprise])
   const tabs = el("div", { class: "avatar-tabs", role: "tablist", "aria-label": t("avatarCustomize") })
-  const characterTab = el("button", { type: "button", role: "tab", id: `${id}-characters-tab`, "aria-controls": `${id}-characters` }, [t("avatarCharacters"), el("span", {}, [String(CHARACTERS.length)])])
+  const characterTab = el("button", { type: "button", role: "tab", id: `${id}-characters-tab`, "aria-controls": `${id}-characters` }, [t("avatarCharacters"), el("span", {}, [String(list.length)])])
   const accessoryTab = el("button", { type: "button", role: "tab", id: `${id}-accessories-tab`, "aria-controls": `${id}-accessories` }, [t("avatarAccessories"), el("span", {}, [String(ACCESSORIES.length)])])
   tabs.append(characterTab, accessoryTab)
   const characterPanel = el("div", { id: `${id}-characters`, class: "avatar-picker-panel", role: "tabpanel", "aria-labelledby": characterTab.id })
@@ -46,18 +56,18 @@ export function buildCharacterPicker(lang: LangCode, taken: string[], onChange: 
 
   function renderPreview(): void {
     applyCharacterTheme(chosen)
-    const def = CHARACTERS.find(c => c.id === chosen)
-    preview.replaceChildren(buildAvatar(def?.id ?? CHARACTERS[0]!.id, "", lang, { size: 100, accessory, lazy: false }))
+    const def = list.find(c => c.id === chosen)
+    preview.replaceChildren(buildAvatar(def?.id ?? list[0]!.id, "", lang, { size: 100, accessory, lazy: false }))
     previewName.textContent = def?.name[lang] ?? t("chooseCharacter")
     previewDetail.textContent = allowsAccessories(chosen) ? findAccessory(accessory)?.name[lang] ?? t("avatarMakeItYours") : t("avatarNoAccessory")
-    surprise.disabled = CHARACTERS.every(c => claimed.has(c.id))
+    surprise.disabled = list.every(c => claimed.has(c.id))
   }
   function renderCharacters(): void {
     const focused = grid.querySelector<HTMLElement>(":focus")?.dataset.character
     const scroll = grid.scrollTop
     clear(grid)
-    const focusId = chosen || CHARACTERS.find(c => !claimed.has(c.id))?.id
-    for (const def of CHARACTERS) {
+    const focusId = chosen || list.find(c => !claimed.has(c.id))?.id
+    for (const def of list) {
       const isTaken = claimed.has(def.id)
       const tile = el("button", {
         class: `char-tile${isTaken ? " is-taken" : ""}`, type: "button", role: "radio",
@@ -89,7 +99,7 @@ export function buildCharacterPicker(lang: LangCode, taken: string[], onChange: 
     for (const def of [{ id: "", name: { [lang]: t("avatarNoAccessory") } }, ...ACCESSORIES]) {
       const tile = el("button", { class: "char-tile accessory-tile", type: "button", role: "radio", "aria-checked": String(accessory === def.id), "aria-label": def.name[lang]!, "data-accessory": def.id, tabindex: accessory === def.id ? "0" : "-1" })
       const icon = el("span", { class: "accessory-icon", "aria-hidden": "true" })
-      const character = CHARACTERS.find(c => c.id === chosen) ?? CHARACTERS[0]!
+      const character = list.find(c => c.id === chosen) ?? list[0]!
       icon.append(buildAvatar(character.id, character.name[lang], lang, { size: 58, lazy: false, accessory: def.id }))
       tile.append(icon, el("span", { class: "char-tile-name" }, [def.name[lang]!]))
       tile.addEventListener("click", () => {
@@ -133,7 +143,7 @@ export function buildCharacterPicker(lang: LangCode, taken: string[], onChange: 
     buttons[next]?.click()
   })
   surprise.addEventListener("click", () => {
-    const free = CHARACTERS.filter(c => !claimed.has(c.id))
+    const free = list.filter(c => !claimed.has(c.id))
     if (!free.length) return
     chosen = free[Math.floor(Math.random() * free.length)]!.id
     accessory = characterAccessory(chosen, ACCESSORIES[Math.floor(Math.random() * ACCESSORIES.length)]!.id)

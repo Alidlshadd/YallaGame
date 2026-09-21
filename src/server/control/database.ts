@@ -48,6 +48,11 @@ CREATE TABLE IF NOT EXISTS game_asset_overrides (
  cover TEXT REFERENCES admin_uploads(id), detail TEXT REFERENCES admin_uploads(id),
  cta TEXT REFERENCES admin_uploads(id), section TEXT REFERENCES admin_uploads(id), updated_at INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS avatar_overrides (
+ id TEXT PRIMARY KEY, enabled INTEGER NOT NULL DEFAULT 1 CHECK(enabled IN (0,1)), sort_order INTEGER NOT NULL DEFAULT 0,
+ name_en TEXT, name_tr TEXT, name_ar TEXT, name_ku TEXT,
+ image TEXT REFERENCES admin_uploads(id), created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
+);
 CREATE TABLE IF NOT EXISTS site_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS admin_audit_logs (
  id INTEGER PRIMARY KEY, admin_id INTEGER REFERENCES admin_users(id) ON DELETE SET NULL,

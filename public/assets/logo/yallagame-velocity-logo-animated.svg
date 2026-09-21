@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="400" viewBox="0 0 1600 400" role="img" aria-labelledby="title desc">
+  <title id="title">Animated YallaGame Velocity logo</title>
+  <desc id="desc">Three forward-moving bars arrive in sequence, followed by the YallaGame wordmark.</desc>
+  <style>
+    .bar-1,.bar-2,.bar-3{opacity:0;animation:bar-in .72s cubic-bezier(.16,.8,.24,1) forwards}
+    .bar-2{animation-delay:.07s}.bar-3{animation-delay:.14s}
+    .word{opacity:0;transform:translateX(54px);animation:word-in .78s .25s cubic-bezier(.16,.8,.24,1) forwards}
+    .accent{opacity:0;animation:accent-in .45s .82s ease-out forwards}
+    @keyframes bar-in{0%{opacity:0;transform:translateX(-150px)}100%{opacity:1;transform:translateX(0)}}
+    @keyframes word-in{0%{opacity:0;transform:translateX(54px)}100%{opacity:1;transform:translateX(0)}}
+    @keyframes accent-in{0%{opacity:0}100%{opacity:1}}
+    @media (prefers-reduced-motion:reduce){.bar-1,.bar-2,.bar-3,.word,.accent{animation:none;opacity:1;transform:none}}
+  </style>
+  <rect width="1600" height="400" rx="48" fill="#090A0C"/>
+  <path class="accent" d="M1080 0h520v400h-630z" fill="#E2FF39" opacity=".025"/>
+  <g transform="translate(118 78) skewX(-7)">
+    <g class="bar-1"><rect x="0" y="45" width="190" height="42" rx="10" fill="#E2FF39" transform="rotate(-48 95 66)"/></g>
+    <g class="bar-2"><rect x="59" y="108" width="145" height="42" rx="10" fill="#F4F1E8" transform="rotate(-48 131.5 129)"/></g>
+    <g class="bar-3"><rect x="103" y="171" width="96" height="42" rx="10" fill="#FF5A47" transform="rotate(-48 151 192)"/></g>
+    <g class="word">
+      <text x="270" y="214" fill="#F4F1E8" font-family="DejaVu Sans, Arial, sans-serif" font-size="142" font-weight="900" letter-spacing="-10">YALLA</text>
+      <text x="720" y="214" fill="#E2FF39" font-family="DejaVu Sans, Arial, sans-serif" font-size="142" font-weight="900" letter-spacing="-10">GAME</text>
+    </g>
+  </g>
+</svg>

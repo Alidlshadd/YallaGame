@@ -16,9 +16,11 @@ import {
   publicConfiguration,
   saveUpload,
   uploadId,
-  MAX_UPLOAD
+  MAX_UPLOAD,
+  type AvatarOverride
 } from "./content.js"
 import { GAME_CATALOG, resolveGame } from "../games/catalog.js"
+import { CHARACTERS, isCharacterId } from "../../shared/characters.js"
 
 const wrap =
   (handler: (req: Request, res: Response) => Promise<void>): RequestHandler =>
@@ -347,6 +349,124 @@ export function mountControl(
     })()
     res.json({ ok: true })
   })
+  const avatarNameSchema = z
+    .object({
+      en: z.string().trim().min(1).max(40),
+      tr: z.string().trim().min(1).max(40),
+      ar: z.string().trim().min(1).max(40),
+      ku: z.string().trim().min(1).max(40)
+    })
+    .strict()
+  api.get("/avatars", (_req, res) => {
+    res.json({
+      catalog: CHARACTERS,
+      overrides: db.prepare("SELECT * FROM avatar_overrides").all()
+    })
+  })
+  api.put("/avatars/:id", (req, res) => {
+    const id = req.params.id!
+    const isBuiltIn = isCharacterId(id)
+    const isExistingCustom =
+      !isBuiltIn && db.prepare("SELECT 1 FROM avatar_overrides WHERE id=?").get(id) !== undefined
+    if (!isBuiltIn && !isExistingCustom) {
+      res.status(400).json({ error: "Unknown avatar" })
+      return
+    }
+    const parsed = z
+      .object({
+        enabled: z.boolean(),
+        order: z.number().int().min(-10000).max(10000),
+        // A built-in may revert its name override to the code default (null);
+        // a custom avatar has no code-side default, so it must always name itself.
+        name: isBuiltIn ? avatarNameSchema.nullable() : avatarNameSchema,
+        // Same reasoning: a custom avatar's image is its only image, ever.
+        image: isBuiltIn ? idSchema : z.string().regex(uploadId)
+      })
+      .strict()
+      .safeParse(req.body)
+    if (!parsed.success) {
+      res.status(400).json({ error: "Invalid avatar settings" })
+      return
+    }
+    const { enabled, order, name, image } = parsed.data
+    try {
+      assertAsset(db, image)
+    } catch {
+      res.status(400).json({ error: "Unknown upload" })
+      return
+    }
+    db.transaction(() => {
+      assertAsset(db, image)
+      const previous = db.prepare("SELECT * FROM avatar_overrides WHERE id=?").get(id) as
+        | AvatarOverride
+        | undefined
+      db.prepare(
+        `INSERT INTO avatar_overrides(id,enabled,sort_order,name_en,name_tr,name_ar,name_ku,image,created_at,updated_at)
+         VALUES(?,?,?,?,?,?,?,?,?,?)
+         ON CONFLICT(id) DO UPDATE SET enabled=excluded.enabled,sort_order=excluded.sort_order,
+           name_en=excluded.name_en,name_tr=excluded.name_tr,name_ar=excluded.name_ar,name_ku=excluded.name_ku,
+           image=excluded.image,updated_at=excluded.updated_at`
+      ).run(
+        id,
+        enabled ? 1 : 0,
+        order,
+        name?.en ?? null,
+        name?.tr ?? null,
+        name?.ar ?? null,
+        name?.ku ?? null,
+        image,
+        previous?.created_at ?? Date.now(),
+        Date.now()
+      )
+      const admin = (res.locals.admin as AdminSession).admin_id
+      if ((previous?.enabled ?? 1) !== Number(enabled)) audit(db, admin, "avatar_status_changed", id, { enabled })
+      if ((previous?.image ?? null) !== image) audit(db, admin, "avatar_image_changed", id, { asset: image })
+      audit(db, admin, "avatar_settings_changed", id, { order })
+    })()
+    res.json({ ok: true })
+  })
+  api.post("/avatars", (req, res) => {
+    const parsed = z
+      .object({ name: avatarNameSchema, image: z.string().regex(uploadId) })
+      .strict()
+      .safeParse(req.body)
+    if (!parsed.success) {
+      res.status(400).json({ error: "Invalid avatar" })
+      return
+    }
+    const { name, image } = parsed.data
+    try {
+      assertAsset(db, image)
+    } catch {
+      res.status(400).json({ error: "Unknown upload" })
+      return
+    }
+    const id = `custom-${token()}`
+    const admin = (res.locals.admin as AdminSession).admin_id
+    db.transaction(() => {
+      assertAsset(db, image)
+      const nextOrder = (
+        db.prepare("SELECT COALESCE(MAX(sort_order),-1)+1 n FROM avatar_overrides").get() as { n: number }
+      ).n
+      db.prepare(
+        `INSERT INTO avatar_overrides(id,enabled,sort_order,name_en,name_tr,name_ar,name_ku,image,created_at,updated_at)
+         VALUES(?,1,?,?,?,?,?,?,?,?)`
+      ).run(id, nextOrder, name.en, name.tr, name.ar, name.ku, image, Date.now(), Date.now())
+      audit(db, admin, "avatar_created", id, {})
+    })()
+    res.status(201).json({ id })
+  })
+  api.delete("/avatars/:id", (req, res) => {
+    const id = req.params.id!
+    if (isCharacterId(id)) {
+      res.status(400).json({ error: "Built-in avatars can only be hidden, not deleted" })
+      return
+    }
+    const admin = (res.locals.admin as AdminSession).admin_id
+    const removed = db.prepare("DELETE FROM avatar_overrides WHERE id=?").run(id)
+    if (removed.changes) audit(db, admin, "avatar_deleted", id, {})
+    res.json({ ok: true })
+  })
   api.get("/branding", (_req, res) => {
     res.json(publicConfiguration(db).branding)
   })
@@ -420,6 +540,7 @@ export function mountControl(
     "/admin/analytics",
     "/admin/games",
     "/admin/games/history",
+    "/admin/avatars",
     "/admin/players",
     "/admin/settings/branding",
     "/admin/settings/system",

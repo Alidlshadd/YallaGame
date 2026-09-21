@@ -12,7 +12,9 @@ import { Analytics, ObservedStore } from "../../../src/server/control/analytics.
 import {
   brandedHtml,
   cleanupUploads,
+  effectiveAvatarCatalog,
   effectiveCatalog,
+  isSelectableCharacterId,
   persistentUploads,
   publicConfiguration,
   saveUpload,
@@ -86,6 +88,7 @@ describe("Control center security and persistence", () => {
       "/session",
       "/dashboard",
       "/games",
+      "/avatars",
       "/history",
       "/players",
       "/branding",
@@ -101,6 +104,7 @@ describe("Control center security and persistence", () => {
       "/admin/games/history",
       "/admin/players",
       "/admin/games",
+      "/admin/avatars",
       "/admin/settings/branding",
       "/admin/settings/system",
       "/admin/audit-logs",
@@ -289,6 +293,101 @@ describe("Control center security and persistence", () => {
     db.prepare("UPDATE admin_uploads SET retired_at=?").run(Date.now() - 8 * 86400_000)
     expect(await cleanupUploads(db, directory, false)).toEqual([id])
     await expect(readFile(path.join(directory, id))).rejects.toThrow()
+  })
+  it("merges avatar overrides with the built-in catalog and validates selectability", () => {
+    expect(effectiveAvatarCatalog(db).length).toBeGreaterThan(0)
+    expect(effectiveAvatarCatalog(db).some(a => a.id === "ace")).toBe(true)
+    expect(isSelectableCharacterId(db, "ace")).toBe(true)
+    expect(isSelectableCharacterId(db, "not-a-real-id")).toBe(false)
+    const now = Date.now()
+    db.prepare(
+      "INSERT INTO avatar_overrides(id,enabled,sort_order,name_en,name_tr,name_ar,name_ku,image,created_at,updated_at) VALUES('ace',0,0,NULL,NULL,NULL,NULL,NULL,?,?)"
+    ).run(now, now)
+    expect(effectiveAvatarCatalog(db).some(a => a.id === "ace")).toBe(false)
+    expect(isSelectableCharacterId(db, "ace")).toBe(false)
+    db.prepare("DELETE FROM avatar_overrides WHERE id='ace'").run()
+    db.prepare(
+      "INSERT INTO avatar_overrides(id,enabled,sort_order,name_en,name_tr,name_ar,name_ku,image,created_at,updated_at) VALUES('custom-1',1,-1,'Robo','Robo','روبو','ڕۆبۆ',NULL,?,?)"
+    ).run(now, now)
+    expect(isSelectableCharacterId(db, "custom-1")).toBe(true)
+    const custom = effectiveAvatarCatalog(db).find(a => a.id === "custom-1")
+    expect(custom?.name.en).toBe("Robo")
+    expect(effectiveAvatarCatalog(db)[0]!.id).toBe("custom-1") // sort_order -1 sorts first
+  })
+  it("manages avatars: hides/renames a built-in, creates/edits/deletes a custom one, and rejects invalid requests", async () => {
+    const png = await sharp({ create: { width: 20, height: 20, channels: 3, background: "blue" } })
+      .png()
+      .toBuffer()
+    const imageId = await saveUpload(db, directory, png, 1)
+    await login()
+    // Unknown id — neither a built-in nor an existing custom row.
+    expect(
+      (
+        await request("/api/admin/avatars/does-not-exist", "PUT", {
+          enabled: true,
+          order: 0,
+          name: null,
+          image: null
+        })
+      ).status
+    ).toBe(400)
+    // Built-ins can be hidden (soft) and renamed; name may revert to null (code default).
+    expect(
+      (
+        await request("/api/admin/avatars/ace", "PUT", {
+          enabled: false,
+          order: 3,
+          name: { en: "Renamed", tr: "Renamed", ar: "Renamed", ku: "Renamed" },
+          image: imageId
+        })
+      ).status
+    ).toBe(200)
+    expect(effectiveAvatarCatalog(db).some(a => a.id === "ace")).toBe(false)
+    expect(
+      (
+        await request("/api/admin/avatars/ace", "PUT", { enabled: true, order: 3, name: null, image: null })
+      ).status
+    ).toBe(200)
+    const restored = effectiveAvatarCatalog(db).find(a => a.id === "ace")
+    expect(restored?.name.en).toBe("Ace")
+    expect(restored?.image).toBeNull()
+    // Built-ins are never truly deleted.
+    expect((await request("/api/admin/avatars/ace", "DELETE")).status).toBe(400)
+    // A custom avatar must be created with a real name and image.
+    expect(
+      (await request("/api/admin/avatars", "POST", { name: { en: "", tr: "x", ar: "x", ku: "x" }, image: imageId }))
+        .status
+    ).toBe(400)
+    const created = await request("/api/admin/avatars", "POST", {
+      name: { en: "Robo", tr: "Robo", ar: "روبو", ku: "ڕۆبۆ" },
+      image: imageId
+    })
+    expect(created.status).toBe(201)
+    const { id: customId } = (await created.json()) as { id: string }
+    expect(customId).not.toMatch(/^(ace|ali|mahmud|morinji)$/)
+    expect(effectiveAvatarCatalog(db).some(a => a.id === customId && a.name.en === "Robo")).toBe(true)
+    // A custom avatar's PUT requires a full name and an image (no code default to fall back to).
+    expect(
+      (await request(`/api/admin/avatars/${customId}`, "PUT", { enabled: true, order: 0, name: null, image: null }))
+        .status
+    ).toBe(400)
+    expect(
+      (
+        await request(`/api/admin/avatars/${customId}`, "PUT", {
+          enabled: true,
+          order: 5,
+          name: { en: "Robo 2", tr: "Robo 2", ar: "روبو ٢", ku: "ڕۆبۆ ٢" },
+          image: imageId
+        })
+      ).status
+    ).toBe(200)
+    expect(effectiveAvatarCatalog(db).find(a => a.id === customId)?.name.en).toBe("Robo 2")
+    expect((await request(`/api/admin/avatars/${customId}`, "DELETE")).status).toBe(200)
+    expect(effectiveAvatarCatalog(db).some(a => a.id === customId)).toBe(false)
+    const logs = db.prepare("SELECT action FROM admin_audit_logs WHERE target LIKE 'ace' OR target LIKE ?").all(
+      `${customId}`
+    )
+    expect(logs.length).toBeGreaterThan(0)
   })
   it("tracks joins, starts, completions and abandoned games without leaking game secrets", async () => {
     const store = new ObservedStore(new MemoryStore(), analytics),
