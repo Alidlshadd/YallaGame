@@ -1410,8 +1410,11 @@ img.hero-brand-mark {
   color: var(--text-muted);
   font-size: var(--type-base);
   line-height: 1.6;
-  margin: 0;
+  margin: 0 auto;
+  max-width: 68ch;
 }
+.how-header-start { align-items: flex-start; text-align: start; }
+.how-header-start .how-sub { margin-inline: 0; }
 
 .how-steps {
   position: relative;
@@ -2021,4 +2024,477 @@ img.hero-brand-mark {
   .hero-slide .cta-row { flex-direction: column; }
   .hero-slide .cta-create,
   .hero-slide .cta-join { width: 100%; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CONTENT PAGES — How to Play / Features / About
+   Flat surfaces (no glass), controlled low-contrast borders. Lime is
+   reserved for active states and key actions; coral for small accents
+   only (tip numbers, a couple of ambient dots). Every section shares one
+   max-width and one reveal system (scrollReveal() in ui/motion.js).
+   ═══════════════════════════════════════════════════════════════════ */
+
+.htp-hero,
+.htp-way,
+.htp-steps,
+.htp-during,
+.htp-tips,
+.about-mission,
+.about-why,
+.about-symbol,
+.about-values,
+.about-built-for,
+.about-vision,
+.features-experience {
+  position: relative;
+  isolation: isolate;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: clamp(var(--s-8), 9vh, 120px) clamp(var(--s-5), 5vw, 64px) 0;
+}
+.feature-grid-v2 {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding-inline: clamp(var(--s-5), 5vw, 64px);
+}
+.htp-hero { padding-top: clamp(120px, 14vh, 160px); text-align: center; }
+.htp-hero .how-header { align-items: center; }
+
+/* One-shot reveal target — ui/motion.js's scrollReveal() toggles these two
+   classes. --tile-delay (set inline per-card by the view) staggers a group. */
+.htp-reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity var(--motion-slow) var(--ease-brand), transform var(--motion-slow) var(--ease-brand);
+  transition-delay: var(--tile-delay, 0ms);
+}
+.htp-reveal-visible { opacity: 1; transform: translateY(0); }
+@media (max-width: 640px) {
+  /* Same stagger shape, compressed — a long relay of delays reads slow on a
+     phone where cards are already stacked one per row. */
+  .htp-reveal { transition-delay: calc(var(--tile-delay, 0ms) * 0.4); }
+}
+
+.htp-hero-actions,
+.page-final-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+  justify-content: center;
+  margin-top: var(--s-5);
+}
+.htp-hero-note {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin: var(--s-4) 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.htp-hero-note .hero-hint-icon { color: var(--yg-lime); }
+
+/* ─── How to Play: hero gathering nodes ──────────────────────────── */
+.htp-hero-nodes { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.htp-hero-node {
+  position: absolute;
+  top: 30%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--yg-lime);
+  opacity: 0;
+  animation: htp-node-gather var(--motion-hero) var(--ease-brand) both;
+}
+.htp-hero-node.n1 { left: 6%;  top: 20%; animation-delay: 80ms;  --gather-x: -70px; }
+.htp-hero-node.n2 { left: 13%; top: 66%; background: var(--yg-coral); animation-delay: 200ms; --gather-x: -70px; }
+.htp-hero-node.n3 { right: 8%;  top: 26%; background: var(--yg-coral); animation-delay: 140ms; --gather-x: 70px; }
+.htp-hero-node.n4 { right: 16%; top: 62%; animation-delay: 260ms; --gather-x: 70px; }
+@keyframes htp-node-gather {
+  from { opacity: 0; transform: translateX(var(--gather-x, 40px)) scale(0.4); }
+  to   { opacity: 0.75; transform: translateX(0) scale(1); }
+}
+
+/* ─── How to Play: Choose Your Way ───────────────────────────────── */
+.htp-way-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s-4);
+  margin-top: var(--s-6);
+}
+.htp-way-card {
+  background: var(--yg-surface);
+  border: 1px solid var(--yg-border);
+  border-radius: 18px;
+  padding: var(--s-5);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-2);
+  text-align: start;
+  transition: border-color var(--motion-base) var(--ease-brand), transform var(--motion-base) var(--ease-brand);
+}
+.htp-way-card:hover { transform: translateY(-4px); border-color: rgba(226, 255, 57, 0.4); }
+.htp-way-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--yg-surface-raised);
+  color: var(--yg-lime);
+  font-size: 18px;
+}
+.htp-way-title { font-family: var(--theme-display); font-size: var(--type-lg); font-weight: 700; color: var(--text-primary); margin: 0; }
+.htp-way-text { color: var(--text-muted); font-size: var(--type-sm); line-height: 1.6; margin: 0; }
+.htp-way-badge {
+  margin-top: auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--yg-muted);
+  padding: 4px 10px;
+  border: 1px solid var(--yg-border);
+  border-radius: 999px;
+}
+
+/* ─── How to Play: Four Steps ─────────────────────────────────────── */
+.htp-steps-track {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--s-4);
+  margin-top: var(--s-7);
+}
+.htp-steps-track::before,
+.htp-steps-track::after {
+  content: "";
+  position: absolute;
+  top: 26px;
+  height: 2px;
+  z-index: 0;
+}
+.htp-steps-track::before { left: 12.5%; right: 12.5%; background: var(--yg-border); }
+.htp-steps-track::after {
+  left: 12.5%;
+  width: var(--htp-progress, 0%);
+  max-width: 75%;
+  background: var(--yg-lime);
+  z-index: 1;
+  transition: width var(--motion-slow) var(--ease-brand);
+}
+[dir="rtl"] .htp-steps-track::after { left: auto; right: 12.5%; }
+.htp-step {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--s-2);
+}
+.htp-step-number {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--yg-surface-raised);
+  border: 1px solid var(--yg-border);
+  color: var(--yg-muted);
+  font-family: var(--theme-display);
+  font-weight: 700;
+  transition: color var(--motion-base) var(--ease-brand), background var(--motion-base) var(--ease-brand), border-color var(--motion-base) var(--ease-brand);
+}
+.htp-step.is-active .htp-step-number { color: var(--yg-black); background: var(--yg-lime); border-color: var(--yg-lime); }
+.htp-step.is-done .htp-step-number { color: var(--yg-black); background: var(--yg-warm-white); border-color: var(--yg-warm-white); }
+.htp-step-title { font-family: var(--theme-display); font-size: var(--type-base); font-weight: 700; color: var(--text-primary); margin: 0; }
+.htp-step-text { color: var(--text-muted); font-size: var(--type-sm); line-height: 1.6; margin: 0; max-width: 32ch; }
+
+/* ─── How to Play: During the Game ───────────────────────────────── */
+.htp-during-list {
+  list-style: none;
+  margin: var(--s-6) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-3);
+}
+.htp-during-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  padding: var(--s-4);
+  background: var(--yg-surface);
+  border: 1px solid var(--yg-border);
+  border-radius: 14px;
+  color: var(--text-primary);
+  font-size: var(--type-sm);
+}
+.htp-during-check {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(226, 255, 57, 0.12);
+  color: var(--yg-lime);
+  font-size: 12px;
+  font-weight: 700;
+}
+.htp-during-note { margin: var(--s-5) 0 0; color: var(--text-muted); font-size: var(--type-sm); max-width: 68ch; }
+
+/* ─── How to Play: Tips ───────────────────────────────────────────── */
+.htp-tips-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--s-3);
+  margin-top: var(--s-6);
+}
+.htp-tip-card {
+  background: var(--yg-surface);
+  border: 1px solid var(--yg-border);
+  border-radius: 14px;
+  padding: var(--s-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  transition: border-color var(--motion-base) var(--ease-brand), transform var(--motion-base) var(--ease-brand);
+}
+.htp-tip-card:hover { transform: translateY(-4px); border-color: rgba(226, 255, 57, 0.35); }
+.htp-tip-index { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; color: var(--yg-coral); }
+.htp-tip-card p { margin: 0; color: var(--text-primary); font-size: var(--type-sm); line-height: 1.6; }
+
+/* ─── Features: grid ──────────────────────────────────────────────── */
+.feature-grid-v2 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s-4);
+  margin: var(--s-8) auto 0;
+}
+.feat-card-v2 {
+  background: var(--yg-surface);
+  border: 1px solid var(--yg-border);
+  border-radius: 16px;
+  padding: var(--s-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  transition: border-color var(--motion-base) var(--ease-brand), transform var(--motion-base) var(--ease-brand);
+}
+.feat-card-v2:hover { transform: translateY(-4px); border-color: rgba(226, 255, 57, 0.4); }
+.feat-card-v2-icon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  border: 1.5px solid var(--yg-lime);
+  color: var(--yg-lime);
+  font-size: 20px;
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path var(--motion-slow) var(--ease-brand);
+}
+.feat-card-v2.htp-reveal-visible .feat-card-v2-icon { clip-path: inset(0 0 0 0); }
+.feat-card-v2-title { font-family: var(--theme-display); font-size: var(--type-base); font-weight: 700; color: var(--text-primary); margin: 0; }
+.feat-card-v2-text { color: var(--text-muted); font-size: var(--type-sm); line-height: 1.6; margin: 0; }
+
+/* ─── Features: Experience section ───────────────────────────────── */
+.features-experience { text-align: center; padding-bottom: clamp(var(--s-8), 9vh, 120px); }
+.features-experience-nodes { display: flex; justify-content: center; gap: 10px; margin-bottom: var(--s-4); }
+.features-node {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--yg-lime);
+  animation: features-node-pulse 4.5s ease-in-out infinite;
+}
+.features-node:nth-child(2) { background: var(--yg-warm-white); animation-delay: -1.5s; }
+.features-node:nth-child(3) { background: var(--yg-coral); animation-delay: -3s; }
+@keyframes features-node-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.85); }
+  50%      { opacity: 1;    transform: scale(1.15); }
+}
+
+/* ─── About: hero logo lines ──────────────────────────────────────── */
+.about-hero-v2 .how-header { align-items: center; }
+.about-hero-lines {
+  display: flex;
+  gap: 6px;
+  margin: 0 auto var(--s-4);
+  transform: skewX(-8deg);
+  width: fit-content;
+}
+.about-hero-line { display: block; height: 8px; border-radius: 4px; opacity: 0; animation: about-line-in var(--motion-base) var(--ease-brand) both; }
+.about-hero-line.l1 { width: 64px; background: var(--yg-lime); animation-delay: 0ms; }
+.about-hero-line.l2 { width: 48px; background: var(--yg-warm-white); animation-delay: 90ms; }
+.about-hero-line.l3 { width: 32px; background: var(--yg-coral); animation-delay: 180ms; }
+@keyframes about-line-in {
+  from { opacity: 0; transform: translateX(-24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.about-hero-v2 .how-header > .how-title,
+.about-hero-v2 .how-header > .how-sub {
+  opacity: 0;
+  animation: about-heading-in var(--motion-hero) var(--ease-brand) 260ms both;
+}
+@keyframes about-heading-in {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ─── About: Why YallaGame ────────────────────────────────────────── */
+.about-why { text-align: center; }
+.about-why-cycle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--yg-muted);
+  margin: 0 0 var(--s-3);
+}
+.about-why-cycle span { transition: color var(--motion-base) var(--ease-brand); }
+.about-why-cycle span.is-active { color: var(--yg-lime); }
+.about-why-note { color: var(--text-muted); font-size: var(--type-sm); max-width: 62ch; margin: var(--s-4) auto 0; }
+
+/* ─── About: Brand Symbol ─────────────────────────────────────────── */
+.about-symbol {
+  display: grid;
+  grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
+  gap: clamp(var(--s-6), 6vw, var(--s-8));
+  align-items: center;
+}
+.about-symbol-visual { display: grid; place-items: center; }
+.about-symbol-lines { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 280px; }
+.about-symbol-line {
+  height: 20px;
+  border-radius: 10px;
+  transform: skewX(-10deg);
+  transition: filter var(--motion-base) var(--ease-brand), transform var(--motion-base) var(--ease-brand);
+}
+.about-symbol-line.lime  { background: var(--yg-lime); width: 100%; }
+.about-symbol-line.warm  { background: var(--yg-warm-white); width: 76%; }
+.about-symbol-line.coral { background: var(--yg-coral); width: 52%; }
+.about-symbol-line:hover,
+.about-symbol-line:focus-visible { filter: brightness(1.12); transform: skewX(-10deg) translateX(6px); }
+[dir="rtl"] .about-symbol-line:hover,
+[dir="rtl"] .about-symbol-line:focus-visible { transform: skewX(-10deg) translateX(-6px); }
+.about-symbol-copy { display: flex; flex-direction: column; gap: var(--s-3); text-align: start; }
+.about-symbol-copy .how-sub { margin-inline: 0; }
+.about-symbol-meanings { list-style: none; margin: var(--s-2) 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.about-symbol-meaning {
+  font-size: var(--type-sm);
+  color: var(--text-muted);
+  padding-inline-start: var(--s-4);
+  position: relative;
+  border-radius: 8px;
+  transition: color var(--motion-base) var(--ease-brand), background var(--motion-base) var(--ease-brand);
+}
+.about-symbol-meaning::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 7px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.about-symbol-meaning.lime::before  { background: var(--yg-lime); }
+.about-symbol-meaning.warm::before  { background: var(--yg-warm-white); }
+.about-symbol-meaning.coral::before { background: var(--yg-coral); }
+.about-symbol-meaning.black::before { background: var(--yg-warm-white); opacity: 0.3; }
+.about-symbol-meaning.is-highlighted { color: var(--text-primary); background: var(--yg-surface); }
+
+/* ─── About: Values ────────────────────────────────────────────────── */
+.about-values-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-4);
+  margin-top: var(--s-6);
+}
+.about-value-card {
+  background: var(--yg-surface);
+  border: 1px solid var(--yg-border);
+  border-radius: 16px;
+  padding: var(--s-5);
+}
+.about-value-title { font-family: var(--theme-display); font-size: var(--type-base); font-weight: 700; color: var(--text-primary); margin: 0 0 8px; }
+.about-value-text { color: var(--text-muted); font-size: var(--type-sm); line-height: 1.6; margin: 0; }
+
+/* ─── About: Built For ────────────────────────────────────────────── */
+.about-built-for { text-align: center; }
+.about-built-for-list {
+  list-style: none;
+  margin: var(--s-5) 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--s-3);
+}
+.about-built-for-list li {
+  padding: 10px 20px;
+  border: 1px solid var(--yg-border);
+  border-radius: 999px;
+  background: var(--yg-surface);
+  color: var(--text-primary);
+  font-size: var(--type-sm);
+}
+
+/* ─── About: Vision ───────────────────────────────────────────────── */
+.about-vision { text-align: center; overflow: hidden; padding-bottom: clamp(var(--s-8), 9vh, 120px); }
+.about-vision-paths { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+.about-vision-path {
+  position: absolute;
+  width: 40%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(226, 255, 57, 0.35), transparent);
+}
+.about-vision-path.p1 { top: 20%; left: -5%; transform: rotate(8deg); }
+.about-vision-path.p2 { top: 55%; right: -5%; transform: rotate(-6deg); background: linear-gradient(90deg, transparent, rgba(255, 90, 71, 0.3), transparent); }
+.about-vision-path.p3 { bottom: 12%; left: 10%; transform: rotate(-3deg); }
+.about-vision .how-header { position: relative; z-index: 1; }
+
+@media (max-width: 900px) {
+  .htp-way-grid,
+  .feature-grid-v2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .about-symbol { grid-template-columns: 1fr; text-align: center; }
+  .about-symbol-copy { text-align: center; }
+  .about-symbol-visual { order: -1; }
+  .htp-during-list { grid-template-columns: 1fr; }
+  .htp-tips-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .htp-way-grid,
+  .feature-grid-v2,
+  .about-values-grid,
+  .htp-tips-grid { grid-template-columns: 1fr; }
+  .htp-steps-track { grid-template-columns: 1fr; gap: var(--s-6); }
+  .htp-steps-track::before,
+  .htp-steps-track::after { display: none; }
+  .htp-hero,
+  .htp-way,
+  .htp-steps,
+  .htp-during,
+  .htp-tips,
+  .about-mission,
+  .about-why,
+  .about-symbol,
+  .about-values,
+  .about-built-for,
+  .about-vision,
+  .features-experience,
+  .feature-grid-v2 { padding-inline: var(--s-4); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .htp-hero-node,
+  .about-hero-line,
+  .about-hero-v2 .how-header > .how-title,
+  .about-hero-v2 .how-header > .how-sub,
+  .features-node { animation: none !important; opacity: 1 !important; transform: none !important; }
 }

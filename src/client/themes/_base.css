@@ -53,6 +53,13 @@
   --motion-cinematic: 900ms;
   --ease-out-expo: cubic-bezier(0.22, 1, 0.36, 1);
 
+  /* Content-page motion system (How to Play / Features / About) */
+  --motion-fast: 160ms;
+  --motion-base: 280ms;
+  --motion-slow: 600ms;
+  --motion-hero: 900ms;
+  --ease-brand: cubic-bezier(0.16, 0.8, 0.24, 1);
+
   /* Spacing scale (8px base) */
   --s-1: 4px;
   --s-2: 8px;
