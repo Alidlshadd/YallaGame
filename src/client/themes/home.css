@@ -118,18 +118,19 @@
 /* ─── SLIDE 1: HERO (split layout, cinematic full-bleed bg) ── */
 
 .hero-slide {
-  /* Velocity brand: flat black base, one restrained lime glow and a hint of
-     coral — no violet/cyan mesh, no photo. Bottom fades to the SAME base
-     shelf-slide starts with → no visible seam on scroll. */
+  /* Velocity brand: the animated arena background (paths, player nodes,
+     lime/coral energy accents — self-contained, respects
+     prefers-reduced-motion internally) carries the ambience. A dark fade on
+     top keeps it seamless into the SAME base shelf-slide starts with, and
+     legible under the hero copy. */
   background:
-    radial-gradient(ellipse 60% 45% at 78% 8%, rgba(226, 255, 57, 0.10), transparent 60%),
-    radial-gradient(ellipse 50% 40% at 90% 85%, rgba(255, 90, 71, 0.07), transparent 60%),
     linear-gradient(180deg,
       rgba(9, 10, 12, 0.2) 0%,
       transparent 30%,
       transparent 62%,
       rgba(9, 10, 12, 0.55) 88%,
       rgba(9, 10, 12, 0.92) 100%),
+    url("/assets/backgrounds/yallagame-arena-background-animated.svg") center / cover no-repeat,
     #090a0c;
   display: flex;
   flex-direction: column;

@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" role="img" aria-labelledby="title desc">
+  <title id="title">YallaGame animated arena background</title>
+  <desc id="desc">A dark premium arena with subtle gathering paths, player nodes, and lime and coral energy accents.</desc>
+  <defs>
+    <radialGradient id="baseGlow" cx="50%" cy="42%" r="80%">
+      <stop offset="0" stop-color="#111316"/>
+      <stop offset=".58" stop-color="#090A0C"/>
+      <stop offset="1" stop-color="#050607"/>
+    </radialGradient>
+    <radialGradient id="limeGlow">
+      <stop offset="0" stop-color="#E2FF39" stop-opacity=".18"/>
+      <stop offset=".42" stop-color="#E2FF39" stop-opacity=".05"/>
+      <stop offset="1" stop-color="#E2FF39" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="coralGlow">
+      <stop offset="0" stop-color="#FF5A47" stop-opacity=".16"/>
+      <stop offset=".44" stop-color="#FF5A47" stop-opacity=".045"/>
+      <stop offset="1" stop-color="#FF5A47" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="fadeStroke" x1="0" x2="1">
+      <stop offset="0" stop-color="#E2FF39" stop-opacity="0"/>
+      <stop offset=".32" stop-color="#E2FF39" stop-opacity=".34"/>
+      <stop offset=".73" stop-color="#F4F1E8" stop-opacity=".18"/>
+      <stop offset="1" stop-color="#F4F1E8" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="fadeStrokeCoral" x1="1" x2="0">
+      <stop offset="0" stop-color="#FF5A47" stop-opacity="0"/>
+      <stop offset=".32" stop-color="#FF5A47" stop-opacity=".3"/>
+      <stop offset=".75" stop-color="#F4F1E8" stop-opacity=".12"/>
+      <stop offset="1" stop-color="#F4F1E8" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="centerMask" cx="50%" cy="43%" r="46%">
+      <stop offset="0" stop-color="#090A0C" stop-opacity=".82"/>
+      <stop offset=".58" stop-color="#090A0C" stop-opacity=".43"/>
+      <stop offset="1" stop-color="#090A0C" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="blur40"><feGaussianBlur stdDeviation="40"/></filter>
+    <filter id="blur12"><feGaussianBlur stdDeviation="12"/></filter>
+    <filter id="nodeGlow"><feGaussianBlur stdDeviation="4"/></filter>
+  </defs>
+  <style>
+    .route{stroke-dasharray:7 24;animation:route-flow 13s linear infinite}
+    .route.r2{animation-duration:17s;animation-direction:reverse}.route.r3{animation-duration:21s}
+    .orbit{stroke-dasharray:110 34 18 46;animation:orbit-flow 24s linear infinite}
+    .orbit.coral{animation-direction:reverse;animation-duration:28s}
+    .pulse{transform-box:fill-box;transform-origin:center;animation:pulse 3.2s ease-in-out infinite}
+    .pulse.p2{animation-delay:-1.1s}.pulse.p3{animation-delay:-2.1s}
+    .ambient{animation:ambient 9s ease-in-out infinite alternate}
+    .ambient.coral{animation-delay:-4s;animation-duration:11s}
+    .slash{animation:slash-float 8s ease-in-out infinite}.slash.s2{animation-delay:-2.5s}.slash.s3{animation-delay:-5s}
+    @keyframes route-flow{to{stroke-dashoffset:-310}}
+    @keyframes orbit-flow{to{stroke-dashoffset:-420}}
+    @keyframes pulse{0%,100%{opacity:.3;transform:scale(.72)}50%{opacity:1;transform:scale(1.18)}}
+    @keyframes ambient{from{opacity:.58;transform:scale(.94)}to{opacity:1;transform:scale(1.08)}}
+    @keyframes slash-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}}
+    @media (prefers-reduced-motion:reduce){.route,.orbit,.pulse,.ambient,.slash{animation:none}}
+  </style>
+
+  <rect width="1920" height="1080" fill="url(#baseGlow)"/>
+  <g class="ambient" filter="url(#blur40)"><ellipse cx="250" cy="1030" rx="620" ry="310" fill="url(#limeGlow)"/></g>
+  <g class="ambient coral" filter="url(#blur40)"><ellipse cx="1710" cy="1010" rx="650" ry="330" fill="url(#coralGlow)"/></g>
+
+  <!-- Quiet, arena-like floor geometry -->
+  <g fill="none" stroke="#F4F1E8" stroke-opacity=".045">
+    <path d="M-100 1110 Q960 560 2020 1110"/>
+    <path d="M-120 1170 Q960 500 2040 1170"/>
+    <path d="M-150 1260 Q960 410 2070 1260"/>
+  </g>
+  <g fill="none" stroke-width="2">
+    <path class="orbit" d="M70 1040 Q960 540 1850 1040" stroke="#E2FF39" stroke-opacity=".13"/>
+    <path class="orbit coral" d="M-40 1100 Q960 475 1960 1100" stroke="#FF5A47" stroke-opacity=".11"/>
+  </g>
+
+  <!-- Paths represent players gathering into one room -->
+  <g fill="none" stroke-linecap="round" stroke-width="2">
+    <path id="routeLeftA" class="route" d="M-30 350 C300 250 430 430 690 675" stroke="url(#fadeStroke)"/>
+    <path id="routeLeftB" class="route r2" d="M80 840 C330 690 480 700 720 730" stroke="url(#fadeStroke)"/>
+    <path id="routeRightA" class="route r3" d="M1950 330 C1650 250 1470 455 1235 675" stroke="url(#fadeStrokeCoral)"/>
+    <path id="routeRightB" class="route r2" d="M1880 850 C1590 690 1450 710 1200 735" stroke="url(#fadeStrokeCoral)"/>
+  </g>
+
+  <!-- Moving player signals -->
+  <g>
+    <circle r="5" fill="#E2FF39"><animateMotion dur="8.8s" repeatCount="indefinite" path="M-30 350 C300 250 430 430 690 675"/></circle>
+    <circle r="4" fill="#F4F1E8" opacity=".75"><animateMotion dur="11s" begin="-4s" repeatCount="indefinite" path="M80 840 C330 690 480 700 720 730"/></circle>
+    <circle r="5" fill="#FF5A47"><animateMotion dur="9.6s" begin="-2s" repeatCount="indefinite" path="M1950 330 C1650 250 1470 455 1235 675"/></circle>
+    <circle r="4" fill="#F4F1E8" opacity=".75"><animateMotion dur="12s" begin="-6s" repeatCount="indefinite" path="M1880 850 C1590 690 1450 710 1200 735"/></circle>
+  </g>
+
+  <!-- Edge-only Velocity motifs; center stays readable -->
+  <g opacity=".055" transform="translate(80 170) rotate(-45 0 0)">
+    <rect class="slash" width="330" height="28" rx="14" fill="#E2FF39"/>
+    <rect class="slash s2" x="30" y="62" width="250" height="28" rx="14" fill="#F4F1E8"/>
+    <rect class="slash s3" x="70" y="124" width="165" height="28" rx="14" fill="#FF5A47"/>
+  </g>
+  <g opacity=".045" transform="translate(1740 750) rotate(-45 0 0)">
+    <rect class="slash" width="300" height="24" rx="12" fill="#E2FF39"/>
+    <rect class="slash s2" x="26" y="56" width="220" height="24" rx="12" fill="#F4F1E8"/>
+    <rect class="slash s3" x="64" y="112" width="140" height="24" rx="12" fill="#FF5A47"/>
+  </g>
+
+  <!-- Player nodes -->
+  <g filter="url(#nodeGlow)">
+    <circle class="pulse" cx="245" cy="290" r="5" fill="#E2FF39"/>
+    <circle class="pulse p2" cx="156" cy="562" r="4" fill="#E2FF39"/>
+    <circle class="pulse p3" cx="352" cy="426" r="4" fill="#F4F1E8"/>
+    <circle class="pulse p2" cx="1700" cy="470" r="5" fill="#FF5A47"/>
+    <circle class="pulse" cx="1545" cy="714" r="4" fill="#F4F1E8"/>
+    <circle class="pulse p3" cx="1790" cy="300" r="4" fill="#FF5A47"/>
+  </g>
+
+  <!-- Contrast shield keeps hero copy and controls clean -->
+  <ellipse cx="960" cy="465" rx="650" ry="480" fill="url(#centerMask)"/>
+  <rect x="0" y="0" width="1920" height="180" fill="#090A0C" opacity=".32"/>
+</svg>
