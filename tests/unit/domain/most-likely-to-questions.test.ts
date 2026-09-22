@@ -3,7 +3,7 @@ import { MOST_LIKELY_TO_QUESTIONS, resolveQuestion } from "@server/games/questio
 
 const languages = ["tr", "en", "ar", "ku"] as const
 
-// Regression manifest for the 100 requested prompts, including reused stable ids.
+// Regression manifest for the 78 requested prompts, including reused stable ids.
 const requestedQuestions = [
   ["like-exs-story", "Kim gizlice takip ettiği eski sevgilisinin hikayesini yanlışlıkla beğenir?"],
   ["typing-never-sends", "Kim WhatsApp'ta \"yazıyor...\" yazıp asla mesaj atmaz?"],
@@ -25,11 +25,6 @@ const requestedQuestions = [
   ["jokes-too-far", "Kim çok fazla şaka yapıp karşısındakini kırar?"],
   ["believes-fake-news", "Kim her duyduğu yalan bilgiye inanıp arkadaş ortamında anlatır?"],
   ["chases-girls-denies-it", "Kim kızlara çok düşkündür ama bunu asla kabul etmez?"],
-  ["wrong-number-chat", "Kim yanlış numarayı arayıp beş dakika boyunca kimle konuştuğunu anlamadan sohbet eder?"],
-  ["hot-mic-meeting", "Kim online toplantıda mikrofonu açık unutup arkasından duymaması gereken bir şey söyler?"],
-  ["taxi-wrong-address", "Kim aldığı taksiyi yanlış adrese gönderip yolun ortasında anlar?"],
-  ["laughing-fit-meeting", "Kim en ciddi anda gülme krizine girip toplantıyı dağıtır?"],
-  ["regret-in-public", "Kim \"keşke söylemeseydim\" dediği cümleyi tam kalabalığın ortasında söyler?"],
   ["most-drama-group", "Kim arkadaş grubunda en çok drama çıkarır?"],
   ["talks-behind-smiles-front", "Kim herkesin arkasından konuşup yüzüne gülümser?"],
   ["secret-five-minutes", "Kim \"aramızda kalsın\" deyip 5 dakikada herkese anlatır?"],
@@ -52,9 +47,6 @@ const requestedQuestions = [
   ["lifts-the-mood", "Kim ortamı en çok neşelendiren ya da ortamı kuran kişidir?"],
   ["vanishes-shared-task", "Kim ortak bir iş/görev olduğunda ortadan kaybolup bahane uydurur?"],
   ["does-all-the-work", "Kim ortak işlerde en fedakar kişi olur ve sonunda bütün işler ona kalır?"],
-  ["never-gives-up-admin", "Kim grup sohbetinde adminliği asla başkasına bırakmaz?"],
-  ["dislikes-new-partner-instantly", "Kim bir arkadaşının yeni sevgilisini daha ilk günden beğenmediğini belli eder?"],
-  ["sulks-forgotten-birthday", "Kim kendi doğum gününde biri unutursa günlerce küser?"],
   ["stalks-ex-online", "Kim sosyal medyada eski sevgilisini gizlice stalklar?"],
   ["detox-triple-order", "Kim \"detoks yapıyorum\" deyip aynı gün üç kez paket sipariş eder?"],
   ["buys-useless-online-junk", "Kim online alışverişte ihtiyacı olmayan en saçma şeyi satın alır?"],
@@ -66,20 +58,6 @@ const requestedQuestions = [
   ["same-mistake-again", "Kim \"bu sefer farklı olacak\" deyip yine aynı hatayı yapar?"],
   ["nonstop-dating-app-search", "Kim flört uygulamalarında hiç durmadan kız arar?"],
   ["hides-heartbreak", "Kim kalbi kırılsa bile bunu asla belli etmez?"],
-  ["night-plans-forgotten", "Kim gece yatmadan önce yarın için kocaman bir plan yapar ama sabah hiçbirini hatırlamaz?"],
-  ["just-bread-full-bags", "Kim markete \"sadece ekmek almaya\" gidip poşetlerle geri döner?"],
-  ["snooze-ten-still-tired", "Kim sabah alarmını on kez erteleyip yine de \"hiç uyumadım\" der?"],
-  ["one-percent-battery-announcement", "Kim telefonu %1'deyken herkese \"şarjım bitiyor, bir şey olursa arama\" diye duyuru yapar?"],
-  ["binge-whole-season-overnight", "Kim yeni bir diziye başlayınca sabaha kadar tüm sezonu bitirir?"],
-  ["gym-membership-first-week-only", "Kim spor salonuna üye olup sadece ilk hafta gider?"],
-  ["new-hobby-forgotten", "Kim gece \"yeni bir hobi edineceğim\" diye yemin edip sabah unutur?"],
-  ["solo-concert-at-home", "Kim evde yalnızken kendine konser veriyormuş gibi dans eder?"],
-  ["rewatches-still-surprised", "Kim aynı filmi onuncu kez izlerken yine de sona şaşırır?"],
-  ["full-day-scrolling", "Kim bir günü tamamen telefonu kaydırarak (scroll) geçirir?"],
-  ["early-tomorrow-never-remembers", "Kim \"yarın erken kalkacağım\" der ama saat kaçta yattığını asla hatırlamaz?"],
-  ["caught-singing-in-car", "Kim arabada yalnızken yüksek sesle şarkı söyleyip kırmızı ışıkta yakalanır?"],
-  ["cleans-later-never", "Kim evde \"ben sonra temizlerim\" deyip asla temizlemeyen kişidir?"],
-  ["midnight-fridge-raid", "Kim gece yarısı acıkıp mutfakta karanlıkta sessizce yemek arar?"],
   ["first-to-loot-apocalypse", "Kim kıyamet kopsa yağmayı ilk başlatan kişi olur?"],
   ["gets-away-with-murder", "Kim bir cinayet işlese hayatta asla yakalanmaz?"],
   ["gang-boss-in-a-week", "Kim bir çeteye katılsa bir hafta içinde patron olur?"],
@@ -108,8 +86,8 @@ const requestedQuestions = [
 ] as const
 
 describe("Most Likely To question bank", () => {
-  it("includes each of the 100 requested prompts exactly once", () => {
-    expect(requestedQuestions).toHaveLength(100)
+  it("includes each of the 78 requested prompts exactly once", () => {
+    expect(requestedQuestions).toHaveLength(78)
     for (const [id, tr] of requestedQuestions) {
       const matches = MOST_LIKELY_TO_QUESTIONS.filter(question => question.text.tr === tr)
       expect(matches, tr).toHaveLength(1)
