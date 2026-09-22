@@ -405,8 +405,6 @@ const MOST_LIKELY_TO: WorldDetail = {
       title: { en: "Funny",       tr: "Komik",      ar: "مضحك",        ku: "پێکەنیناوی" } },
     { key: "friendship", icon: "users",  difficulty: "Easy",   description: "What this table already knows about each other.",
       title: { en: "Friendship",  tr: "Arkadaşlık", ar: "الصداقة",     ku: "هاوڕێیەتی" } },
-    { key: "school",     icon: "book",   difficulty: "Easy",   description: "Homework, alarms, and the back row.",
-      title: { en: "School",      tr: "Okul",       ar: "المدرسة",     ku: "قوتابخانە" } },
     { key: "daily",      icon: "sun",    difficulty: "Easy",   description: "The small habits everybody denies having.",
       title: { en: "Daily Life",  tr: "Günlük Hayat", ar: "الحياة اليومية", ku: "ژیانی ڕۆژانە" } },
     { key: "chaos",      icon: "zap",    difficulty: "Medium", description: "Zombies, buttons, and arguments out of nothing.",

@@ -9,7 +9,7 @@ import type { LocalizedText } from "./types.js"
  * stay on the server — the screen switches on `kind`, never on a phase string.
  */
 
-export type MostLikelyToCategory = "funny" | "friendship" | "school" | "daily" | "chaos"
+export type MostLikelyToCategory = "funny" | "friendship" | "daily" | "chaos"
 
 /** Everybody in the room, enough to draw a face and a name. */
 export interface MostLikelyToPlayer {
