@@ -506,7 +506,10 @@ export const GAME_CATALOG: readonly Game[] = [
     // The server keeps the clock, collects the votes and opens them together,
     // so this room runs on the turn engine rather than on a deal of roles.
     turnBased: true,
-    defaultSettings: { votingSeconds: 20, roundCount: 5, showVoters: false },
+    defaultSettings: {
+      votingSeconds: 20, roundCount: 5, showVoters: false,
+      customQuestionsEnabled: false, customQuestionSeconds: 30, customQuestionMaxLength: 100
+    },
     title: {
       ku: "کێ زۆرترین ئەگەری هەیە؟",
       ar: "من الأكثر احتمالاً؟",
@@ -584,6 +587,43 @@ export const GAME_CATALOG: readonly Game[] = [
           ar: "إظهار من صوّت لمن",
           en: "Show Who Voted",
           tr: "Kimin Oy Verdiğini Göster"
+        }
+      },
+      {
+        // Off is the whole bank picking every question, exactly as before.
+        // On opens a short window after each result where anyone can write
+        // the next one — first one in wins, nobody is told who tried.
+        type: "boolean",
+        key: "customQuestionsEnabled",
+        label: {
+          ku: "یاریزانان بتوانن پرسیار بنووسن",
+          ar: "السماح للاعبين بكتابة سؤال",
+          en: "Let Players Write a Question",
+          tr: "Oyuncular Soru Yazabilsin"
+        }
+      },
+      {
+        type: "number",
+        key: "customQuestionSeconds",
+        min: 10,
+        max: 60,
+        label: {
+          ku: "کاتی نووسینی پرسیار (چرکە)",
+          ar: "وقت كتابة السؤال (ثواني)",
+          en: "Question-Writing Time (seconds)",
+          tr: "Soru Yazma Süresi (saniye)"
+        }
+      },
+      {
+        type: "number",
+        key: "customQuestionMaxLength",
+        min: 40,
+        max: 200,
+        label: {
+          ku: "زۆرترین پیت بۆ پرسیار",
+          ar: "الحد الأقصى لحروف السؤال",
+          en: "Max Question Length",
+          tr: "Maksimum Soru Uzunluğu"
         }
       }
     ]

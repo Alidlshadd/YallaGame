@@ -9,7 +9,7 @@ import {
 import { isTurnBased, resolveEngine } from "@server/games/engines.js"
 import { resolveGame } from "@server/games/catalog.js"
 import {
-  GAME_OVER, MOST_LIKELY_TO_ID, QUESTION_DISPLAY, ROUND_RESULT, VOTING,
+  CUSTOM_QUESTION_PROMPT, GAME_OVER, MOST_LIKELY_TO_ID, QUESTION_DISPLAY, ROUND_RESULT, VOTING,
   mostLikelyToEngine, tally
 } from "@server/games/most-likely-to.js"
 import { MOST_LIKELY_TO_QUESTIONS } from "@server/games/questions/most-likely-to.js"
@@ -17,6 +17,7 @@ import type { MostLikelyToResult, MostLikelyToView } from "@shared/most-likely-t
 
 const VOTING_MS = 20_000
 const READ_MS = 5_000
+const CUSTOM_QUESTION_MS = 30_000
 
 function mkRoom(overrides: Partial<Room> = {}): Room {
   const now = Date.now()
@@ -75,6 +76,13 @@ async function atVoting(h: Harness): Promise<number> {
   return h.seq()
 }
 
+/** Start, then run the clock past voting so the room is sitting on a result. */
+async function atRoundResult(h: Harness): Promise<number> {
+  await atVoting(h)
+  await vi.advanceTimersByTimeAsync(VOTING_MS)
+  return h.seq()
+}
+
 beforeEach(() => { vi.useFakeTimers() })
 afterEach(() => { cancelAllTimers(); vi.useRealTimers() })
 
@@ -116,7 +124,7 @@ describe("a round", () => {
     expect(started.round).toBe(1)
     const shown = await h.viewFor("p1")
     expect(shown.kind).toBe("question")
-    expect(shown.question.tr.length).toBeGreaterThan(0)
+    expect((shown as Extract<MostLikelyToView, { kind: "question" }>).question.tr.length).toBeGreaterThan(0)
 
     await vi.advanceTimersByTimeAsync(READ_MS)
     const room = await h.room()
@@ -405,5 +413,151 @@ describe("a phone that goes dark", () => {
 
     const shown = await h.viewFor("p2")
     expect(shown).toMatchObject({ kind: "voting", votedCount: 0, totalPlayers: 2 })
+  })
+})
+
+describe("the custom question prompt", () => {
+  function customRoom(overrides: Partial<Room> = {}): Room {
+    return mkRoom({
+      settings: { votingSeconds: 20, roundCount: 5, customQuestionsEnabled: true, customQuestionSeconds: 30 },
+      ...overrides
+    })
+  }
+
+  it("stays off the flow entirely when the host has not turned it on", async () => {
+    const h = await harness()
+    const seq = await atRoundResult(h)
+    await hostAdvance(h.deps, "MLT01", "s3cret", seq)
+    expect((await h.room()).phase).toBe(QUESTION_DISPLAY)
+  })
+
+  it("opens between a result and the next question once the host turns it on", async () => {
+    const h = await harness(customRoom())
+    const seq = await atRoundResult(h)
+    await hostAdvance(h.deps, "MLT01", "s3cret", seq)
+
+    const room = await h.room()
+    expect(room.phase).toBe(CUSTOM_QUESTION_PROMPT)
+    expect(room.phaseEndsAt).toBe(Date.now() + CUSTOM_QUESTION_MS)
+    // The round the table just argued about is still the round on screen —
+    // it only advances once the next question is actually decided.
+    expect(room.round).toBe(1)
+  })
+
+  it("is skipped on the game's last round — there is no next question to write", async () => {
+    const h = await harness(customRoom({ settings: { votingSeconds: 20, roundCount: 1, customQuestionsEnabled: true } }))
+    const seq = await atRoundResult(h)
+    await hostAdvance(h.deps, "MLT01", "s3cret", seq)
+    expect((await h.room()).phase).toBe(GAME_OVER)
+  })
+
+  it("falls back to the bank once everyone passes", async () => {
+    const h = await harness(customRoom())
+    const seq = await atRoundResult(h)
+    await hostAdvance(h.deps, "MLT01", "s3cret", seq)
+    const promptSeq = await h.seq()
+
+    await submitAction(h.deps, "MLT01", "p1", promptSeq, { type: "pass" })
+    await submitAction(h.deps, "MLT01", "p2", promptSeq, { type: "pass" })
+    await submitAction(h.deps, "MLT01", "p3", promptSeq, { type: "pass" })
+    await vi.advanceTimersByTimeAsync(1_200)
+
+    const room = await h.room()
+    expect(room.phase).toBe(QUESTION_DISPLAY)
+    expect(room.round).toBe(2)
+    const state = room.gameState as { questionId: string }
+    expect(MOST_LIKELY_TO_QUESTIONS.some(q => q.id === state.questionId)).toBe(true)
+  })
+
+  it("falls back to the bank once the clock runs out with nobody writing", async () => {
+    const h = await harness(customRoom())
+    const seq = await atRoundResult(h)
+    await hostAdvance(h.deps, "MLT01", "s3cret", seq)
+
+    await vi.advanceTimersByTimeAsync(CUSTOM_QUESTION_MS)
+    expect((await h.room()).phase).toBe(QUESTION_DISPLAY)
+  })
+
+  it("opens the next round on whoever submits first, in every language", async () => {
+    const h = await harness(customRoom())
+    const seq = await atRoundResult(h)
+    await hostAdvance(h.deps, "MLT01", "s3cret", seq)
+    const promptSeq = await h.seq()
+
+    await submitAction(h.deps, "MLT01", "p2", promptSeq, { type: "submit", text: "Kim en tembel?" })
+    await vi.advanceTimersByTimeAsync(1_200)
+
+    const room = await h.room()
+    expect(room.phase).toBe(QUESTION_DISPLAY)
+    const shown = await h.viewFor("p1") as Extract<MostLikelyToView, { kind: "question" }>
+    expect(shown.question).toEqual({
+      en: "Kim en tembel?", tr: "Kim en tembel?", ar: "Kim en tembel?", ku: "Kim en tembel?"
+    })
+    // A question a player wrote was never sorted into one of the bank's categories.
+    expect(shown.category).toBeUndefined()
+  })
+
+  it("refuses a second submission — the first one already won the round", async () => {
+    const h = await harness(customRoom())
+    const seq = await atRoundResult(h)
+    await hostAdvance(h.deps, "MLT01", "s3cret", seq)
+    const promptSeq = await h.seq()
+
+    await submitAction(h.deps, "MLT01", "p2", promptSeq, { type: "submit", text: "İlk soru" })
+    await expect(
+      submitAction(h.deps, "MLT01", "p3", promptSeq, { type: "submit", text: "İkinci soru" })
+    ).rejects.toThrow("INVALID_INPUT")
+  })
+
+  it("refuses an empty submission and one over the length limit", async () => {
+    const h = await harness(customRoom({
+      settings: { votingSeconds: 20, roundCount: 5, customQuestionsEnabled: true, customQuestionMaxLength: 10 }
+    }))
+    const seq = await atRoundResult(h)
+    await hostAdvance(h.deps, "MLT01", "s3cret", seq)
+    const promptSeq = await h.seq()
+
+    await expect(
+      submitAction(h.deps, "MLT01", "p1", promptSeq, { type: "submit", text: "   " })
+    ).rejects.toThrow("INVALID_INPUT")
+    await expect(
+      submitAction(h.deps, "MLT01", "p1", promptSeq, { type: "submit", text: "way too long a question" })
+    ).rejects.toThrow("INVALID_INPUT")
+  })
+
+  it("refuses a second pass from the same player", async () => {
+    const h = await harness(customRoom())
+    const seq = await atRoundResult(h)
+    await hostAdvance(h.deps, "MLT01", "s3cret", seq)
+    const promptSeq = await h.seq()
+
+    await submitAction(h.deps, "MLT01", "p1", promptSeq, { type: "pass" })
+    await expect(
+      submitAction(h.deps, "MLT01", "p1", promptSeq, { type: "pass" })
+    ).rejects.toThrow("INVALID_INPUT")
+  })
+
+  it("never tells anybody else who is writing or who passed", async () => {
+    const h = await harness(customRoom())
+    const seq = await atRoundResult(h)
+    await hostAdvance(h.deps, "MLT01", "s3cret", seq)
+    const promptSeq = await h.seq()
+    h.phases.length = 0
+
+    await submitAction(h.deps, "MLT01", "p1", promptSeq, { type: "pass" })
+    await submitAction(h.deps, "MLT01", "p2", promptSeq, { type: "submit", text: "Kim en şanslı?" })
+
+    const mine = await h.viewFor("p2")
+    const theirs = await h.viewFor("p3")
+    expect(mine).toMatchObject({ kind: "customPrompt", myStatus: "submitted" })
+    expect(theirs).toMatchObject({ kind: "customPrompt", myStatus: "idle" })
+
+    // Nothing broadcast to the room ever names who wrote it or who passed.
+    for (const { playerId, payload } of h.phases) {
+      if (playerId === "p2") continue
+      const json = JSON.stringify(payload.view)
+      expect(json).not.toContain("Kim en şanslı")
+      expect(json).not.toContain("submitted")
+    }
   })
 })

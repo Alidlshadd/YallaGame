@@ -94,6 +94,30 @@ export function mountGameStage(opts: GameStageOptions): () => void {
     else showToast(t("errorVoteRejected"))
   }
 
+  async function castCustomPass(): Promise<void> {
+    if (phase === null || sending) return
+    sending = true
+    const r = await emit("game:action", { code: opts.code, seq: phase.seq, action: { type: "pass" } })
+    sending = false
+    if (r.ok) vibrate("tap")
+    else showToast(t("errorGeneric"))
+  }
+
+  async function submitCustomQuestion(text: string): Promise<void> {
+    if (phase === null || sending) return
+    const trimmed = text.trim()
+    if (trimmed === "") return
+    sending = true
+    const r = await emit("game:action", {
+      code: opts.code,
+      seq: phase.seq,
+      action: { type: "submit", text: trimmed }
+    })
+    sending = false
+    if (r.ok) vibrate("tap")
+    else showToast(t("errorCustomQuestionRejected"))
+  }
+
   async function submitLie(text: string): Promise<void> {
     if (phase === null || sending) return
     const trimmed = text.trim()
@@ -251,6 +275,51 @@ export function mountGameStage(opts: GameStageOptions): () => void {
       out.push(el("p", { class: "mlt-counter" }, [t("mltWaitingHost")]))
     }
     return out
+  }
+
+  function buildCustomPrompt(view: Extract<MostLikelyToView, { kind: "customPrompt" }>): HTMLElement[] {
+    const eyebrow = el("p", { class: "mlt-eyebrow" }, [t("mltCustomEyebrow")])
+
+    // Nothing here ever says who is writing or who already passed — a status
+    // other than "idle" just means this one phone has already made its choice.
+    if (view.myStatus === "submitted") {
+      return [eyebrow, el("p", { class: "mlt-hint" }, [t("mltCustomLocked")])]
+    }
+    if (view.myStatus === "passed") {
+      return [eyebrow, el("p", { class: "mlt-hint" }, [t("mltCustomWaiting")])]
+    }
+
+    const choices = el("div", { class: "mlt-custom-choices" })
+    const form = el("div", { class: "mlt-custom-form" })
+    form.hidden = true
+
+    const writeBtn = el("button", { class: "btn btn-primary", type: "button" }, [t("mltCustomWrite")])
+    const passBtn = el("button", { class: "btn btn-ghost", type: "button" }, [t("mltCustomPass")])
+    choices.append(writeBtn, passBtn)
+
+    const input = el("textarea", {
+      class: "bluff-lie-input",
+      maxlength: view.maxLength,
+      rows: 2,
+      placeholder: t("mltCustomPlaceholder"),
+      "aria-label": t("mltCustomPlaceholder")
+    }) as HTMLTextAreaElement
+    const counter = el("span", { class: "bluff-lie-counter" }, [`0/${view.maxLength}`])
+    input.addEventListener("input", () => {
+      counter.textContent = `${input.value.length}/${view.maxLength}`
+    })
+    const submitBtn = el("button", { class: "btn btn-primary", type: "button" }, [t("mltCustomSubmit")])
+    submitBtn.addEventListener("click", () => void submitCustomQuestion(input.value))
+    form.append(el("div", { class: "bluff-lie-row" }, [input, counter, submitBtn]))
+
+    writeBtn.addEventListener("click", () => {
+      choices.hidden = true
+      form.hidden = false
+      input.focus()
+    })
+    passBtn.addEventListener("click", () => void castCustomPass())
+
+    return [eyebrow, el("p", { class: "mlt-hint" }, [t("mltCustomHint")]), choices, form]
   }
 
   function buildBluffSubmit(view: Extract<BluffTriviaView, { kind: "bluff-submit" }>): HTMLElement[] {
@@ -665,7 +734,7 @@ export function mountGameStage(opts: GameStageOptions): () => void {
 
     const lang = getLang()
     const panel = el("div", { class: "mlt" })
-    if (view.kind === "question" || view.kind === "voting") {
+    if ((view.kind === "question" || view.kind === "voting") && view.category !== undefined) {
       panel.setAttribute("data-category", view.category)
     }
 
@@ -683,6 +752,7 @@ export function mountGameStage(opts: GameStageOptions): () => void {
     if (view.kind === "question") panel.append(el("p", { class: "mlt-hint" }, [t("mltGetReady")]))
     else if (view.kind === "voting") panel.append(...buildVoting(view))
     else if (view.kind === "result" || view.kind === "over") panel.append(...buildReveal(view))
+    else if (view.kind === "customPrompt") panel.append(...buildCustomPrompt(view))
     else if (view.kind === "bluff-question") panel.append(el("p", { class: "mlt-hint" }, [t("bluffGetReady")]))
     else if (view.kind === "bluff-submit") panel.append(...buildBluffSubmit(view))
     else if (view.kind === "bluff-guessing") panel.append(...buildBluffGuessing(view))

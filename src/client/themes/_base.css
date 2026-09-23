@@ -4649,6 +4649,16 @@ body.stage-open { overflow: hidden; }
 
 .mlt-advance { width: 100%; }
 
+/* The write/pass choice for a room where players can write the next question. */
+.mlt-custom-choices {
+  display: flex;
+  gap: var(--s-2);
+}
+
+.mlt-custom-choices .btn { flex: 1; }
+
+.mlt-custom-form { margin-top: var(--s-2); }
+
 @media (prefers-reduced-motion: reduce) {
   .mlt { animation: none; }
   .mlt-clock.urgent { animation: none; }

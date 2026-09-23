@@ -1,6 +1,7 @@
 import type { GameState, Room } from "@shared/types.js"
+import type { LocalizedText } from "@shared/types.js"
 import type {
-  MostLikelyToPlayer, MostLikelyToResult, MostLikelyToView
+  MostLikelyToCategory, MostLikelyToPlayer, MostLikelyToResult, MostLikelyToView
 } from "@shared/most-likely-to.js"
 import type { GameEngine, Transition } from "../domain/engine.js"
 import { resolveGame } from "./catalog.js"
@@ -10,14 +11,19 @@ import { MOST_LIKELY_TO_QUESTIONS, resolveQuestion, type Question } from "./ques
  * Most Likely To — the table reads a question, everybody points at somebody,
  * and the votes open together.
  *
- * Three phases per round:
+ * Phases per round:
  *
- *   QUESTION_DISPLAY  the question, on a short clock so nobody votes on a
- *                     sentence they have not finished reading
- *   VOTING            one secret vote each, on the room's clock; closes early
- *                     the moment every connected phone has answered
- *   ROUND_RESULT      every vote at once. No clock: the host decides when the
- *                     table has finished arguing
+ *   QUESTION_DISPLAY      the question, on a short clock so nobody votes on a
+ *                         sentence they have not finished reading
+ *   VOTING                one secret vote each, on the room's clock; closes
+ *                         early the moment every connected phone has answered
+ *   ROUND_RESULT          every vote at once. No clock: the host decides when
+ *                         the table has finished arguing
+ *   CUSTOM_QUESTION_PROMPT  only in a room with `customQuestionsEnabled` —
+ *                         between a result and the next question, anyone can
+ *                         write the next one. First submission wins; closes
+ *                         early once everyone has either passed or one
+ *                         question has come in.
  *
  * The room lands on GAME_OVER once the configured number of rounds is played.
  */
@@ -27,10 +33,14 @@ export const MOST_LIKELY_TO_ID = "most-likely-to"
 export const QUESTION_DISPLAY = "QUESTION_DISPLAY"
 export const VOTING = "VOTING"
 export const ROUND_RESULT = "ROUND_RESULT"
+export const CUSTOM_QUESTION_PROMPT = "CUSTOM_QUESTION_PROMPT"
 export const GAME_OVER = "GAME_OVER"
 
 /** Reading time before the buttons appear. */
 const READ_MS = 5_000
+
+/** Sentinel `questionId` for a round whose question a player wrote, not the bank. */
+const CUSTOM_QUESTION_ID = "__custom__"
 
 // The catalogue already carries these under `defaultSettings` — a room's
 // settings are normalized against it before the engine ever sees them — so
@@ -45,6 +55,8 @@ function catalogNumber(key: string, fallback: number): number {
 
 const DEFAULT_VOTING_SECONDS = catalogNumber("votingSeconds", 20)
 const DEFAULT_ROUNDS = catalogNumber("roundCount", 5)
+const DEFAULT_CUSTOM_QUESTION_SECONDS = catalogNumber("customQuestionSeconds", 30)
+const DEFAULT_CUSTOM_QUESTION_MAX_LENGTH = catalogNumber("customQuestionMaxLength", 100)
 
 /**
  * One vote. Flat, and carrying everything a `votes` row would need — round,
@@ -64,6 +76,16 @@ export interface MostLikelyToState extends GameState {
   asked: string[]
   /** The round being played, and only that one. */
   votes: Vote[]
+  /**
+   * Set once somebody's submission has won the CUSTOM_QUESTION_PROMPT race,
+   * and carried into the round it opens so `view`/`tally` can read it back.
+   * Null everywhere else — a round from the bank has no text of its own here.
+   */
+  customQuestionText: string | null
+  /** Whichever connected player already chose "pass" this prompt. */
+  passedPlayerIds: string[]
+  /** Who is behind `customQuestionText`, kept only to answer that one player's own view — never broadcast. */
+  customQuestionWriterId: string | null
 }
 
 /** The room row comes back through JSON, so nothing in it is trusted as typed. */
@@ -72,7 +94,10 @@ function stateOf(room: Room): MostLikelyToState {
   return {
     questionId: typeof raw.questionId === "string" ? raw.questionId : "",
     asked: Array.isArray(raw.asked) ? raw.asked : [],
-    votes: Array.isArray(raw.votes) ? raw.votes : []
+    votes: Array.isArray(raw.votes) ? raw.votes : [],
+    customQuestionText: typeof raw.customQuestionText === "string" ? raw.customQuestionText : null,
+    passedPlayerIds: Array.isArray(raw.passedPlayerIds) ? raw.passedPlayerIds : [],
+    customQuestionWriterId: typeof raw.customQuestionWriterId === "string" ? raw.customQuestionWriterId : null
   }
 }
 
@@ -89,6 +114,18 @@ function totalRounds(room: Room): number {
   return settingNumber(room, "roundCount", DEFAULT_ROUNDS)
 }
 
+function customQuestionsEnabled(room: Room): boolean {
+  return room.settings["customQuestionsEnabled"] === true
+}
+
+function customQuestionMs(room: Room): number {
+  return settingNumber(room, "customQuestionSeconds", DEFAULT_CUSTOM_QUESTION_SECONDS) * 1000
+}
+
+function customQuestionMaxLength(room: Room): number {
+  return settingNumber(room, "customQuestionMaxLength", DEFAULT_CUSTOM_QUESTION_MAX_LENGTH)
+}
+
 /**
  * A question the table has not had yet. Once the seed is exhausted the pool
  * reopens rather than leaving a round with nothing to ask.
@@ -102,7 +139,40 @@ function pickQuestion(asked: readonly string[], rng: () => number): Question {
 
 function openRound(asked: readonly string[], rng: () => number): MostLikelyToState {
   const question = pickQuestion(asked, rng)
-  return { questionId: question.id, asked: [...asked, question.id], votes: [] }
+  return {
+    questionId: question.id, asked: [...asked, question.id], votes: [],
+    customQuestionText: null, passedPlayerIds: [], customQuestionWriterId: null
+  }
+}
+
+/** Clears the previous round's leftovers and opens the floor for a submission. */
+function openCustomPrompt(state: MostLikelyToState): MostLikelyToState {
+  return { ...state, customQuestionText: null, passedPlayerIds: [], customQuestionWriterId: null }
+}
+
+/**
+ * What the prompt phase decided. A submission that won the race opens the
+ * round; nothing submitted — everyone passed, or the clock ran out first —
+ * falls back to the bank exactly as a room with the setting off would.
+ */
+function resolveCustomOrRandom(state: MostLikelyToState, rng: () => number): MostLikelyToState {
+  if (state.customQuestionText !== null && state.customQuestionText !== "") {
+    return {
+      questionId: CUSTOM_QUESTION_ID, asked: state.asked, votes: [],
+      customQuestionText: state.customQuestionText, passedPlayerIds: [], customQuestionWriterId: null
+    }
+  }
+  return openRound(state.asked, rng)
+}
+
+/** The question this round is actually asking, whichever source it came from. */
+function currentQuestion(state: MostLikelyToState): { text: LocalizedText; category?: MostLikelyToCategory } {
+  if (state.questionId === CUSTOM_QUESTION_ID && state.customQuestionText !== null) {
+    const text = state.customQuestionText
+    return { text: { en: text, tr: text, ar: text, ku: text } }
+  }
+  const question = resolveQuestion(state.questionId)
+  return { text: question.text, category: question.category }
 }
 
 /**
@@ -151,7 +221,7 @@ export function tally(room: Room): MostLikelyToResult {
 
   return {
     roundNumber: room.round,
-    question: resolveQuestion(state.questionId).text,
+    question: currentQuestion(state).text,
     totalVotes,
     results,
     winnerPlayerIds,
@@ -177,6 +247,25 @@ export const mostLikelyToEngine: GameEngine = {
   },
 
   act(room, playerId, action): GameState {
+    if (room.phase === CUSTOM_QUESTION_PROMPT) {
+      const state = stateOf(room)
+      const move = action as { type?: unknown; text?: unknown }
+
+      if (move.type === "pass") {
+        if (state.passedPlayerIds.includes(playerId)) throw new Error("INVALID_INPUT")
+        return { ...state, passedPlayerIds: [...state.passedPlayerIds, playerId] }
+      }
+      if (move.type === "submit") {
+        // First one in wins the round; a second submission is a loser of that
+        // race, not a retry — refusing it is what makes "first wins" true.
+        if (state.customQuestionText !== null) throw new Error("INVALID_INPUT")
+        const text = typeof move.text === "string" ? move.text.trim() : ""
+        if (text === "" || text.length > customQuestionMaxLength(room)) throw new Error("INVALID_INPUT")
+        return { ...state, customQuestionText: text, customQuestionWriterId: playerId }
+      }
+      throw new Error("INVALID_INPUT")
+    }
+
     // Voting happens at the one screen that has buttons on it. A vote arriving
     // in any other phase is a forged packet rather than a slow finger — a late
     // tap from the screen before is already refused as a stale phase.
@@ -208,10 +297,19 @@ export const mostLikelyToEngine: GameEngine = {
       // Whatever votes are in are the votes there are; the missing ones stay missing.
       return { phase: ROUND_RESULT, state, ms: null }
     }
-    if (room.phase === GAME_OVER || room.round >= totalRounds(room)) {
-      return { phase: GAME_OVER, state, ms: null, winner: null }
+    if (room.phase === ROUND_RESULT) {
+      if (room.round >= totalRounds(room)) {
+        return { phase: GAME_OVER, state, ms: null, winner: null }
+      }
+      if (customQuestionsEnabled(room)) {
+        return { phase: CUSTOM_QUESTION_PROMPT, state: openCustomPrompt(state), ms: customQuestionMs(room) }
+      }
+      return { phase: QUESTION_DISPLAY, state: openRound(state.asked, rng), ms: READ_MS, nextRound: true }
     }
-    return { phase: QUESTION_DISPLAY, state: openRound(state.asked, rng), ms: READ_MS, nextRound: true }
+    if (room.phase === CUSTOM_QUESTION_PROMPT) {
+      return { phase: QUESTION_DISPLAY, state: resolveCustomOrRandom(state, rng), ms: READ_MS, nextRound: true }
+    }
+    return { phase: GAME_OVER, state, ms: null, winner: null }
   },
 
   pending(room): string[] {
@@ -220,6 +318,13 @@ export const mostLikelyToEngine: GameEngine = {
       return room.players
         .filter(p => p.connected && !state.votes.some(v => v.voterId === p.id))
         .map(p => p.id)
+    }
+    if (room.phase === CUSTOM_QUESTION_PROMPT) {
+      const state = stateOf(room)
+      // A submission already came in — the race is decided, nothing more to
+      // wait on, whether or not everyone else has chosen yet.
+      if (state.customQuestionText !== null) return []
+      return room.players.filter(p => p.connected && !state.passedPlayerIds.includes(p.id)).map(p => p.id)
     }
     // QUESTION_DISPLAY has nothing to act on — it is a reading clock, not a
     // wait for moves — so it must never report "done" just because a phone
@@ -233,14 +338,29 @@ export const mostLikelyToEngine: GameEngine = {
 
   view(room, playerId): MostLikelyToView {
     const state = stateOf(room)
-    const question = resolveQuestion(state.questionId)
+
+    if (room.phase === CUSTOM_QUESTION_PROMPT) {
+      const myStatus =
+        state.customQuestionWriterId === playerId ? "submitted"
+        : state.passedPlayerIds.includes(playerId) ? "passed"
+        : "idle"
+      return {
+        kind: "customPrompt",
+        roundNumber: room.round,
+        roster: roster(room),
+        myStatus,
+        maxLength: customQuestionMaxLength(room)
+      }
+    }
+
+    const question = currentQuestion(state)
 
     if (room.phase === QUESTION_DISPLAY) {
       return {
         kind: "question",
         roundNumber: room.round,
         question: question.text,
-        category: question.category,
+        ...(question.category !== undefined ? { category: question.category } : {}),
         roster: roster(room)
       }
     }
@@ -250,7 +370,7 @@ export const mostLikelyToEngine: GameEngine = {
         kind: "voting",
         roundNumber: room.round,
         question: question.text,
-        category: question.category,
+        ...(question.category !== undefined ? { category: question.category } : {}),
         roster: roster(room),
         myVote: state.votes.find(v => v.voterId === playerId)?.targetId ?? null,
         // A vote from a phone that has since dropped still counts toward the

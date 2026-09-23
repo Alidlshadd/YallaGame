@@ -49,7 +49,8 @@ export interface MostLikelyToQuestionView {
   kind: "question"
   roundNumber: number
   question: LocalizedText
-  category: MostLikelyToCategory
+  /** Absent for a question a player wrote themselves — it was never sorted into one. */
+  category?: MostLikelyToCategory
   roster: MostLikelyToPlayer[]
 }
 
@@ -57,7 +58,8 @@ export interface MostLikelyToVotingView {
   kind: "voting"
   roundNumber: number
   question: LocalizedText
-  category: MostLikelyToCategory
+  /** Absent for a question a player wrote themselves — it was never sorted into one. */
+  category?: MostLikelyToCategory
   roster: MostLikelyToPlayer[]
   /** This one player's own vote. Nobody's else's reaches this phone. */
   myVote: string | null
@@ -71,7 +73,24 @@ export type MostLikelyToRevealView = {
   roster: MostLikelyToPlayer[]
 } & MostLikelyToResult
 
+/**
+ * The interstitial between a round's reveal and the next question, open only
+ * in a room whose host turned "players can write a question" on. Whoever
+ * submits first wins the next round; everyone else's screen looks the same
+ * whether they passed or are still deciding — nothing here ever says who is
+ * writing, so it never reads like a vote.
+ */
+export interface MostLikelyToCustomPromptView {
+  kind: "customPrompt"
+  roundNumber: number
+  roster: MostLikelyToPlayer[]
+  /** This one player's own choice so far. Nobody else's reaches this phone. */
+  myStatus: "idle" | "passed" | "submitted"
+  maxLength: number
+}
+
 export type MostLikelyToView =
   | MostLikelyToQuestionView
   | MostLikelyToVotingView
   | MostLikelyToRevealView
+  | MostLikelyToCustomPromptView
