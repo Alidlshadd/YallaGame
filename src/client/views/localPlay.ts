@@ -12,7 +12,7 @@ import { getGames } from "./home.js"
 import { worldCoverPath } from "../data/assets.js"
 import { buildRolePool, assignRolesLocally, type LocalAssignment } from "../domain/local-roles.js"
 import { SPY_WORD_CATEGORIES, pickSpyWordWithCategory } from "../domain/spy-data.js"
-import { getCategoryByKey } from "@shared/word-categories.js"
+import { getCategoryByKey, rememberRecentWord } from "@shared/word-categories.js"
 import {
   WHO_AM_I_CATEGORIES,
   RANDOM_MIX_KEY,
@@ -640,6 +640,27 @@ function localReviewText(
   return text[lang]?.[key] ?? text.en[key]
 }
 
+/* Recently dealt spy words, kept per device so the next rounds (and the next
+   game on the same phone) don't hand out the same word again. */
+const RECENT_SPY_WORDS_KEY = "yg.spyRecent"
+
+function loadRecentSpyWords(): string[] {
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(RECENT_SPY_WORDS_KEY) ?? "[]")
+    return Array.isArray(parsed) ? parsed.filter((w): w is string => typeof w === "string") : []
+  } catch {
+    return []
+  }
+}
+
+function saveRecentSpyWords(words: readonly string[]): void {
+  try {
+    localStorage.setItem(RECENT_SPY_WORDS_KEY, JSON.stringify(words))
+  } catch {
+    // Storage blocked (private mode etc.) — repeat avoidance just won't persist.
+  }
+}
+
 function prepareRound(game: Game, lang: LangCode): void {
   if (isSpyGame(game) && settingNumber("spyCount", 1) >= state.playerNames.length) {
     throw new Error("TOO_MANY_SPECIAL_ROLES")
@@ -656,7 +677,9 @@ function prepareRound(game: Game, lang: LangCode): void {
   state.voteAttemptsLeft = Math.max(1, settingNumber("guessAttempts", 1))
 
   if (isSpyGame(game)) {
-    const pick = pickSpyWordWithCategory(lang, state.spyCategoryIds, state.customSpyWords)
+    const recent = loadRecentSpyWords()
+    const pick = pickSpyWordWithCategory(lang, state.spyCategoryIds, state.customSpyWords, Math.random, recent)
+    saveRecentSpyWords(rememberRecentWord(recent, pick.word))
     state.spyWord = pick.word
     state.spyHintCategory = pick.categoryLabel
   } else {

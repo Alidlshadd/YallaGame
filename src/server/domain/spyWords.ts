@@ -1,5 +1,5 @@
 import type { GameState, LocalizedText, Role, Settings } from "@shared/types.js"
-import { getCategoriesForGame } from "../../shared/word-categories.js"
+import { getCategoriesForGame, rememberRecentWord, withoutRecentWords } from "../../shared/word-categories.js"
 
 export const SPY_GAME_ID = "spy-game"
 
@@ -22,24 +22,54 @@ function parseCustomWords(input: string): string[] {
     .filter(w => w.length >= 2)
 }
 
-/** Picks one word (with its category, if any) from the room's configured spy settings. Null when nothing is selectable. */
-export function pickSpyWord(settings: Settings, rng: () => number): SpyWordPick | null {
+/**
+ * Picks one word (with its category, if any) from the room's configured spy
+ * settings, skipping the words in `recent` (English text). Null when nothing
+ * is selectable.
+ */
+export function pickSpyWord(settings: Settings, rng: () => number, recent: readonly string[] = []): SpyWordPick | null {
   const categoryIds = new Set(Array.isArray(settings["spyCategories"]) ? settings["spyCategories"] as string[] : [])
   const customWordsRaw = typeof settings["spyCustomWords"] === "string" ? settings["spyCustomWords"] : ""
 
+  // The same word can live in two categories (e.g. "Spoon" in Objects and
+  // Kitchen Items) — keep one copy so it isn't twice as likely to come up.
   const pool: SpyWordPick[] = []
+  const seen = new Set<string>()
+  const add = (pick: SpyWordPick): void => {
+    if (seen.has(pick.word.en)) return
+    seen.add(pick.word.en)
+    pool.push(pick)
+  }
   for (const category of getCategoriesForGame("spy-game")) {
     if (!categoryIds.has(category.key)) continue
     for (const w of category.words) {
-      pool.push({ word: { en: w.en, tr: w.tr, ar: w.ar, ku: w.ku }, categoryLabel: category.label })
+      add({ word: { en: w.en, tr: w.tr, ar: w.ar, ku: w.ku }, categoryLabel: category.label })
     }
   }
   for (const custom of parseCustomWords(customWordsRaw)) {
-    pool.push({ word: { en: custom, tr: custom, ar: custom, ku: custom }, categoryLabel: null })
+    add({ word: { en: custom, tr: custom, ar: custom, ku: custom }, categoryLabel: null })
   }
 
   if (pool.length === 0) return null
-  return pool[Math.floor(rng() * pool.length)]!
+  const candidates = withoutRecentWords(pool, recent, p => p.word.en)
+  return candidates[Math.floor(rng() * candidates.length)]!
+}
+
+/** Recently dealt words (English text), oldest first. Untrusted: the room row round-trips through JSON. */
+export function readRecentSpyWords(gameState: GameState): string[] {
+  const raw = gameState["spyRecent"]
+  return Array.isArray(raw) ? raw.filter((w): w is string => typeof w === "string") : []
+}
+
+/** Game-state patch for a fresh deal: the new word plus the updated repeat-avoidance history. */
+export function dealSpyWord(settings: Settings, gameState: GameState, rng: () => number): GameState {
+  const recent = readRecentSpyWords(gameState)
+  const spyWord = pickSpyWord(settings, rng, recent)
+  return {
+    ...gameState,
+    spyWord,
+    spyRecent: spyWord ? rememberRecentWord(recent, spyWord.word.en) : recent
+  }
 }
 
 /** The room row comes back through JSON, so nothing in `gameState` is trusted as typed. */

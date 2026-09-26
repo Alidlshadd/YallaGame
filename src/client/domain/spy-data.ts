@@ -1,7 +1,8 @@
 import type { LangCode, LocalizedText } from "@shared/types.js"
 import {
   type WordCategory,
-  getCategoriesForGame
+  getCategoriesForGame,
+  withoutRecentWords
 } from "@shared/word-categories.js"
 
 /**
@@ -63,25 +64,35 @@ export interface SpyWordPick {
   categoryLabel: LocalizedText | null
 }
 
+/** `recent` holds previously dealt words (in `lang`); they're skipped while enough others remain. */
 export function pickSpyWordWithCategory(
   lang: LangCode,
   categoryIds: readonly string[],
   customWordsText: string,
-  rng: () => number = Math.random
+  rng: () => number = Math.random,
+  recent: readonly string[] = []
 ): SpyWordPick {
   const selected = new Set(categoryIds)
+  // A word shared by two categories keeps a single entry so it isn't drawn twice as often.
   const pool: SpyWordPick[] = []
+  const seen = new Set<string>()
+  const add = (pick: SpyWordPick): void => {
+    if (seen.has(pick.word)) return
+    seen.add(pick.word)
+    pool.push(pick)
+  }
   for (const category of SPY_WORD_CATEGORIES) {
     if (!selected.has(category.id)) continue
     for (const word of category.words[lang] ?? category.words.en ?? []) {
-      pool.push({ word, categoryLabel: category.label })
+      add({ word, categoryLabel: category.label })
     }
   }
   for (const word of parseCustomSpyWords(customWordsText)) {
-    pool.push({ word, categoryLabel: null })
+    add({ word, categoryLabel: null })
   }
   if (pool.length === 0) throw new Error("NO_SPY_WORDS")
-  return pool[Math.floor(rng() * pool.length)]!
+  const candidates = withoutRecentWords(pool, recent, p => p.word)
+  return candidates[Math.floor(rng() * candidates.length)]!
 }
 
 export function pickSpyWord(

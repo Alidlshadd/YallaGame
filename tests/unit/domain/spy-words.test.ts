@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest"
-import { pickSpyWord } from "@server/domain/spyWords.js"
+import { dealSpyWord, pickSpyWord } from "@server/domain/spyWords.js"
 import { resolveRoleData } from "@server/domain/roles.js"
-import type { Game, Room, Settings } from "@shared/types.js"
+import type { Game, GameState, Room, Settings } from "@shared/types.js"
 
 const spyGame: Game = {
   id: "spy-game", icon: "x", theme: "x", minPlayers: 3,
@@ -44,6 +44,27 @@ describe("pickSpyWord", () => {
 
   it("returns null when nothing is selected", () => {
     expect(pickSpyWord({ spyCategories: [], spyCustomWords: "" }, () => 0)).toBeNull()
+  })
+
+  it("skips recently dealt words while fresh ones remain", () => {
+    const first = pickSpyWord(settings, () => 0)!
+    const next = pickSpyWord(settings, () => 0, [first.word.en])!
+    expect(next.word.en).not.toBe(first.word.en)
+  })
+
+  it("falls back to the full pool when every word was recent", () => {
+    const pick = pickSpyWord({ spyCategories: [], spyCustomWords: "aa, bb" }, () => 0, ["aa", "bb"])
+    expect(pick).not.toBeNull()
+  })
+
+  it("does not repeat a word within 40 consecutive deals of one room", () => {
+    let state: GameState = {}
+    const dealt: string[] = []
+    for (let i = 0; i < 40; i++) {
+      state = dealSpyWord(settings, state, Math.random)
+      dealt.push((state["spyWord"] as { word: { en: string } }).word.en)
+    }
+    expect(new Set(dealt).size).toBe(40)
   })
 
   it("ignores custom word fragments shorter than 2 characters", () => {

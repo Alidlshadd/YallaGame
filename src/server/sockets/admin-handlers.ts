@@ -12,7 +12,7 @@ import { isCharacterId } from "../../shared/characters.js"
 import { characterAccessory } from "../../shared/accessories.js"
 import { normalizeSettings } from "../domain/settings.js"
 import { buildRolePool, assignRolesToConnected, resolveRoleData } from "../domain/roles.js"
-import { pickSpyWord, SPY_GAME_ID } from "../domain/spyWords.js"
+import { dealSpyWord, SPY_GAME_ID } from "../domain/spyWords.js"
 import { makeRoomCode, makeSecret } from "../domain/codes.js"
 import { cancelTimer } from "../domain/scheduler.js"
 import { sendPhaseTo, type EngineResolver } from "../domain/engine.js"
@@ -187,9 +187,9 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
       const players = assignRolesToConnected(room.players, pool, deps.rng)
       redeal = room.assigned
       // Spy Game hides one secret word per round behind the generic role pool —
-      // picked fresh on every deal so a redeal never repeats last round's word.
+      // picked fresh on every deal, skipping the room's recently used words.
       const gameState = game.id === SPY_GAME_ID
-        ? { ...room.gameState, spyWord: pickSpyWord(room.settings, deps.rng) }
+        ? dealSpyWord(room.settings, room.gameState, deps.rng)
         : room.gameState
       return { ...room, players, assigned: true, gameState }
     })
