@@ -66,6 +66,14 @@ for (const { name, make } of factories) {
       expect(await store.get("EEEEE")).toBeNull()
     })
 
+    it("a rejected update cannot poison another queued operation", async () => {
+      await store.create(mkRoom("QUEUE"))
+      const rejected = store.update("QUEUE", () => { throw new Error("AUTHZ_MISMATCH") })
+      const valid = store.update("QUEUE", r => ({ ...r, assigned: true }))
+      await expect(rejected).rejects.toThrow("AUTHZ_MISMATCH")
+      await expect(valid).resolves.toMatchObject({ assigned: true })
+    })
+
     it("deleteOlderThan respects cutoff", async () => {
       await store.create(mkRoom("OLD11", 100))
       await store.create(mkRoom("OLD22", 200))

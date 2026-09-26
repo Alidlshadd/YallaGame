@@ -115,6 +115,7 @@ export const joinSetupView = {
 
       const data = r.data as PlayerJoinData
       if (data.status === "pending") {
+        session.save({ kind: "player", code, playerId: data.requestId, name: playerName, resumeToken: data.resumeToken })
         await applyTheme(data.theme)
         await setView("pendingView", {
           requestId: data.requestId, code: data.code, theme: data.theme,
@@ -122,7 +123,7 @@ export const joinSetupView = {
         })
         return
       }
-      session.save({ kind: "player", code, playerId: data.player.id, name: data.player.name })
+      session.save({ kind: "player", code, playerId: data.player.id, name: data.player.name, resumeToken: data.resumeToken })
       await applyTheme(data.room.game.theme)
       await setView("playerRoomView", { initial: data })
     }

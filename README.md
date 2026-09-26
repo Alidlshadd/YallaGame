@@ -60,6 +60,7 @@ npm run build
 export DB_PATH=/var/lib/yallagame/rooms.db
 export UPLOAD_DIR=/var/lib/yallagame/uploads
 export BACKUP_DIR=/var/backups/yallagame
+export ALLOWED_ORIGIN=https://YOUR_REAL_GAME_DOMAIN
 node dist/server/control/cli.js migrate
 node dist/server/control/cli.js create operator
 NODE_ENV=production npm start
@@ -70,13 +71,15 @@ PowerShell:
 npm run build
 $env:DB_PATH = Join-Path $PWD 'data/rooms.db'
 $env:UPLOAD_DIR = Join-Path $PWD 'data/uploads'
+$env:ALLOWED_ORIGIN = 'https://YOUR_REAL_GAME_DOMAIN'
 node dist/server/control/cli.js migrate
 node dist/server/control/cli.js create operator
 $env:NODE_ENV = 'production'
 npm start
 ```
 
-Open http://localhost:3000.
+Open your configured HTTPS origin through the reverse proxy. For plain HTTP
+on localhost or a LAN, use development mode.
 
 The private control center is at `/admin`. There is no default administrator or password.
 The CLI prompts for passwords without terminal echo. Migration backs up an existing database
@@ -92,16 +95,39 @@ PM2 deployment/rollback commands are in [the Admin Control Center runbook](docs/
 |---|---|---|
 | `NODE_ENV` | `development` | `production` requires `DB_PATH` (fail-fast) |
 | `PORT` | `3000` | |
-| `DB_PATH` | (unset → MemoryStore) | Path to SQLite file. Required in prod. `:memory:` also works. |
-| `ALLOWED_ORIGIN` | unset (all) | CORS origin for Socket.IO |
-| `UPLOAD_DIR` | `data/uploads` (dev) | Absolute persistent directory required in production, outside `dist` |
-| `BACKUP_DIR` | `data/backups` | CLI online backups; must be outside `dist` |
+| `DB_PATH` | (unset → MemoryStore) | Path to SQLite file, outside `dist` and `public`. Required in prod. `:memory:` also works. |
+| `ALLOWED_ORIGIN` | unset (same host in dev) | Exact HTTPS origin required for persistent production; validated on WebSocket and polling handshakes |
+| `UPLOAD_DIR` | `data/uploads` (dev) | Absolute persistent directory required in production, outside `dist` and `public` |
+| `BACKUP_DIR` | `data/backups` | CLI online backups; must be outside `dist` and `public` |
 | `ANALYTICS_RETENTION_DAYS` | `365` | Analytics retention, 1–3650 days |
 | `TRUST_PROXY` | unset | Only trusted proxy addresses, e.g. `loopback` |
 | `ROOM_TTL_HOURS` | `8` | Rooms older than this are GC'd |
 | `LOG_LEVEL` | `info` | pino level |
 | `MAX_ROOMS_PER_SOCKET` | `5` | Anti-abuse per admin socket |
 | `MAX_TOTAL_ROOMS` | `10000` | Server-wide cap |
+
+Player reconnects require a private resume token in addition to the public player
+ID. Sessions created before this security update cannot resume by ID or display
+name alone; start fresh rooms after deploying the update. Existing Bluff Trivia
+rounds also need to be restarted to replace their old answer-revealing option IDs.
+
+Socket traffic is capped at 16 KiB per message, 180 new handshakes/minute,
+240 simultaneous connections, 6000 events/minute and 60 room creations/10 minutes
+per client IP (shared by users behind the same NAT). The process allows at most
+10000 simultaneous connections. Reconnecting does not reset the IP windows;
+process restarts do. Configure `TRUST_PROXY` narrowly when using a reverse proxy.
+An explicit HTTP loopback origin is accepted for local production checks; the
+isolated `:memory:` test server also permits an unset origin. Public deployments
+must use HTTPS.
+Database, upload and backup paths are checked against public build directories,
+including existing symlinks/junctions. Public catalog/config requests share a
+600 requests/minute limit per IP. HTTP headers are limited to 16 KiB, with
+15-second header and 30-second request deadlines. Compressed request bodies are
+rejected; normal response compression is retained. HTTPS production responses
+enable HSTS and insecure-request upgrading, and restrict WebSocket destinations
+to the configured origin. CSP, browser permission restrictions and generic error
+responses provide additional protection against injection and information leaks.
+See [the security review](docs/security-review.md) for findings and validation.
 
 ## Phone testing on same Wi-Fi
 

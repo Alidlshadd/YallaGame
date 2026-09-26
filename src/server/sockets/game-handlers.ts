@@ -70,7 +70,7 @@ export function registerGameHandlers(socket: TypedSocket, deps: GameDeps): void 
     // Who is acting comes from the socket, never from the payload: otherwise
     // one player could vote, write, or play a card as somebody else.
     const playerId = socket.data.playerId
-    if (playerId === undefined || socket.data.roomCode !== code) throw new Error("AUTHZ_MISMATCH")
+    if (playerId === undefined || socket.data.roomCode !== code || !socket.rooms.has(`p:${code}:${playerId}`)) throw new Error("AUTHZ_MISMATCH")
     await submitAction(engine, code, playerId, seq, action)
     return { accepted: true as const }
   })

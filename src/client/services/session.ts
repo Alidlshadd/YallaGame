@@ -2,7 +2,7 @@ const STORAGE_KEY = "role-room:session"
 
 export type Session =
   | { kind: "admin";  code: string; adminSecret: string }
-  | { kind: "player"; code: string; playerId: string; name: string }
+  | { kind: "player"; code: string; playerId: string; name: string; resumeToken: string }
 
 export function load(): Session | null {
   const raw = localStorage.getItem(STORAGE_KEY)
@@ -10,7 +10,7 @@ export function load(): Session | null {
   try {
     const parsed = JSON.parse(raw)
     if (parsed?.kind === "admin"  && parsed.code && parsed.adminSecret) return parsed
-    if (parsed?.kind === "player" && parsed.code && parsed.playerId && parsed.name) return parsed
+    if (parsed?.kind === "player" && parsed.code && parsed.playerId && parsed.name && /^[a-f0-9]{64}$/.test(parsed.resumeToken)) return parsed
     return null
   } catch { return null }
 }

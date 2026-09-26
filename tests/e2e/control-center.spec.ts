@@ -347,7 +347,8 @@ test("all four languages and both themes cover every admin route, retain prefere
         await expect(page.locator("html")).toHaveAttribute("dir", locale.dir)
         await expect(page.locator("html")).toHaveAttribute("data-theme", theme)
         await expect(page.locator("h1")).toHaveText(locale.titles[index]!)
-        await expect(page.locator(".sidebar nav a")).toHaveCount(8)
+        await expect(page.locator(".sidebar nav a")).toHaveCount(9)
+        await expect(page.locator('.sidebar nav a[href="/admin/avatars"]')).toHaveCount(1)
         if (index < 8) await expect(page.locator(".sidebar nav a[aria-current='page']")).toHaveCount(1)
         if (route === "/admin") {
           await expect(page.locator(".kpi")).toHaveCount(10)

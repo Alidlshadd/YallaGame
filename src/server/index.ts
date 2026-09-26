@@ -2,7 +2,7 @@ import express from "express"
 import compression from "compression"
 import http from "node:http"
 import { Server } from "socket.io"
-import helmet from "helmet"
+import { publicApiLimit, safeHttpError, securityHeaders } from "./security/http.js"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 import { existsSync, mkdirSync } from "node:fs"
@@ -12,6 +12,7 @@ import { MemoryStore } from "./store/memory-store.js"
 import { SqliteStore } from "./store/sqlite-store.js"
 import type { RoomStore } from "./store/store.js"
 import { registerHandlers } from "./sockets/index.js"
+import { AddressLimits, allowedSocketOrigin } from "./sockets/security.js"
 import { resolveGame } from "./games/catalog.js"
 import { resolveEngine } from "./games/engines.js"
 import { cancelAllTimers } from "./domain/scheduler.js"
@@ -49,35 +50,8 @@ async function main() {
   // and ~60 kB gzipped.
   app.use(compression())
 
-  app.use(helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        // The views set style attributes (per-world backdrops) and Vite
-        // injects a style element, so inline styles have to stay allowed.
-        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-        fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
-        scriptSrc: ["'self'"],
-        imgSrc: ["'self'", "data:", "blob:"],
-        mediaSrc: ["'self'"],
-        // Same origin over http(s) and the websocket the room runs on.
-        connectSrc: ["'self'", "ws:", "wss:"],
-        workerSrc: ["'self'"],
-        manifestSrc: ["'self'"],
-        frameAncestors: ["'none'"],
-        objectSrc: ["'none'"],
-        baseUri: ["'self'"],
-        formAction: ["'self'"],
-        // Helmet adds this by default, which would rewrite every request to
-        // https - fatal for a host running the room over plain http on the
-        // living-room wifi.
-        upgradeInsecureRequests: null
-      }
-    },
-    // The app is served over plain http on a LAN during local play evenings;
-    // HSTS there would pin a certificate the host does not have.
-    hsts: config.NODE_ENV === "production" && Boolean(config.ALLOWED_ORIGIN)
-  }))
+  app.use(securityHeaders(config.NODE_ENV === "production", config.ALLOWED_ORIGIN))
+  app.use(["/api/games", "/api/public-config"], publicApiLimit())
 
   if (config.NODE_ENV === "production" && config.DB_PATH !== ":memory:" &&
       (!path.isAbsolute(config.DB_PATH!) || !process.env.UPLOAD_DIR || !path.isAbsolute(process.env.UPLOAD_DIR))) {
@@ -122,9 +96,47 @@ async function main() {
     }
   }))
 
-  const server = http.createServer(app)
+  app.use(safeHttpError)
+  const server = http.createServer({ headersTimeout: 15_000, requestTimeout: 30_000, maxHeaderSize: 16 * 1024 }, app)
+  const socketLimits = new AddressLimits()
   const io = new Server<ClientToServerEvents, ServerToClientEvents, never, SocketData>(server, {
-    cors: { origin: config.ALLOWED_ORIGIN ?? true }
+    cors: { origin: config.ALLOWED_ORIGIN ?? false },
+    maxHttpBufferSize: 16 * 1024,
+    allowRequest: (req, done) => {
+      // Resolve addresses with the same explicit trust-proxy policy as Express.
+      const address = app.get("trust proxy fn") as (ip: string, hop: number) => boolean
+      const peer = req.socket.remoteAddress ?? "unknown"
+      const forwarded = req.headers["x-forwarded-for"]
+      const chain = typeof forwarded === "string" ? forwarded.split(",").map(value => value.trim()).reverse() : []
+      let ip = peer
+      for (let i = 0; i < chain.length && address(ip, i); i++) ip = chain[i]!
+      const accepted = allowedSocketOrigin(req, config.ALLOWED_ORIGIN) && socketLimits.consume(`connect:${ip}`, 180, 60_000)
+      if (accepted) (req as typeof req & { clientAddress: string }).clientAddress = ip
+      done(null, accepted)
+    }
+  })
+  const connectedAddresses = new Map<string, number>()
+  io.on("connection", socket => {
+    const ip = (socket.request as typeof socket.request & { clientAddress?: string }).clientAddress ?? socket.handshake.address
+    const count = connectedAddresses.get(ip) ?? 0
+    if (count >= 240 || io.engine.clientsCount > 10_000) {
+      socket.disconnect(true)
+      return
+    }
+    connectedAddresses.set(ip, count + 1)
+    socket.once("disconnect", () => {
+      const remaining = (connectedAddresses.get(ip) ?? 1) - 1
+      if (remaining > 0) connectedAddresses.set(ip, remaining)
+      else connectedAddresses.delete(ip)
+    })
+    socket.use(([event], next) => {
+      if (!socketLimits.consume(`events:${ip}`, 6000, 60_000) ||
+          (event === "admin:create-room" && !socketLimits.consume(`rooms:${ip}`, 60, 600_000))) {
+        socket.disconnect(true)
+        return
+      }
+      next()
+    })
   })
 
   registerHandlers(io, {

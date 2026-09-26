@@ -13,7 +13,8 @@ import { characterAccessory } from "../../shared/accessories.js"
 import { normalizeSettings } from "../domain/settings.js"
 import { buildRolePool, assignRolesToConnected, resolveRoleData } from "../domain/roles.js"
 import { dealSpyWord, SPY_GAME_ID } from "../domain/spyWords.js"
-import { makeRoomCode, makeSecret } from "../domain/codes.js"
+import { makeRoomCode, makeSecret, playerResumeToken } from "../domain/codes.js"
+import { bindIdentity, revokeRoomSubscriptions } from "./membership.js"
 import { cancelTimer } from "../domain/scheduler.js"
 import { sendPhaseTo, type EngineResolver } from "../domain/engine.js"
 import { engineDeps } from "./game-handlers.js"
@@ -70,10 +71,14 @@ async function announceApprovals(deps: AdminDeps, room: Room, playerIds: string[
     const roleData = resolveRoleData(game, room, player.role)
     deps.io.to(`pending:${room.code}:${id}`).emit("player:join-approved", {
       status: "joined",
+      resumeToken: playerResumeToken(room.adminSecret, player.id),
       room: projectRoomFor(room, { kind: "player", playerId: id }, deps.resolveGame),
       player: { id: player.id, name: player.name, role: player.role, roleData, character: player.character, accessory: player.accessory ?? "" }
     })
     deps.io.in(`pending:${room.code}:${id}`).socketsLeave(`pending:${room.code}:${id}`)
+    for (const peer of deps.io.sockets.sockets.values()) {
+      if (peer.data.roomCode === room.code && peer.data.pendingRequestId === id) delete peer.data.pendingRequestId
+    }
   }
 }
 
@@ -85,8 +90,20 @@ async function generateUniqueCode(store: RoomStore): Promise<string> {
   throw new Error("SERVER_BUSY")
 }
 
+const creationQueues = new WeakMap<RoomStore, Promise<unknown>>()
+
+/** Counting and inserting must share a lock or concurrent sockets bypass the global cap. */
+function serializeCreation<T>(store: RoomStore, create: () => Promise<T>): Promise<T> {
+  const previous = creationQueues.get(store) ?? Promise.resolve()
+  const next = previous.catch(() => {}).then(create)
+  creationQueues.set(store, next)
+  return next.finally(() => {
+    if (creationQueues.get(store) === next) creationQueues.delete(store)
+  })
+}
+
 export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): void {
-  bind(socket, "admin:create-room", CreateRoomPayload, async ({ gameId, hostName, hostCharacter, hostAccessory, isPublic, requireApproval }) => {
+  bind(socket, "admin:create-room", CreateRoomPayload, async ({ gameId, hostName, hostCharacter, hostAccessory, isPublic, requireApproval }) => serializeCreation(deps.store, async () => {
     const game = deps.resolveGame(gameId)
     if (!game) throw new Error("UNKNOWN_GAME")
     if (deps.canCreateGame?.(gameId) === false) throw new Error("UNKNOWN_GAME")
@@ -114,30 +131,25 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
       round: 0, gameState: {}, scores: {}
     }
     await deps.store.create(room)
+    // Also covers codes reused after TTL expiry, when former sockets may still be open.
+    await revokeRoomSubscriptions(deps, finalCode)
 
+    await bindIdentity(socket, deps, finalCode, host.id)
     socket.data.adminSecret = adminSecret
-    socket.data.roomCode = finalCode
-    socket.data.playerId = host.id
     socket.data.adminRoomCount = adminRoomCount + 1
-    socket.join(`room:${finalCode}`)
-    socket.join(`admin:${finalCode}`)
-    // Also a player room, so the host receives their own role like everybody else.
-    socket.join(`p:${finalCode}:${host.id}`)
+    await socket.join(`admin:${finalCode}`)
 
     logger.info({ code: finalCode, gameId, isPublic, requireApproval }, "room created")
     const projection = projectRoomFor(room, { kind: "admin", adminSecret }, deps.resolveGame)
     return { code: finalCode, adminSecret, room: projection, hostPlayerId: host.id }
-  })
+  }))
 
   bind(socket, "admin:reconnect", ReconnectPayload, async ({ code, adminSecret }) => {
     const room = await deps.store.get(code)
     if (!room || room.adminSecret !== adminSecret) throw new Error("INVALID_ADMIN")
+    await bindIdentity(socket, deps, code, room.hostPlayerId)
     socket.data.adminSecret = adminSecret
-    socket.data.roomCode = code
-    socket.data.playerId = room.hostPlayerId
-    socket.join(`room:${code}`)
-    socket.join(`admin:${code}`)
-    socket.join(`p:${code}:${room.hostPlayerId}`)
+    await socket.join(`admin:${code}`)
     // Coming back from a dropped connection: the host is playing again.
     const revived = await deps.store.update(code, r => ({
       ...r,
@@ -234,6 +246,7 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
       // Turning approval off is also an answer to everyone already queued:
       // leaving them stranded in a queue nobody looks at would be worse.
       if (room.requireApproval && next.requireApproval === false && room.pending.length > 0) {
+        if (room.players.length + room.pending.length > deps.config.MAX_PLAYERS_PER_ROOM) throw new Error("ROOM_FULL")
         promoted = room.pending.map(r => r.id)
         const claimed = new Set(takenCharacters({ ...room, pending: [] }))
         next.players = [
@@ -305,6 +318,8 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
     for (const r of room.pending) {
       deps.io.to(`pending:${code}:${r.id}`).emit("player:join-rejected")
     }
+    // Room codes can be reused. No old subscriber may receive a future room's secrets.
+    await revokeRoomSubscriptions(deps, code)
     logger.info({ code }, "room closed by host")
     return { closed: true as const }
   })

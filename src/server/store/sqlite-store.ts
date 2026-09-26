@@ -2,6 +2,7 @@ import Database from "better-sqlite3"
 import type { Database as DB, Statement } from "better-sqlite3"
 import type { Room } from "@shared/types.js"
 import { RoomNotFoundError, type RoomStore } from "./store.js"
+import { privateStoragePath } from "../security/storage.js"
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS rooms (
@@ -111,6 +112,7 @@ export class SqliteStore implements RoomStore {
   private readonly stmtListPublic: Statement
 
   constructor(path: string) {
+    if (path !== ":memory:") path = privateStoragePath(path, "DB_PATH")
     this.db = new Database(path)
     if (path !== ":memory:") this.db.pragma("journal_mode = WAL")
     this.db.pragma("foreign_keys = ON")

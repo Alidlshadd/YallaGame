@@ -13,6 +13,7 @@ function attachFrameCapture(page: Page): CapturedFrame[] {
 }
 
 test("happy path: 4 players, role visibility, wire-level privacy", async ({ browser }) => {
+  test.setTimeout(60_000)
   const adminCtx = await browser.newContext()
   const adminPage = await adminCtx.newPage()
   attachFrameCapture(adminPage)

@@ -123,7 +123,7 @@ async function bootstrap() {
   }
   if (existing?.kind === "player") {
     const { emit } = await import("./services/socket.js")
-    const r = await emit("player:join", { code: existing.code, name: existing.name, playerId: existing.playerId })
+    const r = await emit("player:join", { code: existing.code, name: existing.name, playerId: existing.playerId, resumeToken: existing.resumeToken })
     if (r.ok) {
       const data = r.data as PlayerJoinData
       // A reload while the host still has not decided lands back in the queue

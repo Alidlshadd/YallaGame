@@ -12,6 +12,7 @@ export function registerHandlers(
   deps: SocketDeps
 ): void {
   io.on("connection", (socket: Socket<ClientToServerEvents, ServerToClientEvents, never, SocketData>) => {
+    if (!socket.connected) return
     registerAdminHandlers(socket, deps)
     registerPlayerHandlers(socket, deps)
     registerGameHandlers(socket, deps)

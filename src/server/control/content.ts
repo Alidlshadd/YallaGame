@@ -4,6 +4,7 @@ import path from "node:path"
 import { mkdir, writeFile, unlink } from "node:fs/promises"
 import { token } from "./auth.js"
 import { audit } from "./database.js"
+import { privateStoragePath } from "../security/storage.js"
 import { GAME_CATALOG } from "../games/catalog.js"
 import { CHARACTERS, isCharacterId } from "../../shared/characters.js"
 import type { LocalizedText } from "../../shared/types.js"
@@ -152,12 +153,7 @@ export async function validateImage(input: Buffer): Promise<{ data: Buffer; widt
   return { data, width: info.width, height: info.height }
 }
 export function persistentUploads(directory: string): string {
-  const resolved = path.resolve(directory)
-  const dist = path.resolve("dist")
-  const relative = path.relative(dist, resolved)
-  if (!relative || (!relative.startsWith("..") && !path.isAbsolute(relative)))
-    throw new Error("UPLOAD_DIR must be outside dist")
-  return resolved
+  return privateStoragePath(directory, "UPLOAD_DIR")
 }
 export async function saveUpload(
   db: Database.Database,

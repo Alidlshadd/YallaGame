@@ -47,7 +47,7 @@ export const pendingView = {
 
     const onApproved = async (data: JoinedData) => {
       settled = true
-      session.save({ kind: "player", code: roomCode, playerId: data.player.id, name: data.player.name })
+      session.save({ kind: "player", code: roomCode, playerId: data.player.id, name: data.player.name, resumeToken: data.resumeToken })
       vibrate("reveal")
       showToast(t("joinApproved"))
       await applyTheme(data.room.game.theme)
@@ -56,6 +56,7 @@ export const pendingView = {
 
     const onRejected = () => {
       settled = true
+      session.clear()
       clearTheme()
       showToast(t("joinRejected"))
       void setView("joinView", {}, { mode: "root" })
@@ -67,6 +68,7 @@ export const pendingView = {
     const withdraw = (): void => {
       if (settled) return
       settled = true
+      session.clear()
       // Fire and forget: the server also drops the request when this socket
       // disconnects, so a failed call cannot strand anyone.
       if (roomCode && requestId) void emit("player:cancel-request", { code: roomCode, requestId })

@@ -10,7 +10,7 @@ import { isTurnBased, resolveEngine } from "@server/games/engines.js"
 import { resolveGame } from "@server/games/catalog.js"
 import {
   BLUFF_TRIVIA_ID, GAME_OVER, GUESSING_PHASE, QUESTION_INPUT, SCORE_REVEAL, SUBMIT_LIES,
-  bluffTriviaEngine, normalizeAnswer, seededShuffle, type BluffTriviaState
+  bluffTriviaEngine, normalizeAnswer, shuffleOptions, type BluffTriviaState
 } from "@server/games/bluff-trivia.js"
 import { BLUFF_TRIVIA_QUESTIONS } from "@server/games/questions/bluff-trivia.js"
 import type {
@@ -129,20 +129,10 @@ describe("normalizeAnswer", () => {
   })
 })
 
-describe("seededShuffle", () => {
-  it("gives the same order for the same seed", () => {
-    const items = ["a", "b", "c", "d", "e"]
-    expect(seededShuffle(items, "ROOM1-1-q1")).toEqual(seededShuffle(items, "ROOM1-1-q1"))
-  })
-
-  it("gives a different order for a different seed", () => {
-    const items = ["a", "b", "c", "d", "e"]
-    expect(seededShuffle(items, "ROOM1-1-q1")).not.toEqual(seededShuffle(items, "ROOM2-1-q1"))
-  })
-
+describe("shuffleOptions", () => {
   it("never drops or duplicates an item", () => {
     const items = [1, 2, 3, 4, 5, 6]
-    expect([...seededShuffle(items, "seed")].sort()).toEqual(items)
+    expect([...shuffleOptions(items)].sort()).toEqual(items)
   })
 })
 
@@ -269,6 +259,20 @@ describe("submitting a lie", () => {
     const view = JSON.stringify(await h.viewFor("p2"))
     expect(view).not.toContain("ownerIds")
     expect(view).not.toMatch(/"(kind|type)":"correct"/)
+    expect(view).not.toMatch(/opt-(correct|lie|decoy)/)
+    const options = (await h.viewFor("p2") as BluffTriviaGuessingView).options
+    for (const option of options) expect(option.optionId).toMatch(/^[A-Za-z0-9_-]{22}$/)
+    expect((await h.viewFor("p3") as BluffTriviaGuessingView).options.map(o => o.optionId)).toEqual(options.map(o => o.optionId))
+  })
+
+  it("uses fresh opaque option identities even for identical room, round and question inputs", async () => {
+    const h = await harness()
+    await atGuessing(h, {})
+    const first = (await h.room()).gameState as BluffTriviaState
+    const transition = bluffTriviaEngine.next({ ...(await h.room()), phase: SUBMIT_LIES }, () => 0)
+    const second = transition.state as BluffTriviaState
+    const ids = new Set(first.options.map(o => o.id))
+    expect(second.options.every(o => !ids.has(o.id))).toBe(true)
   })
 
   it("accepts a lie and reflects it back only to its own author", async () => {

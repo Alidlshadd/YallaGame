@@ -5,6 +5,8 @@ import type {
 import type { GameEngine, Transition } from "../domain/engine.js"
 import { resolveGame } from "./catalog.js"
 import { BLUFF_TRIVIA_QUESTIONS, resolveBluffQuestion, type BluffTriviaQuestion } from "./questions/bluff-trivia.js"
+import { randomInt } from "node:crypto"
+import { makeSecret } from "../domain/codes.js"
 
 /**
  * Bluff Trivia — the table reads a question, everybody writes a plausible
@@ -145,36 +147,13 @@ function sameForAllLangs(text: string): LocalizedText {
   return { en: text, tr: text, ar: text, ku: text }
 }
 
-// ─── Deterministic shuffle ───────────────────────────────────────────────
-// The room needs one option order every phone agrees on. The server only
-// ever runs this once per round and stores the result, so nothing about
-// this has to be fast — only reproducible, so a test can pin it down.
+// Shuffle once with server-side cryptographic randomness, then persist the
+// order so all phones agree without exposing a predictable public seed.
 
-function hashSeed(seed: string): number {
-  let h = 2166136261
-  for (let i = 0; i < seed.length; i++) {
-    h ^= seed.charCodeAt(i)
-    h = Math.imul(h, 16777619)
-  }
-  return h >>> 0
-}
-
-function mulberry32(seed: number): () => number {
-  let a = seed
-  return () => {
-    a |= 0
-    a = (a + 0x6D2B79F5) | 0
-    let t = Math.imul(a ^ (a >>> 15), 1 | a)
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
-
-export function seededShuffle<T>(items: readonly T[], seed: string): T[] {
-  const rng = mulberry32(hashSeed(seed))
+export function shuffleOptions<T>(items: readonly T[]): T[] {
   const arr = [...items]
   for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1))
+    const j = randomInt(i + 1)
     const tmp = arr[i]!
     arr[i] = arr[j]!
     arr[j] = tmp
@@ -189,8 +168,7 @@ export function seededShuffle<T>(items: readonly T[], seed: string): T[] {
  */
 function buildOptionPool(
   question: BluffTriviaQuestion,
-  lies: Record<string, LieEntry>,
-  room: Room
+  lies: Record<string, LieEntry>
 ): { options: BluffOption[]; truthGuesserPlayerIds: string[] } {
   const correctVariants = new Set(normalizedVariants(question.correctAnswer))
   const usedVariants = new Set(correctVariants)
@@ -212,12 +190,12 @@ function buildOptionPool(
     else group.ownerIds.push(playerId)
   }
 
-  const lieOptions: BluffOption[] = [...groups.entries()].map(([normalized, group], index) => {
+  const lieOptions: BluffOption[] = [...groups.entries()].map(([normalized, group]) => {
     usedVariants.add(normalized)
-    return { id: `opt-lie-${index}`, text: sameForAllLangs(group.display), kind: "lie" as const, ownerIds: group.ownerIds }
+    return { id: makeSecret(), text: sameForAllLangs(group.display), kind: "lie" as const, ownerIds: group.ownerIds }
   })
 
-  const correctOption: BluffOption = { id: "opt-correct", text: question.correctAnswer, kind: "correct", ownerIds: [] }
+  const correctOption: BluffOption = { id: makeSecret(), text: question.correctAnswer, kind: "correct", ownerIds: [] }
 
   const needed = Math.max(0, MIN_OPTIONS - (1 + lieOptions.length))
   const decoyOptions: BluffOption[] = []
@@ -228,12 +206,13 @@ function buildOptionPool(
     // lie would look like a second copy of the same option on the screen.
     if (variants.some(v => usedVariants.has(v))) continue
     for (const v of variants) usedVariants.add(v)
-    decoyOptions.push({ id: `opt-decoy-${decoyOptions.length}`, text: decoy, kind: "decoy", ownerIds: [] })
+    decoyOptions.push({ id: makeSecret(), text: decoy, kind: "decoy", ownerIds: [] })
   }
 
   const pool = [correctOption, ...lieOptions, ...decoyOptions]
-  const seed = `${room.code}-${room.round}-${question.id}`
-  return { options: seededShuffle(pool, seed), truthGuesserPlayerIds }
+  // Both identity and position must hide the answer. A public room/round seed
+  // lets a client reconstruct the position of the initially-first correct option.
+  return { options: shuffleOptions(pool), truthGuesserPlayerIds }
 }
 
 /**
@@ -365,7 +344,7 @@ export const bluffTriviaEngine: GameEngine = {
     }
     if (room.phase === SUBMIT_LIES) {
       const question = resolveBluffQuestion(state.questionId)
-      const { options, truthGuesserPlayerIds } = buildOptionPool(question, state.lies, room)
+      const { options, truthGuesserPlayerIds } = buildOptionPool(question, state.lies)
       return { phase: GUESSING_PHASE, state: { ...state, options, truthGuesserPlayerIds }, ms: GUESS_MS }
     }
     if (room.phase === GUESSING_PHASE) {

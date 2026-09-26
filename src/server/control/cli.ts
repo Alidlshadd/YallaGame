@@ -5,6 +5,7 @@ import { emitKeypressEvents } from "node:readline"
 import { openControlDatabase, audit } from "./database.js"
 import { hashPassword, normalizeAdminUsername } from "./auth.js"
 import { cleanupUploads, persistentUploads } from "./content.js"
+import { privateStoragePath } from "../security/storage.js"
 
 function secretPrompt(label: string): Promise<string> {
   if (!process.stdin.isTTY || !process.stdout.isTTY)
@@ -58,9 +59,8 @@ async function main() {
     )
   const filename = process.env.DB_PATH
   if (!filename || filename === ":memory:") throw new Error("Set DB_PATH to the persistent SQLite file")
-  const backupDir = path.resolve(process.env.BACKUP_DIR ?? "data/backups")
-  if (backupDir === path.resolve("dist") || backupDir.startsWith(path.resolve("dist") + path.sep))
-    throw new Error("Backups must be outside dist")
+  privateStoragePath(filename, "DB_PATH")
+  const backupDir = privateStoragePath(process.env.BACKUP_DIR ?? "data/backups", "BACKUP_DIR")
   if (command === "backup" || command === "migrate") {
     if (rawUsername) throw new Error("Unexpected argument")
     if (existsSync(filename)) {

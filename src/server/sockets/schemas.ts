@@ -39,7 +39,8 @@ export const JoinPayload          = z.object({
   // Optional so a rebinding player keeps the character they already hold.
   character: CharacterId.optional(),
   accessory: AccessoryId.optional(),
-  playerId: z.string().min(1).max(64).optional()
+  playerId: z.string().min(1).max(64).optional(),
+  resumeToken: z.string().regex(/^[a-f0-9]{64}$/).optional()
 })
 export const PeekRoomPayload      = z.object({ code: RoomCode })
 export const UpdateRoomPayload    = z.object({

@@ -8,7 +8,8 @@ import { bind } from "./bind.js"
 import { projectRoomFor, takenCharacters } from "../domain/visibility.js"
 import { isCharacterId } from "../../shared/characters.js"
 import { characterAccessory } from "../../shared/accessories.js"
-import { makeSecret } from "../domain/codes.js"
+import { makeSecret, playerResumeToken, validResumeToken } from "../domain/codes.js"
+import { bindIdentity } from "./membership.js"
 import { fillerRoleId, resolveRoleData } from "../domain/roles.js"
 import { JoinPayload, CancelRequestPayload } from "./schemas.js"
 import type { EngineResolver } from "../domain/engine.js"
@@ -31,7 +32,7 @@ export interface PlayerDeps {
 }
 
 export function registerPlayerHandlers(socket: TypedSocket, deps: PlayerDeps): void {
-  bind(socket, "player:join", JoinPayload, async ({ code, name, character, accessory, playerId }) => {
+  bind(socket, "player:join", JoinPayload, async ({ code, name, character, accessory, playerId, resumeToken }) => {
     if (character !== undefined && !(deps.isValidCharacter?.(character) ?? isCharacterId(character)))
       throw new Error("UNKNOWN_CHARACTER")
     let bound: Player | null = null
@@ -46,6 +47,7 @@ export function registerPlayerHandlers(socket: TypedSocket, deps: PlayerDeps): v
         current ?? (room.assigned ? fillerRoleId(game) : null)
 
       if (playerId) {
+        if (!validResumeToken(room.adminSecret, playerId, resumeToken)) throw new Error("AUTHZ_MISMATCH")
         const existing = room.players.find(p => p.id === playerId)
         if (existing) {
           bound = { ...existing, connected: true, role: roleFor(existing.role), accessory: characterAccessory(existing.character, existing.accessory) }
@@ -55,18 +57,11 @@ export function registerPlayerHandlers(socket: TypedSocket, deps: PlayerDeps): v
         // instead of asking the host a second time.
         const waiting = room.pending.find(r => r.id === playerId)
         if (waiting) { queued = waiting; return room }
+        throw new Error("AUTHZ_MISMATCH")
       }
 
       const collision = room.players.find(p => p.name.toLowerCase() === name.toLowerCase())
-      if (collision && collision.connected) throw new Error("NAME_TAKEN")
-      if (collision && !collision.connected) {
-        // Coming back to a seat that is still theirs: keep the character they
-        // already had unless they explicitly picked a different free one.
-        const wanted = character && character !== collision.character
-          && !takenCharacters(room).includes(character) ? character : collision.character
-        bound = { ...collision, connected: true, role: roleFor(collision.role), character: wanted, accessory: characterAccessory(wanted, accessory ?? collision.accessory) }
-        return { ...room, players: room.players.map(p => p.id === collision.id ? bound! : p) }
-      }
+      if (collision) throw new Error("NAME_TAKEN")
       // A name already waiting in the queue is just as taken as one in a seat.
       if (room.pending.some(r => r.name.toLowerCase() === name.toLowerCase())) throw new Error("NAME_TAKEN")
 
@@ -74,6 +69,7 @@ export function registerPlayerHandlers(socket: TypedSocket, deps: PlayerDeps): v
       // sat down or waited for the host.
       if (character && takenCharacters(room).includes(character)) throw new Error("CHARACTER_TAKEN")
 
+      if (room.players.length + room.pending.length >= deps.config.MAX_PLAYERS_PER_ROOM) throw new Error("ROOM_FULL")
       if (room.requireApproval) {
         const request: PendingJoin = { id: makeSecret(), name, requestedAt: Date.now(), character: character ?? "", accessory: characterAccessory(character ?? "", accessory) }
         queued = request
@@ -89,24 +85,19 @@ export function registerPlayerHandlers(socket: TypedSocket, deps: PlayerDeps): v
     if (queued) {
       const request: PendingJoin = queued
       const game = deps.resolveGame(updated.gameId)!
-      socket.data.roomCode = code
-      socket.data.pendingRequestId = request.id
+      await bindIdentity(socket, deps, code, request.id, true)
       // A private room of its own, so approve/reject reaches exactly this
       // person without ever putting them inside `room:` first.
-      socket.join(`pending:${code}:${request.id}`)
       const adminProjection = projectRoomFor(updated, { kind: "admin", adminSecret: updated.adminSecret }, deps.resolveGame)
       deps.io.to(`admin:${code}`).emit("admin:room-updated", adminProjection)
       logger.info({ code, requestId: request.id }, "join requested")
-      return { status: "pending" as const, requestId: request.id, code, theme: game.theme }
+      return { status: "pending" as const, requestId: request.id, code, theme: game.theme, resumeToken: playerResumeToken(updated.adminSecret, request.id) }
     }
 
     if (!bound) throw new Error("INVALID_INPUT")
     const me: Player = bound
 
-    socket.data.roomCode = code
-    socket.data.playerId = me.id
-    socket.join(`room:${code}`)
-    socket.join(`p:${code}:${me.id}`)
+    await bindIdentity(socket, deps, code, me.id)
 
     const game = deps.resolveGame(updated.gameId)!
     const roleData = resolveRoleData(game, updated, me.role)
@@ -132,14 +123,14 @@ export function registerPlayerHandlers(socket: TypedSocket, deps: PlayerDeps): v
 
     const myProjection = projectRoomFor(updated, { kind: "player", playerId: me.id }, deps.resolveGame)
     return {
-      status: "joined" as const, room: myProjection,
+      status: "joined" as const, room: myProjection, resumeToken: playerResumeToken(updated.adminSecret, me.id),
       player: { id: me.id, name: me.name, role: me.role, roleData, character: me.character, accessory: me.accessory ?? "" }
     }
   })
 
   bind(socket, "player:cancel-request", CancelRequestPayload, async ({ code, requestId }) => {
     // Only the socket holding the request may withdraw it.
-    if (socket.data.pendingRequestId !== requestId) throw new Error("AUTHZ_MISMATCH")
+    if (socket.data.pendingRequestId !== requestId || socket.data.roomCode !== code) throw new Error("AUTHZ_MISMATCH")
     const updated = await deps.store.update(code, room => ({
       ...room, pending: room.pending.filter(r => r.id !== requestId)
     }))
@@ -157,7 +148,7 @@ export function registerPlayerHandlers(socket: TypedSocket, deps: PlayerDeps): v
 
     // Somebody who closed the tab while waiting should not stay in the host's
     // queue as a request that can never be answered.
-    if (code && pendingRequestId) {
+    if (code && pendingRequestId && !deps.io.sockets.adapter.rooms.get(`pending:${code}:${pendingRequestId}`)?.size) {
       try {
         const updated = await deps.store.update(code, room => ({
           ...room, pending: room.pending.filter(r => r.id !== pendingRequestId)
@@ -168,6 +159,7 @@ export function registerPlayerHandlers(socket: TypedSocket, deps: PlayerDeps): v
     }
 
     if (!code || !playerId) return
+    if (deps.io.sockets.adapter.rooms.get(`p:${code}:${playerId}`)?.size) return
     try {
       const updated = await deps.store.update(code, room => ({
         ...room,

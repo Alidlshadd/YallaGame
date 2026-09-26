@@ -10,9 +10,9 @@ export interface AdminRoomData     { room: VisibleRoom }
 export interface RoomListData      { rooms: RoomSummary[] }
 
 /** A seat in the room, handed out immediately or after the host accepts. */
-export interface JoinedData        { status: "joined"; room: VisibleRoom; player: SelfPlayer }
+export interface JoinedData        { status: "joined"; room: VisibleRoom; player: SelfPlayer; resumeToken: string }
 /** The host has approval turned on: hold this id and wait for the decision. */
-export interface PendingData       { status: "pending"; requestId: string; code: string; theme: string }
+export interface PendingData       { status: "pending"; requestId: string; code: string; theme: string; resumeToken: string }
 export type PlayerJoinData = JoinedData | PendingData
 
 /**
@@ -59,7 +59,7 @@ export interface ClientToServerEvents {
   "admin:approve-join":    (p: { code: string; adminSecret: string; requestId: string },            cb: Ack<AdminRoomData>)  => void
   "admin:reject-join":     (p: { code: string; adminSecret: string; requestId: string },            cb: Ack<AdminRoomData>)  => void
   "admin:close-room":      (p: { code: string; adminSecret: string },                               cb: Ack<{ closed: true }>) => void
-  "player:join":           (p: { code: string; name: string; character?: string; accessory?: string; playerId?: string }, cb: Ack<PlayerJoinData>) => void
+  "player:join":           (p: { code: string; name: string; character?: string; accessory?: string; playerId?: string; resumeToken?: string }, cb: Ack<PlayerJoinData>) => void
   "player:cancel-request": (p: { code: string; requestId: string },                                 cb: Ack<{ cancelled: true }>) => void
   "rooms:list":            (p: Record<string, never>,                                               cb: Ack<RoomListData>)   => void
   /** One room by code, for the join screen reached with a code rather than a list row. */

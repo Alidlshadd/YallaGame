@@ -6,6 +6,8 @@ import { checkRateLimit } from "./rate-limit.js"
 import { logger } from "../logger.js"
 
 type TypedSocket = Socket<ClientToServerEvents, ServerToClientEvents, never, SocketData>
+const identityEvents = new Set(["admin:create-room", "admin:reconnect", "player:join"])
+const identityInFlight = new WeakSet<TypedSocket>()
 
 const ERROR_CODES = new Set<ErrorCode>([
   "INVALID_ADMIN","ROOM_NOT_FOUND","NAME_REQUIRED","NAME_TAKEN",
@@ -39,11 +41,16 @@ export function bind<E extends keyof ClientToServerEvents, Payload, Data>(
     if (!checkRateLimit(socket, event as string)) return ack({ ok: false, error: "RATE_LIMITED" })
     const parsed = schema.safeParse(payload)
     if (!parsed.success) return ack({ ok: false, error: "INVALID_INPUT" })
+    const identity = identityEvents.has(event as string)
+    if (identityInFlight.has(socket)) return ack({ ok: false, error: "RATE_LIMITED" })
+    if (identity) identityInFlight.add(socket)
     try {
       const data = await handler(parsed.data, socket)
       ack({ ok: true, data })
     } catch (err) {
       ack({ ok: false, error: toErrorCode(err) })
+    } finally {
+      if (identity) identityInFlight.delete(socket)
     }
   })
 }

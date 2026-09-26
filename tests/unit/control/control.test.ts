@@ -4,6 +4,7 @@ import { createServer, type Server } from "node:http"
 import { mkdtemp, rm, readFile, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
+import { gzipSync } from "node:zlib"
 import sharp from "sharp"
 import type Database from "better-sqlite3"
 import { ADMIN_SCHEMA, openControlDatabase } from "../../../src/server/control/database.js"
@@ -120,6 +121,58 @@ describe("Control center security and persistence", () => {
     expect(await verifyPassword("wrong", passwordHash)).toBe(false)
     expect(await verifyPassword("testing-only-long-password", passwordHash)).toBe(true)
   })
+  it("SQL injection cannot authenticate or change the user table", async () => {
+    for (const username of ["operator'--", "' OR 1=1 --", "'; DROP TABLE admin_users; --"]) {
+      expect((await login("testing-only-long-password", username)).status).toBe(401)
+    }
+    expect(db.prepare("SELECT username FROM admin_users").all()).toEqual([{ username: "operator" }])
+    expect(db.prepare("SELECT count(*) n FROM admin_sessions").get()).toEqual({ n: 0 })
+    expect((await login()).status).toBe(200)
+  })
+  it("treats SQL fragments and LIKE wildcards as data in record searches", async () => {
+    await login()
+    db.prepare("INSERT INTO analytics_events(event,player_name,game_id,created_at) VALUES('player_joined','Alice','spy-game',?)").run(Date.now())
+    expect((await (await request("/api/admin/players?q=Alice")).json()).total).toBe(1)
+    for (const value of ["' OR 1=1 --", "'; DROP TABLE admin_users; --", "%", "_"]) {
+      for (const endpoint of ["players", "history", "audit-logs"]) {
+        const response = await request(`/api/admin/${endpoint}?q=${encodeURIComponent(value)}`)
+        expect(response.status).toBe(200)
+        expect((await response.json()).total).toBe(0)
+      }
+    }
+    const game = encodeURIComponent("spy-game' OR 1=1 --")
+    expect((await (await request(`/api/admin/players?game=${game}`)).json()).total).toBe(0)
+    expect((await request("/api/admin/players?page=1%3BDROP%20TABLE%20admin_users")).status).toBe(400)
+    expect(db.prepare("SELECT count(*) n FROM admin_users").get()).toEqual({ n: 1 })
+  })
+  it("requires CSRF for every admin mutation including uploads and deletes", async () => {
+    expect((await request("/api/admin/uploads", "POST", {})).status).toBe(401)
+    await login()
+    for (const [endpoint, method] of [["/branding", "PUT"], ["/games/spy-game", "PUT"], ["/avatars", "POST"], ["/avatars/unknown", "DELETE"], ["/uploads", "POST"]]) {
+      expect((await request(`/api/admin${endpoint}`, method, {}, "")).status).toBe(403)
+    }
+  })
+  it("rejects compressed request bodies, malformed JSON and excessive bodies", async () => {
+    const headers = { Origin: base, "Content-Type": "application/json" }
+    const compressed = await fetch(base + "/api/auth/login", { method: "POST", headers: { ...headers, "Content-Encoding": "gzip" }, body: new Uint8Array(gzipSync(Buffer.from('{}'))) })
+    expect(compressed.status).toBe(415)
+    const broken = await fetch(base + "/api/auth/login", { method: "POST", headers, body: '{"password":' })
+    expect(broken.status).toBe(400)
+    expect(await broken.text()).not.toMatch(/SyntaxError|stack|password/)
+    const oversized = await fetch(base + "/api/auth/login", { method: "POST", headers, body: JSON.stringify({ value: "x".repeat(3000) }) })
+    expect(oversized.status).toBe(413)
+  })
+  it("rejects arbitrary URLs and unexpected object keys in branding", async () => {
+    await login()
+    const brand = { siteName: "Safe", description: "", footer: "", logo: null, darkLogo: null, favicon: null, ogImage: null }
+    for (const logo of ["http://169.254.169.254/latest/meta-data/", "file:///etc/passwd", "javascript:alert(1)", "../../private.db"]) {
+      expect((await request("/api/admin/branding", "PUT", { ...brand, logo })).status).toBe(400)
+    }
+    const polluted = JSON.parse('{"__proto__":{"polluted":true}}') as Record<string, unknown>
+    expect((await request("/api/admin/branding", "PUT", { ...brand, ...polluted })).status).toBe(400)
+    expect(({} as Record<string, unknown>)["polluted"]).toBeUndefined()
+    expect(publicConfiguration(db).branding).toEqual({})
+  })
   it("accepts email admin identifiers, normalizes case and rejects malformed identifiers", async () => {
     expect(normalizeAdminUsername(" Legacy.Operator_1 ")).toBe("legacy.operator_1")
     const email = normalizeAdminUsername(" Admin+Operations@Example.com ")
@@ -172,6 +225,7 @@ describe("Control center security and persistence", () => {
     ).toBe(403)
     for (let i = 0; i < 8; i++) expect((await login("wrong")).status).toBe(401)
     expect((await login("wrong")).status).toBe(429)
+    for (let i = 0; i < 5; i++) expect((await login("wrong")).status).toBe(429)
     expect(db.prepare("SELECT count(*) n FROM admin_audit_logs WHERE action='login_failed'").get()).toEqual({
       n: 9
     })

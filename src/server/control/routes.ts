@@ -71,7 +71,7 @@ export function mountControl(
     res.set({ "X-Content-Type-Options": "nosniff", "Cache-Control": "public, max-age=31536000, immutable" })
     res.sendFile(path.join(uploads, req.params.id!))
   })
-  app.post("/api/analytics", express.json({ limit: "1kb" }), (req, res) => {
+  app.post("/api/analytics", express.json({ limit: "1kb", inflate: false }), (req, res) => {
     if (!auth.sameOrigin(req) || !limited(req, "analytics", 180, 60_000)) {
       res.sendStatus(429)
       return
@@ -130,7 +130,7 @@ export function mountControl(
   const dummy = `scrypt$${"0".repeat(32)}$${"0".repeat(128)}`
   app.post(
     "/api/auth/login",
-    express.json({ limit: "2kb" }),
+    express.json({ limit: "2kb", inflate: false }),
     wrap(async (req, res) => {
       const candidate = z
         .object({ username: z.string().trim().min(1).max(64), password: z.string().min(1).max(128) })
@@ -149,7 +149,9 @@ export function mountControl(
       const ipAllowed = limited(req, "login", 10, 900_000)
       const accountAllowed = ipAllowed && consumeLimit(db, hash(`${salt}:account:${account}`), 8, 900_000)
       if (!ipAllowed || !accountAllowed || activeHashes >= 2) {
-        audit(db, null, "login_failed", "authentication", { reason: "rate_limited" })
+        // Rejected floods must not turn the audit log into an unbounded disk sink.
+        if (limited(req, "login-rate-audit", 1, 900_000))
+          audit(db, null, "login_failed", "authentication", { reason: "rate_limited" })
         res
           .set("Retry-After", "900")
           .status(429)
@@ -290,7 +292,8 @@ export function mountControl(
     },
     express.raw({
       type: ["image/jpeg", "image/png", "image/webp", "application/octet-stream"],
-      limit: MAX_UPLOAD
+      limit: MAX_UPLOAD,
+      inflate: false
     }),
     wrap(async (req, res) => {
       if (!Buffer.isBuffer(req.body)) {
@@ -309,7 +312,7 @@ export function mountControl(
       }
     })
   )
-  api.use(express.json({ limit: "16kb" }))
+  api.use(express.json({ limit: "16kb", inflate: false }))
   api.put("/games/:id", (req, res) => {
     const id = req.params.id!
     const parsed = z
@@ -571,13 +574,15 @@ export function mountControl(
       res: Response,
       _next: express.NextFunction
     ) => {
-      const status = error.type === "entity.too.large" ? 413 : error.status === 400 ? 400 : 503
+      const status = error.type === "entity.too.large" ? 413 : error.status === 415 ? 415 : error.status === 400 ? 400 : 503
       res
         .status(status)
         .json({
           error:
             status === 413
               ? "Request too large"
+              : status === 415
+                ? "Unsupported content encoding or media type"
               : status === 400
                 ? "Invalid request"
                 : "Service temporarily unavailable"

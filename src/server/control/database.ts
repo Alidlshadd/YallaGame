@@ -1,6 +1,7 @@
 import Database from "better-sqlite3"
 import { chmodSync, existsSync, mkdirSync } from "node:fs"
 import path from "node:path"
+import { privateStoragePath } from "../security/storage.js"
 
 export const ADMIN_SCHEMA = `
 CREATE TABLE IF NOT EXISTS admin_schema (version INTEGER PRIMARY KEY);
@@ -64,6 +65,7 @@ INSERT OR IGNORE INTO admin_schema(version) VALUES(1);
 `
 
 export function openControlDatabase(filename: string, migrate = false): Database.Database {
+  if (filename !== ":memory:") filename = privateStoragePath(filename, "DB_PATH")
   const isNew = filename !== ":memory:" && !existsSync(filename)
   if (filename !== ":memory:") mkdirSync(path.dirname(path.resolve(filename)), { recursive: true, mode: 0o700 })
   const db = new Database(filename, { timeout: 250 })

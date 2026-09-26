@@ -17,7 +17,7 @@ export class MemoryStore implements RoomStore {
 
   async update(code: string, updater: (room: Room) => Room): Promise<Room> {
     const prev = this.chains.get(code) ?? Promise.resolve()
-    const next = prev.then(() => {
+    const next = prev.catch(() => {}).then(() => {
       const current = this.rooms.get(code)
       if (!current) throw new RoomNotFoundError(code)
       const updated = updater(structuredClone(current))

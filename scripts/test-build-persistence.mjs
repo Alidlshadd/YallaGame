@@ -52,6 +52,7 @@ try {
     env: {
       ...process.env,
       NODE_ENV: "production",
+      ALLOWED_ORIGIN: "https://test.invalid",
       DB_PATH: filename,
       UPLOAD_DIR: uploads,
       PORT: String(port),
