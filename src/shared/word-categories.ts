@@ -2025,6 +2025,7 @@ export const WORD_CATEGORIES: readonly WordCategory[] = [
       w("farhad-pirbal",    "Farhad Pirbal",        "Ferhad Pirbal",        "فرهاد بيربال",       "فەرهاد پیرباڵ"),
       w("hassan-zirak",     "Hassan Zirak",         "Hasan Zirek",          "حسن زيرك",           "حەسەن زیرەک"),
       w("yunis-tutunci",    "Yunis Tutunci",        "Yunus Tütüncü",        "يونس تتنجي",         "یونس توتنچی"),
+      w("mama-vandam",      "Mama Vandam",          "Mama Vandam",          "ماما فاندام",        "مامە ڤاندام"),
       w("peshawa-barznji",  "Peshawa Barznji",      "Peşewa Berzenci",      "بيشوا برزنجي",       "پێشەوا بەرزنجی"),
       w("sivan-perwer",     "Şivan Perwer",         "Şivan Perwer",         "شفان برور",          "شڤان پەروەر"),
       w("ibrahim-tatlises", "İbrahim Tatlıses",     "İbrahim Tatlıses",     "إبراهيم تاتليسس",    "ئیبراهیم تاتلیسەس"),
