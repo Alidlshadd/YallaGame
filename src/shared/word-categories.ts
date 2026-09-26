@@ -1436,8 +1436,7 @@ export const WORD_CATEGORIES: readonly WordCategory[] = [
       w("jackie-chan",      "Jackie Chan",          "Jackie Chan",          "جاكي شان",           "جاکی چان"),
       w("kadim-al-sahir",   "Kadim Al Sahir",       "Kazım El Sahir",       "كاظم الساهر",        "کازم ساهیر"),
       w("tarkan",           "Tarkan",               "Tarkan",               "تاركان",             "تارکان"),
-      w("shakira",          "Shakira",              "Shakira",              "شاكيرا",             "شاکیرا"),
-      w("hassan-zirak",     "Hassan Zirak",         "Hasan Zirek",          "حسن زيرك",           "حەسەن زیرەک")
+      w("shakira",          "Shakira",              "Shakira",              "شاكيرا",             "شاکیرا")
     ]
   },
 
@@ -2023,6 +2022,8 @@ export const WORD_CATEGORIES: readonly WordCategory[] = [
       w("samana-shet",      "Samana Shet",          "Samana Şet",           "سمانة شيت",          "سەمانە شێت"),
       w("shaxo-hadad",      "Shaxo Hadad",          "Şaxo Hadad",           "شاخو حداد",          "شاخۆ حەداد"),
       w("farhad-pirbal",    "Farhad Pirbal",        "Ferhad Pirbal",        "فرهاد بيربال",       "فەرهاد پیرباڵ"),
+      w("hassan-zirak",     "Hassan Zirak",         "Hasan Zirek",          "حسن زيرك",           "حەسەن زیرەک"),
+      w("yunis-tutunci",    "Yunis Tutunci",        "Yunus Tütüncü",        "يونس تتنجي",         "یونس توتنچی"),
       w("peshawa-barznji",  "Peshawa Barznji",      "Peşewa Berzenci",      "بيشوا برزنجي",       "پێشەوا بەرزنجی"),
       w("sivan-perwer",     "Şivan Perwer",         "Şivan Perwer",         "شفان برور",          "شڤان پەروەر"),
       w("ibrahim-tatlises", "İbrahim Tatlıses",     "İbrahim Tatlıses",     "إبراهيم تاتليسس",    "ئیبراهیم تاتلیسەس"),
