@@ -5,6 +5,7 @@ import {
   type SupportedGame,
   getCategoriesForGame,
   resolveCategoryLabel,
+  withoutRecentWords,
   RANDOM_MIX_KEY
 } from "@shared/word-categories.js"
 
@@ -60,25 +61,27 @@ export function pickWhoAmIWord(
   exclude: readonly string[] = [],
   rng: () => number = Math.random
 ): { word: string; categoryKey: string } {
-  const excluded = new Set(exclude)
+  // Random Mix spans every category, and a word shared by two categories
+  // keeps a single entry so it isn't drawn twice as often.
   const pool: Array<{ word: string; categoryKey: string }> = []
+  const seen = new Set<string>()
+  const add = (word: string, key: string): void => {
+    if (seen.has(word)) return
+    seen.add(word)
+    pool.push({ word, categoryKey: key })
+  }
 
   if (categoryKey === RANDOM_MIX_KEY) {
     for (const cat of WHO_AM_I_CATEGORIES) {
-      for (const word of wordsFor(cat, lang)) {
-        pool.push({ word, categoryKey: cat.key })
-      }
+      for (const word of wordsFor(cat, lang)) add(word, cat.key)
     }
   } else {
     const cat = WHO_AM_I_CATEGORIES.find(c => c.key === categoryKey)
     if (!cat) throw new Error("WHO_AM_I_UNKNOWN_CATEGORY")
-    for (const word of wordsFor(cat, lang)) {
-      pool.push({ word, categoryKey: cat.key })
-    }
+    for (const word of wordsFor(cat, lang)) add(word, cat.key)
   }
 
-  const fresh = pool.filter(p => !excluded.has(p.word))
-  const choices = fresh.length > 0 ? fresh : pool
-  if (choices.length === 0) throw new Error("WHO_AM_I_NO_WORDS")
+  if (pool.length === 0) throw new Error("WHO_AM_I_NO_WORDS")
+  const choices = withoutRecentWords(pool, exclude, p => p.word)
   return choices[Math.floor(rng() * choices.length)]!
 }

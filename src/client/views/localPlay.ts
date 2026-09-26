@@ -46,7 +46,6 @@ const FOOTBALL_GAME_ID = "football-player-guess"
    that exist in the shared file and produce playable spy rounds out of the
    box. "iraq-kurdistan-cities" gives the audience a local hook. */
 const DEFAULT_SPY_CATEGORIES = ["iraq-kurdistan-cities", "food-drinks", "jobs", "objects"]
-const WHO_AM_I_RECENT_LIMIT = 8
 
 type Step =
   | "game"
@@ -640,22 +639,23 @@ function localReviewText(
   return text[lang]?.[key] ?? text.en[key]
 }
 
-/* Recently dealt spy words, kept per device so the next rounds (and the next
-   game on the same phone) don't hand out the same word again. */
+/* Recently dealt words (oldest first), kept per device so the next rounds —
+   and the next game on the same phone — don't hand out the same word again. */
 const RECENT_SPY_WORDS_KEY = "yg.spyRecent"
+const RECENT_WHO_WORDS_KEY = "yg.whoRecent"
 
-function loadRecentSpyWords(): string[] {
+function loadRecentWords(storageKey: string): string[] {
   try {
-    const parsed: unknown = JSON.parse(localStorage.getItem(RECENT_SPY_WORDS_KEY) ?? "[]")
+    const parsed: unknown = JSON.parse(localStorage.getItem(storageKey) ?? "[]")
     return Array.isArray(parsed) ? parsed.filter((w): w is string => typeof w === "string") : []
   } catch {
     return []
   }
 }
 
-function saveRecentSpyWords(words: readonly string[]): void {
+function saveRecentWords(storageKey: string, words: readonly string[]): void {
   try {
-    localStorage.setItem(RECENT_SPY_WORDS_KEY, JSON.stringify(words))
+    localStorage.setItem(storageKey, JSON.stringify(words))
   } catch {
     // Storage blocked (private mode etc.) — repeat avoidance just won't persist.
   }
@@ -677,9 +677,9 @@ function prepareRound(game: Game, lang: LangCode): void {
   state.voteAttemptsLeft = Math.max(1, settingNumber("guessAttempts", 1))
 
   if (isSpyGame(game)) {
-    const recent = loadRecentSpyWords()
+    const recent = loadRecentWords(RECENT_SPY_WORDS_KEY)
     const pick = pickSpyWordWithCategory(lang, state.spyCategoryIds, state.customSpyWords, Math.random, recent)
-    saveRecentSpyWords(rememberRecentWord(recent, pick.word))
+    saveRecentWords(RECENT_SPY_WORDS_KEY, rememberRecentWord(recent, pick.word))
     state.spyWord = pick.word
     state.spyHintCategory = pick.categoryLabel
   } else {
@@ -1979,7 +1979,7 @@ function renderWhoAmISetup(container: HTMLDivElement, lang: LangCode, render: ()
   startBtn.addEventListener("click", () => {
     state.whoCurrentWord = null
     state.whoCurrentWordCategory = null
-    state.whoRecentWords = []
+    state.whoRecentWords = loadRecentWords(RECENT_WHO_WORDS_KEY)
     state.step = "whoCountdown"
     render()
   })
@@ -2024,8 +2024,8 @@ function pickNextWhoAmIWord(lang: LangCode): void {
   const picked = pickWhoAmIWord(state.whoCategoryKey, lang, state.whoRecentWords)
   state.whoCurrentWord = picked.word
   state.whoCurrentWordCategory = picked.categoryKey
-  const recent = [picked.word, ...state.whoRecentWords]
-  state.whoRecentWords = recent.slice(0, WHO_AM_I_RECENT_LIMIT)
+  state.whoRecentWords = rememberRecentWord(state.whoRecentWords, picked.word)
+  saveRecentWords(RECENT_WHO_WORDS_KEY, state.whoRecentWords)
 }
 
 function renderWhoAmICountdown(
