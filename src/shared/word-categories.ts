@@ -19,7 +19,8 @@ import type { LangCode, LocalizedText } from "./types.js"
  *   • Arabic = MSA with Iraqi-familiar terms where idiomatic.
  *   • Turkish = simple, diacritics correct.
  *   • English = common everyday words.
- *   • No political, religious, adult, or otherwise sensitive entries.
+ *   • No political, religious, adult, or otherwise sensitive entries
+ *     (sole exception: world leaders in the World Icons category).
  */
 
 export type SupportedGame = "spy-game" | "who-am-i"
@@ -2052,6 +2053,82 @@ export const WORD_CATEGORIES: readonly WordCategory[] = [
       w("dicaprio",         "Leonardo DiCaprio",    "Leonardo DiCaprio",    "ليوناردو دي كابريو", "لیۆناردۆ دیکاپریۆ"),
       w("taylor-swift",     "Taylor Swift",         "Taylor Swift",         "تايلور سويفت",       "تەیلەر سویفت"),
       w("bruce-lee",        "Bruce Lee",            "Bruce Lee",            "بروس لي",            "بروس لی")
+    ]
+  },
+
+  /* ─── 29. WORLD ICONS ────────────────────────────────────────────── */
+  // Names nearly everyone at the table will know, from world leaders to
+  // Hollywood, sport legends and Turkish/Arab stars. World leaders are the
+  // one deliberate exception to the "no political entries" rule above.
+  {
+    key: "world-icons",
+    icon: "🌍",
+    difficulty: "easy",
+    games: BOTH,
+    label: { en: "World Icons", tr: "Dünya Ünlüleri", ar: "مشاهير العالم", ku: "ناودارانی جیهان" },
+    description: {
+      en: "World-famous leaders, stars, legends and inventors everyone knows.",
+      tr: "Herkesin tanıdığı dünyaca ünlü liderler, yıldızlar, efsaneler ve mucitler.",
+      ar: "قادة ونجوم وأساطير ومخترعون مشهورون عالمياً يعرفهم الجميع.",
+      ku: "سەرکردە و ئەستێرە و ئەفسانە و داهێنەرە ناودارەکانی جیهان کە هەموو دەیانناسن."
+    },
+    words: [
+      w("putin",            "Vladimir Putin",       "Vladimir Putin",       "فلاديمير بوتين",     "ڤلادیمیر پوتین"),
+      w("erdogan",          "Recep Tayyip Erdoğan", "Recep Tayyip Erdoğan", "رجب طيب أردوغان",    "ڕەجەب تەیب ئەردۆغان"),
+      w("trump",            "Donald Trump",         "Donald Trump",         "دونالد ترامب",       "دۆناڵد ترەمپ"),
+      w("obama",            "Barack Obama",         "Barack Obama",         "باراك أوباما",       "باراک ئۆباما"),
+      w("kim-jong-un",      "Kim Jong-un",          "Kim Jong-un",          "كيم جونغ أون",       "کیم جۆنگ ئون"),
+      w("merkel",           "Angela Merkel",        "Angela Merkel",        "أنجيلا ميركل",       "ئەنگێلا مێرکڵ"),
+      w("mandela",          "Nelson Mandela",       "Nelson Mandela",       "نيلسون مانديلا",     "نێلسن ماندێلا"),
+      w("gandhi",           "Mahatma Gandhi",       "Mahatma Gandhi",       "المهاتما غاندي",     "مەهاتما گاندی"),
+      w("queen-elizabeth",  "Queen Elizabeth II",   "Kraliçe II. Elizabeth","الملكة إليزابيث الثانية","شاژن ئێلیزابێسی دووەم"),
+      w("napoleon",         "Napoleon",             "Napolyon",             "نابليون",            "ناپلیۆن"),
+      w("cleopatra",        "Cleopatra",            "Kleopatra",            "كليوباترا",          "کلیۆپاترا"),
+      w("elon-musk",        "Elon Musk",            "Elon Musk",            "إيلون ماسك",         "ئیلۆن ماسک"),
+      w("bill-gates",       "Bill Gates",           "Bill Gates",           "بيل غيتس",           "بیل گەیتس"),
+      w("zuckerberg",       "Mark Zuckerberg",      "Mark Zuckerberg",      "مارك زوكربيرغ",      "مارک زاکەربێرگ"),
+      w("steve-jobs",       "Steve Jobs",           "Steve Jobs",           "ستيف جوبز",          "ستیڤ جۆبز"),
+      w("walt-disney",      "Walt Disney",          "Walt Disney",          "والت ديزني",         "واڵت دیزنی"),
+      w("newton",           "Isaac Newton",         "Isaac Newton",         "إسحاق نيوتن",        "ئیسحاق نیوتن"),
+      w("da-vinci",         "Leonardo da Vinci",    "Leonardo da Vinci",    "ليوناردو دا فينشي",  "لیۆناردۆ دا ڤینچی"),
+      w("nikola-tesla",     "Nikola Tesla",         "Nikola Tesla",         "نيكولا تسلا",        "نیکۆلا تێسلا"),
+      w("edison",           "Thomas Edison",        "Thomas Edison",        "توماس إديسون",       "تۆماس ئێدیسن"),
+      w("hawking",          "Stephen Hawking",      "Stephen Hawking",      "ستيفن هوكينغ",       "ستیڤن هاوکینگ"),
+      w("columbus",         "Christopher Columbus", "Kristof Kolomb",       "كريستوفر كولومبوس",  "کریستۆفەر کۆلۆمبس"),
+      w("muhammad-ali",     "Muhammad Ali",         "Muhammed Ali",         "محمد علي كلاي",      "محەمەد عەلی کلەی"),
+      w("pele",             "Pelé",                 "Pelé",                 "بيليه",              "پێلێ"),
+      w("maradona",         "Diego Maradona",       "Diego Maradona",       "دييغو مارادونا",     "دیێگۆ مارادۆنا"),
+      w("usain-bolt",       "Usain Bolt",           "Usain Bolt",           "يوسين بولت",         "یوسەین بۆڵت"),
+      w("michael-jordan",   "Michael Jordan",       "Michael Jordan",       "مايكل جوردان",       "مایکڵ جۆردن"),
+      w("conor-mcgregor",   "Conor McGregor",       "Conor McGregor",       "كونور ماكغريغور",    "کۆنەر ماکگرێگەر"),
+      w("tom-cruise",       "Tom Cruise",           "Tom Cruise",           "توم كروز",           "تۆم کرووز"),
+      w("brad-pitt",        "Brad Pitt",            "Brad Pitt",            "براد بيت",           "براد پیت"),
+      w("angelina-jolie",   "Angelina Jolie",       "Angelina Jolie",       "أنجلينا جولي",       "ئەنجلینا جۆلی"),
+      w("johnny-depp",      "Johnny Depp",          "Johnny Depp",          "جوني ديب",           "جۆنی دێپ"),
+      w("schwarzenegger",   "Arnold Schwarzenegger","Arnold Schwarzenegger","أرنولد شوارزنيجر",   "ئارنۆڵد شوارزنەگەر"),
+      w("keanu-reeves",     "Keanu Reeves",         "Keanu Reeves",         "كيانو ريفز",         "کیانو ڕیڤز"),
+      w("marilyn-monroe",   "Marilyn Monroe",       "Marilyn Monroe",       "مارلين مونرو",       "مارلین مۆنرۆ"),
+      w("eminem",           "Eminem",               "Eminem",               "إيمينيم",            "ئێمینەم"),
+      w("rihanna",          "Rihanna",              "Rihanna",              "ريانا",              "ڕیهانا"),
+      w("beyonce",          "Beyoncé",              "Beyoncé",              "بيونسيه",            "بیۆنسێ"),
+      w("justin-bieber",    "Justin Bieber",        "Justin Bieber",        "جاستن بيبر",         "جاستن بیبەر"),
+      w("elvis-presley",    "Elvis Presley",        "Elvis Presley",        "إلفيس بريسلي",       "ئێلڤیس پرێسلی"),
+      w("bob-marley",       "Bob Marley",           "Bob Marley",           "بوب مارلي",          "بۆب مارلی"),
+      w("ed-sheeran",       "Ed Sheeran",           "Ed Sheeran",           "إد شيران",           "ئێد شیران"),
+      w("kim-kardashian",   "Kim Kardashian",       "Kim Kardashian",       "كيم كارداشيان",      "کیم کارداشیان"),
+      w("bts",              "BTS",                  "BTS",                  "فرقة بي تي إس",      "بی تی ئێس"),
+      w("umm-kulthum",      "Umm Kulthum",          "Ümmü Gülsüm",          "أم كلثوم",           "ئوم کولسووم"),
+      w("fairuz",           "Fairuz",               "Feyruz",               "فيروز",              "فەیرووز"),
+      w("adel-emam",        "Adel Emam",            "Adil İmam",            "عادل إمام",          "عادل ئیمام"),
+      w("murat-boz",        "Murat Boz",            "Murat Boz",            "مراد بوز",           "موڕات بۆز"),
+      w("kemal-sunal",      "Kemal Sunal",          "Kemal Sunal",          "كمال صونال",         "کەمال سوناڵ"),
+      w("cem-yilmaz",       "Cem Yılmaz",           "Cem Yılmaz",           "جم يلماز",           "جەم یەڵماز"),
+      w("sezen-aksu",       "Sezen Aksu",           "Sezen Aksu",           "سزن أكسو",           "سێزەن ئاکسو"),
+      w("hadise",           "Hadise",               "Hadise",               "هاديسه",             "هادیسە"),
+      w("baris-manco",      "Barış Manço",          "Barış Manço",          "باريش مانشو",        "باریش مانچۆ"),
+      w("acun-ilicali",     "Acun Ilıcalı",         "Acun Ilıcalı",         "أجون إليجالي",       "ئاجون ئیلیجالی"),
+      w("salt-bae",         "Salt Bae (Nusret)",    "Nusret",               "نصرت (سولت باي)",    "نوسرەت (سۆڵت بەی)"),
+      w("mustafa-sandal",   "Mustafa Sandal",       "Mustafa Sandal",       "مصطفى صندل",         "مستەفا ساندەڵ")
     ]
   }
 ] as const
