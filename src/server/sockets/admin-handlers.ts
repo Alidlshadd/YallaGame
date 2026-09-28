@@ -1,19 +1,20 @@
 import type { Server, Socket } from "socket.io"
-import type { ClientToServerEvents, ServerToClientEvents } from "@shared/events.js"
+import type { ClientToServerEvents, JoinedData, ServerToClientEvents } from "@shared/events.js"
 import type { Player, Room, SocketData } from "@shared/types.js"
 // A value, so it takes the relative path the server build can resolve at
 // runtime — the `@shared` alias only survives in type-only imports.
 import { IDLE_PHASE } from "../../shared/types.js"
+import { isModerator, playingPlayers } from "../../shared/room-players.js"
 import type { RoomStore } from "../store/store.js"
 import type { GameResolver } from "../domain/visibility.js"
 import { bind } from "./bind.js"
 import { projectRoomFor, summarizeRoom, takenCharacters } from "../domain/visibility.js"
-import { isCharacterId } from "../../shared/characters.js"
+import { CHARACTERS, isCharacterId } from "../../shared/characters.js"
 import { characterAccessory } from "../../shared/accessories.js"
 import { normalizeSettings } from "../domain/settings.js"
 import { buildRolePool, assignRolesToConnected, resolveRoleData } from "../domain/roles.js"
 import { dealSpyWord, SPY_GAME_ID } from "../domain/spyWords.js"
-import { makeRoomCode, makeSecret, playerResumeToken } from "../domain/codes.js"
+import { makeRoomCode, makeSecret, playerResumeToken, resumeKey } from "../domain/codes.js"
 import { bindIdentity, revokeRoomSubscriptions } from "./membership.js"
 import { cancelTimer } from "../domain/scheduler.js"
 import { sendPhaseTo, type EngineResolver } from "../domain/engine.js"
@@ -25,6 +26,7 @@ import {
   AssignRolesPayload,
   ClearRolesPayload,
   KickPlayerPayload,
+  TransferHostPayload,
   UpdateRoomPayload,
   JoinDecisionPayload,
   CloseRoomPayload,
@@ -32,6 +34,7 @@ import {
   PeekRoomPayload
 } from "./schemas.js"
 import { logger } from "../logger.js"
+import { emitGameFinished } from "./completion.js"
 import type { Config } from "../config.js"
 
 type TypedServer = Server<ClientToServerEvents, ServerToClientEvents, never, SocketData>
@@ -46,6 +49,7 @@ export interface AdminDeps {
   rng: () => number
   canCreateGame?: (id: string) => boolean
   isValidCharacter?: (id: string) => boolean
+  selectableCharacters?: () => readonly string[]
 }
 
 async function broadcastRoom(deps: AdminDeps, room: Room): Promise<void> {
@@ -71,7 +75,7 @@ async function announceApprovals(deps: AdminDeps, room: Room, playerIds: string[
     const roleData = resolveRoleData(game, room, player.role)
     deps.io.to(`pending:${room.code}:${id}`).emit("player:join-approved", {
       status: "joined",
-      resumeToken: playerResumeToken(room.adminSecret, player.id),
+      resumeToken: playerResumeToken(resumeKey(room), player.id),
       room: projectRoomFor(room, { kind: "player", playerId: id }, deps.resolveGame),
       player: { id: player.id, name: player.name, role: player.role, roleData, character: player.character, accessory: player.accessory ?? "" }
     })
@@ -118,8 +122,8 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
     const finalCode = await generateUniqueCode(deps.store)
     const adminSecret = makeSecret()
     const now = Date.now()
-    // The host plays too, so they take the first seat rather than sitting
-    // outside the game: their name is what the room browser shows as "created by".
+    // Keep the owner's identity for reconnects and the browser's "created by".
+    // playingPlayers excludes this identity when the host only moderates.
     const host: Player = { id: makeSecret(), name: hostName, role: null, connected: true, character: hostCharacter, accessory: characterAccessory(hostCharacter, hostAccessory) }
     const room: Room = {
       code: finalCode, gameId: game.id, adminSecret,
@@ -153,7 +157,8 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
     // Coming back from a dropped connection: the host is playing again.
     const revived = await deps.store.update(code, r => ({
       ...r,
-      players: r.players.map(p => p.id === r.hostPlayerId ? { ...p, connected: true } : p)
+      players: r.players.map(p => p.id === r.hostPlayerId
+        ? { ...p, connected: true, role: isModerator(r, p.id) ? null : p.role } : p)
     }))
     await broadcastRoom(deps, revived)
     // The host's own screen has to come back to the running turn too, and a
@@ -184,7 +189,7 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
     return { room: projectRoomFor(updated, { kind: "admin", adminSecret }, deps.resolveGame) }
   })
 
-  bind(socket, "admin:assign-roles", AssignRolesPayload, async ({ code, adminSecret }) => {
+  bind(socket, "admin:assign-roles", AssignRolesPayload, async ({ code, adminSecret, settings }) => {
     let redeal = false
     const updated = await deps.store.update(code, room => {
       if (room.adminSecret !== adminSecret) throw new Error("INVALID_ADMIN")
@@ -193,17 +198,20 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
       // Turn-based games deal their own roles when the game starts; redealing
       // mid-round would hand somebody a card the table has already seen played.
       if (room.phase !== IDLE_PHASE) throw new Error("INVALID_INPUT")
-      const connectedCount = room.players.filter(p => p.connected).length
+      const participants = playingPlayers(room)
+      const connectedCount = participants.filter(p => p.connected).length
       if (connectedCount < game.minPlayers) throw new Error("NEED_MORE_PLAYERS")
-      const pool = buildRolePool(game, room.settings, connectedCount)
-      const players = assignRolesToConnected(room.players, pool, deps.rng)
+      const nextSettings = settings ? normalizeSettings(game, { ...room.settings, ...settings }) : room.settings
+      const pool = buildRolePool(game, nextSettings, connectedCount)
+      const dealt = new Map(assignRolesToConnected(participants, pool, deps.rng).map(p => [p.id, p]))
+      const players = room.players.map(p => dealt.get(p.id) ?? { ...p, role: null })
       redeal = room.assigned
       // Spy Game hides one secret word per round behind the generic role pool —
       // picked fresh on every deal, skipping the room's recently used words.
       const gameState = game.id === SPY_GAME_ID
-        ? dealSpyWord(room.settings, room.gameState, deps.rng)
+        ? dealSpyWord(nextSettings, room.gameState, deps.rng)
         : room.gameState
-      return { ...room, players, assigned: true, gameState }
+      return { ...room, settings: nextSettings, players, assigned: true, gameState }
     })
     if (redeal) deps.store.recordRoleRedeal?.(updated)
     const game = deps.resolveGame(updated.gameId)!
@@ -233,6 +241,63 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
     return { room: projectRoomFor(updated, { kind: "admin", adminSecret }, deps.resolveGame) }
   })
 
+  /**
+   * The host hands the room to another player and sits down as an ordinary
+   * one. There is only ever one host: the admin secret is rotated, so the old
+   * host's saved credential stops working, and the seats already handed out
+   * keep theirs because resume tokens stay signed with the frozen old key.
+   */
+  bind(socket, "admin:transfer-host", TransferHostPayload, async ({ code, adminSecret, playerId }) => {
+    const newSecret = makeSecret()
+    let oldHostId = ""
+    const updated = await deps.store.update(code, room => {
+      if (room.adminSecret !== adminSecret) throw new Error("INVALID_ADMIN")
+      const target = room.players.find(p => p.id === playerId)
+      if (!target || !target.connected || playerId === room.hostPlayerId) throw new Error("INVALID_INPUT")
+      // A running turn is driven from the host's screen; hand over between games.
+      if (room.phase !== IDLE_PHASE) throw new Error("INVALID_INPUT")
+      // A moderating host holds no card, so swapping seats would break a dealt table.
+      if (room.assigned && (isModerator(room, room.hostPlayerId) || isModerator({ ...room, hostPlayerId: playerId }, playerId))) {
+        throw new Error("INVALID_INPUT")
+      }
+      oldHostId = room.hostPlayerId
+      return { ...room, hostPlayerId: playerId, adminSecret: newSecret, resumeSecret: resumeKey(room) }
+    })
+
+    // Admin rights move with the sockets, not only with the stored secret.
+    for (const peer of deps.io.sockets.sockets.values()) {
+      if (peer.data.roomCode !== code) continue
+      if (peer.data.playerId === oldHostId) {
+        await peer.leave(`admin:${code}`)
+        delete peer.data.adminSecret
+      } else if (peer.data.playerId === playerId) {
+        await peer.join(`admin:${code}`)
+        peer.data.adminSecret = newSecret
+      }
+    }
+
+    const game = deps.resolveGame(updated.gameId)!
+    deps.io.to(`p:${code}:${playerId}`).emit("player:host-granted", {
+      code, adminSecret: newSecret,
+      room: projectRoomFor(updated, { kind: "admin", adminSecret: newSecret }, deps.resolveGame)
+    })
+    const formerHost = updated.players.find(p => p.id === oldHostId)!
+    const formerHostView: JoinedData = {
+      status: "joined",
+      resumeToken: playerResumeToken(resumeKey(updated), formerHost.id),
+      room: projectRoomFor(updated, { kind: "player", playerId: formerHost.id }, deps.resolveGame),
+      player: {
+        id: formerHost.id, name: formerHost.name, role: formerHost.role,
+        roleData: resolveRoleData(game, updated, formerHost.role),
+        character: formerHost.character, accessory: formerHost.accessory ?? ""
+      }
+    }
+    deps.io.to(`p:${code}:${oldHostId}`).emit("admin:host-revoked", formerHostView)
+    await broadcastRoom(deps, updated)
+    logger.info({ code }, "host transferred")
+    return { room: formerHostView.room }
+  })
+
   bind(socket, "admin:update-room", UpdateRoomPayload, async ({ code, adminSecret, isPublic, requireApproval }) => {
     let promoted: string[] = []
     const updated = await deps.store.update(code, room => {
@@ -246,7 +311,6 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
       // Turning approval off is also an answer to everyone already queued:
       // leaving them stranded in a queue nobody looks at would be worse.
       if (room.requireApproval && next.requireApproval === false && room.pending.length > 0) {
-        if (room.players.length + room.pending.length > deps.config.MAX_PLAYERS_PER_ROOM) throw new Error("ROOM_FULL")
         promoted = room.pending.map(r => r.id)
         const claimed = new Set(takenCharacters({ ...room, pending: [] }))
         next.players = [
@@ -275,13 +339,15 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
       if (room.adminSecret !== adminSecret) throw new Error("INVALID_ADMIN")
       const request = room.pending.find(r => r.id === requestId)
       if (!request) throw new Error("REQUEST_NOT_FOUND")
-      if (room.players.length >= deps.config.MAX_PLAYERS_PER_ROOM) throw new Error("ROOM_FULL")
       // The request id becomes the player id, so the waiting socket is already
       // in the right room name and needs no second round trip to find itself.
       // A character can go stale between the request and the decision: somebody
        // else may have taken it. The seat is worth more than the picture, so
        // admit them without one rather than rejecting a person the host accepted.
-      const stillFree = !takenCharacters({ ...room, pending: [] }).includes(request.character)
+      // With every avatar already claimed, faces are shared (see player:join).
+      const taken = takenCharacters({ ...room, pending: [] })
+      const cast = deps.selectableCharacters?.() ?? CHARACTERS.map(c => c.id)
+      const stillFree = !taken.includes(request.character) || !cast.some(id => !taken.includes(id))
       const seat = {
         id: request.id, name: request.name, role: null, connected: true,
         character: stillFree ? request.character : "", accessory: request.accessory ?? ""
@@ -343,13 +409,17 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
     return { rooms: summaries }
   })
 
-  bind(socket, "admin:clear-roles", ClearRolesPayload, async ({ code, adminSecret }) => {
+  bind(socket, "admin:clear-roles", ClearRolesPayload, async ({ code, adminSecret, finished }) => {
+    let completed = false
     const updated = await deps.store.update(code, room => {
       if (room.adminSecret !== adminSecret) throw new Error("INVALID_ADMIN")
+      if (finished && room.phase !== IDLE_PHASE) throw new Error("INVALID_INPUT")
+      completed = finished === true && room.assigned
       return { ...room, assigned: false, players: room.players.map(p => ({ ...p, role: null })) }
     })
     await broadcastRoom(deps, updated)
     for (const p of updated.players) deps.io.to(`p:${code}:${p.id}`).emit("player:role-cleared")
+    if (completed) emitGameFinished(deps.io, updated)
     return { room: projectRoomFor(updated, { kind: "admin", adminSecret }, deps.resolveGame) }
   })
 }

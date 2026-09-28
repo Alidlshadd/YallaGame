@@ -15,7 +15,7 @@ export function normalizeSettings(game: Game, incoming: Partial<Record<string, u
 
     if (def.type === "number") {
       const n = Number(raw ?? def.min)
-      out[def.key] = clamp(Number.isFinite(n) ? n : def.min, def.min, def.max)
+      out[def.key] = clamp(Number.isFinite(n) ? n : def.min, def.min, def.max ?? Infinity)
     } else if (def.type === "boolean") {
       out[def.key] = Boolean(raw)
     } else if (def.type === "categories") {

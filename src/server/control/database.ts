@@ -55,6 +55,13 @@ CREATE TABLE IF NOT EXISTS avatar_overrides (
  image TEXT REFERENCES admin_uploads(id), created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
 );
 CREATE TABLE IF NOT EXISTS site_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS game_feedback (
+ id INTEGER PRIMARY KEY, visitor_id TEXT NOT NULL, game_id TEXT NOT NULL,
+ rating INTEGER NOT NULL CHECK(rating BETWEEN 1 AND 5),
+ comment TEXT NOT NULL DEFAULT '' CHECK(length(comment) <= 2000),
+ created_at INTEGER NOT NULL, UNIQUE(visitor_id, game_id)
+);
+CREATE INDEX IF NOT EXISTS feedback_time ON game_feedback(created_at DESC, id DESC);
 CREATE TABLE IF NOT EXISTS admin_audit_logs (
  id INTEGER PRIMARY KEY, admin_id INTEGER REFERENCES admin_users(id) ON DELETE SET NULL,
  action TEXT NOT NULL, target TEXT NOT NULL, created_at INTEGER NOT NULL, metadata TEXT NOT NULL DEFAULT '{}'

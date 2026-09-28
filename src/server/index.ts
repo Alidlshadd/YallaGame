@@ -19,7 +19,7 @@ import { cancelAllTimers } from "./domain/scheduler.js"
 import { openControlDatabase } from "./control/database.js"
 import { Analytics, ObservedStore } from "./control/analytics.js"
 import { mountControl } from "./control/routes.js"
-import { brandedHtml, effectiveCatalog, isSelectableCharacterId, persistentUploads, publicConfiguration } from "./control/content.js"
+import { brandedHtml, effectiveAvatarCatalog, effectiveCatalog, isSelectableCharacterId, persistentUploads, publicConfiguration } from "./control/content.js"
 import { readFileSync } from "node:fs"
 import type { ClientToServerEvents, ServerToClientEvents } from "@shared/events.js"
 import type { SocketData } from "@shared/types.js"
@@ -142,7 +142,8 @@ async function main() {
   registerHandlers(io, {
     io, store, resolveGame, resolveEngine, config, rng: Math.random,
     canCreateGame: id => (controlDb.prepare("SELECT enabled FROM game_asset_overrides WHERE game_id=?").get(id) as {enabled:number} | undefined)?.enabled !== 0,
-    isValidCharacter: id => isSelectableCharacterId(controlDb, id)
+    isValidCharacter: id => isSelectableCharacterId(controlDb, id),
+    selectableCharacters: () => effectiveAvatarCatalog(controlDb).map(a => a.id)
   })
 
   setInterval(() => {

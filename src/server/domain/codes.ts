@@ -18,6 +18,11 @@ export function makeSecret(): string {
   return randomBytes(16).toString("base64url")
 }
 
+/** The key resume tokens are signed with — see `Room.resumeSecret`. */
+export function resumeKey(room: { adminSecret: string; resumeSecret?: string | undefined }): string {
+  return room.resumeSecret ?? room.adminSecret
+}
+
 /** Player ids are public. Only this private, room-scoped credential permits resuming a seat. */
 export function playerResumeToken(adminSecret: string, playerId: string): string {
   return createHmac("sha256", adminSecret).update(`player-resume:${playerId}`).digest("hex")

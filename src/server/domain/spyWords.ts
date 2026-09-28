@@ -73,7 +73,7 @@ export function dealSpyWord(settings: Settings, gameState: GameState, rng: () =>
 }
 
 /** The room row comes back through JSON, so nothing in `gameState` is trusted as typed. */
-function readSpyWordPick(gameState: GameState): SpyWordPick | null {
+export function readSpyWordPick(gameState: GameState): SpyWordPick | null {
   const raw = gameState["spyWord"] as Partial<SpyWordPick> | undefined
   if (!raw || typeof raw.word !== "object" || raw.word === null) return null
   return { word: raw.word as LocalizedText, categoryLabel: (raw.categoryLabel as LocalizedText | null) ?? null }

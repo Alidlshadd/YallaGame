@@ -92,6 +92,7 @@ describe("Control center security and persistence", () => {
       "/avatars",
       "/history",
       "/players",
+      "/feedback",
       "/branding",
       "/system",
       "/audit-logs",
@@ -104,6 +105,7 @@ describe("Control center security and persistence", () => {
       "/admin/analytics",
       "/admin/games/history",
       "/admin/players",
+      "/admin/feedback",
       "/admin/games",
       "/admin/avatars",
       "/admin/settings/branding",
@@ -248,6 +250,39 @@ describe("Control center security and persistence", () => {
     expect(settings.secure).toBe(true)
     expect(settings.path).toBe("/")
   })
+  it("stores feedback once per visitor and game and only exposes it to admins", async () => {
+    const first = await request("/api/feedback", "POST", { gameId: "vampire-village", rating: 4, comment: "  More roles please  " })
+    expect(first.status).toBe(200)
+    cookie = first.headers.get("set-cookie")!.split(";")[0]!
+    expect(await first.json()).toEqual({ saved: true })
+    expect((await request("/api/feedback", "POST", { gameId: "vampire-village", rating: 1, comment: "retry" })).status).toBe(200)
+    expect((await request("/api/feedback", "POST", { gameId: "spy-game", rating: 5 })).status).toBe(200)
+    expect(db.prepare("SELECT game_id,rating,comment FROM game_feedback ORDER BY id").all()).toEqual([
+      { game_id: "vampire-village", rating: 4, comment: "More roles please" },
+      { game_id: "spy-game", rating: 5, comment: "" }
+    ])
+    expect((await request("/api/admin/feedback")).status).toBe(401)
+    await login()
+    const result = await (await request("/api/admin/feedback")).json()
+    expect(result).toMatchObject({ total: 2, average: 4.5 })
+    expect(JSON.stringify(result)).not.toContain("visitor_id")
+    expect(result.rows[0]).toMatchObject({ game_id: "spy-game", rating: 5 })
+  })
+
+  it("validates ratings and comments and rejects cross-origin feedback", async () => {
+    for (const body of [
+      { gameId: "vampire-village", rating: 0 }, { gameId: "vampire-village", rating: 6 },
+      { gameId: "vampire-village", rating: 2.5 }, { gameId: "unknown", rating: 5 },
+      { gameId: "vampire-village", rating: 5, comment: "x".repeat(2001) }
+    ]) expect((await request("/api/feedback", "POST", body)).status).toBe(400)
+    const cross = await fetch(base + "/api/feedback", {
+      method: "POST", headers: { Origin: "https://attacker.invalid", "Content-Type": "application/json" },
+      body: JSON.stringify({ gameId: "vampire-village", rating: 5 })
+    })
+    expect(cross.status).toBe(403)
+    expect(db.prepare("SELECT COUNT(*) n FROM game_feedback").get()).toEqual({ n: 0 })
+  })
+
   it("records anonymous unique visitors once but counts repeat page views", async () => {
     const first = await request("/api/analytics", "POST", { view: "homeView" })
     expect(first.status).toBe(204)

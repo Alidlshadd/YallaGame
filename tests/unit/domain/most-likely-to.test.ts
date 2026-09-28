@@ -93,10 +93,12 @@ describe("registration", () => {
   })
 
   it("leaves the role-dealing games off the turn engine", () => {
-    for (const id of ["vampire-village", "mafia-classic", "spy-game", "who-am-i", "football-player-guess"]) {
+    for (const id of ["vampire-village", "mafia-classic", "who-am-i", "football-player-guess"]) {
       expect(resolveEngine(id)).toBeUndefined()
       expect(isTurnBased(id)).toBe(false)
     }
+    // Spy Game only runs its vote on the engine; it is still dealt as roles.
+    expect(isTurnBased("spy-game")).toBe(false)
   })
 
   it("is in the catalogue, needs two players, and is marked turn-based", () => {

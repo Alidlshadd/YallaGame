@@ -2,13 +2,14 @@ import type { Server, Socket } from "socket.io"
 import type { ClientToServerEvents, ServerToClientEvents } from "@shared/events.js"
 import type { PendingJoin, Player, SocketData } from "@shared/types.js"
 import { IDLE_PHASE } from "../../shared/types.js"
+import { isModerator } from "../../shared/room-players.js"
 import type { RoomStore } from "../store/store.js"
 import type { GameResolver } from "../domain/visibility.js"
 import { bind } from "./bind.js"
 import { projectRoomFor, takenCharacters } from "../domain/visibility.js"
-import { isCharacterId } from "../../shared/characters.js"
+import { CHARACTERS, isCharacterId } from "../../shared/characters.js"
 import { characterAccessory } from "../../shared/accessories.js"
-import { makeSecret, playerResumeToken, validResumeToken } from "../domain/codes.js"
+import { makeSecret, playerResumeToken, resumeKey, validResumeToken } from "../domain/codes.js"
 import { bindIdentity } from "./membership.js"
 import { fillerRoleId, resolveRoleData } from "../domain/roles.js"
 import { JoinPayload, CancelRequestPayload } from "./schemas.js"
@@ -29,6 +30,8 @@ export interface PlayerDeps {
   config: Config
   rng: () => number
   isValidCharacter?: (id: string) => boolean
+  /** Every avatar a player can pick right now; the bundled cast when absent. */
+  selectableCharacters?: () => readonly string[]
 }
 
 export function registerPlayerHandlers(socket: TypedSocket, deps: PlayerDeps): void {
@@ -47,7 +50,8 @@ export function registerPlayerHandlers(socket: TypedSocket, deps: PlayerDeps): v
         current ?? (room.assigned ? fillerRoleId(game) : null)
 
       if (playerId) {
-        if (!validResumeToken(room.adminSecret, playerId, resumeToken)) throw new Error("AUTHZ_MISMATCH")
+        if (isModerator(room, playerId)) throw new Error("AUTHZ_MISMATCH")
+        if (!validResumeToken(resumeKey(room), playerId, resumeToken)) throw new Error("AUTHZ_MISMATCH")
         const existing = room.players.find(p => p.id === playerId)
         if (existing) {
           bound = { ...existing, connected: true, role: roleFor(existing.role), accessory: characterAccessory(existing.character, existing.accessory) }
@@ -67,16 +71,20 @@ export function registerPlayerHandlers(socket: TypedSocket, deps: PlayerDeps): v
 
       // Whoever asks second for the same face is told now, not after they have
       // sat down or waited for the host.
-      if (character && takenCharacters(room).includes(character)) throw new Error("CHARACTER_TAKEN")
+      // Once every avatar is claimed, faces are shared rather than the door
+      // closing: a big table must never be turned away for want of pictures.
+      if (character) {
+        const taken = takenCharacters(room)
+        const cast = deps.selectableCharacters?.() ?? CHARACTERS.map(c => c.id)
+        if (taken.includes(character) && cast.some(id => !taken.includes(id))) throw new Error("CHARACTER_TAKEN")
+      }
 
-      if (room.players.length + room.pending.length >= deps.config.MAX_PLAYERS_PER_ROOM) throw new Error("ROOM_FULL")
       if (room.requireApproval) {
         const request: PendingJoin = { id: makeSecret(), name, requestedAt: Date.now(), character: character ?? "", accessory: characterAccessory(character ?? "", accessory) }
         queued = request
         return { ...room, pending: [...room.pending, request] }
       }
 
-      if (room.players.length >= deps.config.MAX_PLAYERS_PER_ROOM) throw new Error("ROOM_FULL")
       const fresh: Player = { id: makeSecret(), name, role: roleFor(null), connected: true, character: character ?? "", accessory: characterAccessory(character ?? "", accessory) }
       bound = fresh
       return { ...room, players: [...room.players, fresh] }
@@ -91,7 +99,7 @@ export function registerPlayerHandlers(socket: TypedSocket, deps: PlayerDeps): v
       const adminProjection = projectRoomFor(updated, { kind: "admin", adminSecret: updated.adminSecret }, deps.resolveGame)
       deps.io.to(`admin:${code}`).emit("admin:room-updated", adminProjection)
       logger.info({ code, requestId: request.id }, "join requested")
-      return { status: "pending" as const, requestId: request.id, code, theme: game.theme, resumeToken: playerResumeToken(updated.adminSecret, request.id) }
+      return { status: "pending" as const, requestId: request.id, code, theme: game.theme, resumeToken: playerResumeToken(resumeKey(updated), request.id) }
     }
 
     if (!bound) throw new Error("INVALID_INPUT")
@@ -123,7 +131,7 @@ export function registerPlayerHandlers(socket: TypedSocket, deps: PlayerDeps): v
 
     const myProjection = projectRoomFor(updated, { kind: "player", playerId: me.id }, deps.resolveGame)
     return {
-      status: "joined" as const, room: myProjection, resumeToken: playerResumeToken(updated.adminSecret, me.id),
+      status: "joined" as const, room: myProjection, resumeToken: playerResumeToken(resumeKey(updated), me.id),
       player: { id: me.id, name: me.name, role: me.role, roleData, character: me.character, accessory: me.accessory ?? "" }
     }
   })

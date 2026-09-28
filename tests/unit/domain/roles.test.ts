@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest"
 import { buildRolePool, assignRolesToConnected, fillerRoleId } from "@server/domain/roles.js"
+import { buildRolePool as buildLocalRolePool } from "../../../src/client/domain/local-roles.js"
+import { resolveGame } from "@server/games/catalog.js"
+import { normalizeSettings } from "@server/domain/settings.js"
 import type { Game, Player } from "@shared/types.js"
 
 const game: Game = {
@@ -34,6 +37,12 @@ describe("fillerRoleId", () => {
 })
 
 describe("buildRolePool", () => {
+  it.each([buildRolePool, buildLocalRolePool])("allows more than five vampires and rejects counts larger than the table before allocation", build => {
+    const vampire = resolveGame("vampire-village")!
+    const settings = normalizeSettings(vampire, { vampireCount: 8, doctor: false, detective: false })
+    expect(build(vampire, settings, 8)).toEqual(Array(8).fill("vampire"))
+    expect(() => build(vampire, { ...settings, vampireCount: 1e12 }, 8)).toThrow("TOO_MANY_SPECIAL_ROLES")
+  })
   it("adds countSetting roles N times and fills the rest with the filler", () => {
     const pool = buildRolePool(game, { vampires: 2 }, 6)
     expect(pool.filter(r => r === "vampire")).toHaveLength(2)

@@ -26,8 +26,8 @@ export const UpdateSettingsPayload = z.object({
     z.number(), z.boolean(), z.string().max(500), z.array(z.string().max(64)).max(50)
   ]))
 })
-export const AssignRolesPayload   = ReconnectPayload
-export const ClearRolesPayload    = ReconnectPayload
+export const AssignRolesPayload   = ReconnectPayload.extend({ settings: UpdateSettingsPayload.shape.settings.optional() })
+export const ClearRolesPayload    = ReconnectPayload.extend({ finished: z.boolean().optional() })
 export const KickPlayerPayload    = z.object({
   code: RoomCode,
   adminSecret: z.string().min(1).max(64),
@@ -43,6 +43,7 @@ export const JoinPayload          = z.object({
   resumeToken: z.string().regex(/^[a-f0-9]{64}$/).optional()
 })
 export const PeekRoomPayload      = z.object({ code: RoomCode })
+export const TransferHostPayload  = KickPlayerPayload
 export const UpdateRoomPayload    = z.object({
   code: RoomCode,
   adminSecret: z.string().min(1).max(64),
@@ -62,7 +63,7 @@ export const CancelRequestPayload = z.object({
 /** The room browser takes no arguments; the schema exists so bind() can parse it. */
 export const ListRoomsPayload     = z.object({}).strict()
 
-export const GameStartPayload     = ReconnectPayload
+export const GameStartPayload     = ReconnectPayload.extend({ settings: UpdateSettingsPayload.shape.settings.optional() })
 export const GameEndPayload       = ReconnectPayload
 /** Phase counter the caller was looking at. Never negative, never fractional. */
 const PhaseSeq = z.number().int().nonnegative().max(1_000_000)

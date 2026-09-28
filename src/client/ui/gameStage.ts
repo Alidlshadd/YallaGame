@@ -9,6 +9,7 @@ import type { PhaseEvent } from "@shared/events.js"
 import type { MostLikelyToView } from "@shared/most-likely-to.js"
 import type { BluffTriviaView } from "@shared/bluff-trivia.js"
 import type { PoliticianPlayer, PoliticianView } from "@shared/secret-politician.js"
+import type { SpyVoteView } from "@shared/spy-vote.js"
 
 /**
  * The screen a turn-based game is played on.
@@ -31,7 +32,7 @@ export interface GameStageOptions {
 
 /** Under this many seconds left, the clock starts asking for attention. */
 const URGENT_SECONDS = 5
-type StageView = MostLikelyToView | BluffTriviaView | PoliticianView
+type StageView = MostLikelyToView | BluffTriviaView | PoliticianView | SpyVoteView
 
 // Progress from another player should not replace buttons, restart reveals,
 // or destroy the textarea under somebody's fingers.
@@ -47,6 +48,7 @@ function progressText(view: StageView | null | undefined): string | null {
   if (view?.kind === "bluff-submit") return `${view.submittedCount} / ${view.totalPlayers} ${t("bluffSubmitted")}`
   if (view?.kind === "bluff-guessing") return `${view.guessedCount} / ${view.totalPlayers} ${t("bluffGuessed")}`
   if (view?.kind === "politician-vote") return `${view.votedCount} / ${view.totalVoters} ${t("politicianVoted")}`
+  if (view?.kind === "spy-voting") return `${view.votedCount} / ${view.totalPlayers} ${t("mltVoted")}`
   return null
 }
 
@@ -270,6 +272,90 @@ export function mountGameStage(opts: GameStageOptions): () => void {
       const label = view.kind === "over" ? t("mltBackToLobby") : t("mltNextRound")
       const button = el("button", { class: "btn btn-primary mlt-advance", type: "button" }, [label])
       button.addEventListener("click", () => void (view.kind === "over" ? endGame() : closePhase()))
+      out.push(button)
+    } else {
+      out.push(el("p", { class: "mlt-counter" }, [t("mltWaitingHost")]))
+    }
+    return out
+  }
+
+  function buildSpyVoting(view: Extract<SpyVoteView, { kind: "spy-voting" }>): HTMLElement[] {
+    const locked = view.myVote !== null
+    const grid = el("div", { class: "mlt-targets" })
+    for (const person of view.roster) {
+      if (person.id === opts.myPlayerId) continue
+      const chosen = view.myVote === person.id
+      const button = el("button", {
+        class: `mlt-target${chosen ? " chosen" : ""}${person.connected ? "" : " off"}`,
+        type: "button",
+        "aria-pressed": chosen ? "true" : "false"
+      }, [
+        avatarOf(person, person.name, 52),
+        el("span", { class: "mlt-target-name" }, [person.name])
+      ]) as HTMLButtonElement
+      button.disabled = locked
+      button.addEventListener("click", () => void castVote(person.id))
+      grid.appendChild(button)
+    }
+    const out: HTMLElement[] = [
+      el("p", { class: "mlt-question" }, [t("spyVoteQuestion")]),
+      grid,
+      el("p", { class: "mlt-hint" }, [locked ? t("mltVoteLocked") : t("spyVoteHint")]),
+      el("p", { class: "mlt-counter" }, [`${view.votedCount} / ${view.totalPlayers} ${t("mltVoted")}`])
+    ]
+    // The host may not want to wait for the clock once the table has decided.
+    if (isHost) {
+      const close = el("button", { class: "btn btn-ghost mlt-advance", type: "button" }, [t("spyShowResults")])
+      close.addEventListener("click", () => void closePhase())
+      out.push(close)
+    }
+    return out
+  }
+
+  function buildSpyResult(view: Extract<SpyVoteView, { kind: "spy-result" }>): HTMLElement[] {
+    const lang = getLang()
+    const byId = new Map(view.roster.map(p => [p.id, p]))
+    const top = view.results[0]?.voteCount ?? 0
+    const bars = el("div", { class: "mlt-bars" })
+    for (const row of view.results) {
+      const isTop = view.topPlayerIds.includes(row.playerId)
+      const isSpy = view.spyIds.includes(row.playerId)
+      const fill = el("span", { class: "mlt-bar-fill" })
+      fill.style.width = `${top === 0 ? 0 : Math.round((row.voteCount / top) * 100)}%`
+      const name = el("span", { class: "mlt-bar-name" }, [row.playerName])
+      if (isSpy) name.appendChild(el("span", { class: "player-badge" }, [`🕶️ ${t("spyBadge")}`]))
+      const bar = el("div", { class: `mlt-bar${isTop ? " winner" : ""}` }, [
+        avatarOf(byId.get(row.playerId), row.playerName, 36),
+        name,
+        el("span", { class: "mlt-bar-track" }, [fill]),
+        el("span", { class: "mlt-bar-count" }, [String(row.voteCount)])
+      ])
+      // Names only when the host turned them on; otherwise the field is absent.
+      if (row.voters !== undefined && row.voters.length > 0) {
+        bar.appendChild(el("span", { class: "mlt-bar-voters" }, [`${t("mltVotedBy")} ${row.voters.join(", ")}`]))
+      }
+      bars.appendChild(bar)
+    }
+
+    const caught = view.topPlayerIds.length === 1 && view.spyIds.includes(view.topPlayerIds[0]!)
+    const verdict =
+      view.totalVotes === 0          ? t("mltNoVotes")
+      : view.topPlayerIds.length > 1 ? t("spyVerdictTie")
+      : caught                       ? t("spyVerdictCaught")
+      : t("spyVerdictEscaped")
+
+    const spyNames = view.spyIds.map(id => byId.get(id)?.name ?? "").filter(Boolean)
+    const out: HTMLElement[] = [
+      el("p", { class: "mlt-eyebrow" }, [t("mltResults")]),
+      bars,
+      el("p", { class: "mlt-verdict" }, [verdict]),
+      el("p", { class: "mlt-hint" }, [`${t("spyRevealSpies")}: ${spyNames.join(", ") || "—"}`])
+    ]
+    if (view.word !== null) out.push(el("p", { class: "mlt-hint" }, [`${t("spyRevealWord")}: ${view.word[lang]}`]))
+
+    if (isHost) {
+      const button = el("button", { class: "btn btn-primary mlt-advance", type: "button" }, [t("mltBackToLobby")])
+      button.addEventListener("click", () => void endGame())
       out.push(button)
     } else {
       out.push(el("p", { class: "mlt-counter" }, [t("mltWaitingHost")]))
@@ -722,7 +808,7 @@ export function mountGameStage(opts: GameStageOptions): () => void {
     cancelReveal?.()
     cancelReveal = null
 
-    const view = phase?.view as (MostLikelyToView | BluffTriviaView | PoliticianView) | null | undefined
+    const view = phase?.view as StageView | null | undefined
     if (phase === null || view === null || view === undefined) {
       stage.hidden = true
       document.body.classList.remove("stage-open")
@@ -748,6 +834,11 @@ export function mountGameStage(opts: GameStageOptions): () => void {
     ) {
       panel.append(el("p", { class: "mlt-question" }, [view.question[lang]]))
     }
+    // Only sent when the host chose to name who wrote a player question.
+    if ((view.kind === "question" || view.kind === "voting" || view.kind === "result" || view.kind === "over")
+      && view.customQuestionAuthor !== undefined) {
+      panel.append(el("p", { class: "mlt-hint" }, [`${t("mltQuestionBy")} ${view.customQuestionAuthor}`]))
+    }
 
     if (view.kind === "question") panel.append(el("p", { class: "mlt-hint" }, [t("mltGetReady")]))
     else if (view.kind === "voting") panel.append(...buildVoting(view))
@@ -765,6 +856,8 @@ export function mountGameStage(opts: GameStageOptions): () => void {
     else if (view.kind === "politician-board-update") panel.append(...buildPoliticianBoardUpdate(view))
     else if (view.kind === "politician-executive-action") panel.append(...buildPoliticianExecutiveAction(view))
     else if (view.kind === "politician-over") panel.append(...buildPoliticianOver(view))
+    else if (view.kind === "spy-voting") panel.append(...buildSpyVoting(view))
+    else if (view.kind === "spy-result") panel.append(...buildSpyResult(view))
 
     stage.appendChild(panel)
     drawClock()

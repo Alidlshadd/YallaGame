@@ -4427,7 +4427,7 @@ body[data-perf="low"] *::after {
 }
 
 /* Player rows and request rows gained a leading avatar column. */
-.player-row { grid-template-columns: auto auto 1fr auto auto; }
+.player-row { grid-template-columns: auto auto 1fr auto auto auto; }
 
 .request-row .avatar { margin-inline-end: 2px; }
 
@@ -5008,4 +5008,11 @@ body.stage-open { overflow: hidden; }
 
 .politician-watching {
   opacity: 0.55;
+}
+
+/* "Make admin" sits beside kick; a crown, so it reads as a promotion. */
+.player-row .host-btn:hover {
+  color: var(--theme-glow);
+  border-color: var(--theme-glow);
+  background: transparent;
 }

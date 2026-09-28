@@ -6,6 +6,9 @@ import type { GameResolver } from "../domain/visibility.js"
 import type { EngineDeps, EngineResolver } from "../domain/engine.js"
 import { hostAdvance, startGame, stopGame, submitAction } from "../domain/engine.js"
 import { bind } from "./bind.js"
+import { IDLE_PHASE } from "../../shared/types.js"
+import { normalizeSettings } from "../domain/settings.js"
+import { SPY_GAME_ID } from "../domain/spyWords.js"
 import {
   GameStartPayload,
   GameActionPayload,
@@ -14,6 +17,7 @@ import {
   TimeSyncPayload
 } from "./schemas.js"
 import { logger } from "../logger.js"
+import { emitGameFinished } from "./completion.js"
 
 type TypedServer = Server<ClientToServerEvents, ServerToClientEvents, never, SocketData>
 type TypedSocket = Socket<ClientToServerEvents, ServerToClientEvents, never, SocketData>
@@ -41,14 +45,40 @@ export function engineDeps(deps: GameDeps): EngineDeps {
     },
     emitOver(code, payload) {
       deps.io.to(`room:${code}`).emit("game:over", payload)
+    },
+    emitFinished(room) {
+      emitGameFinished(deps.io, room)
     }
   }
+}
+
+const SPY_VOTE_SETTINGS = ["spyVoteSeconds", "spyShowVoters"] as const
+
+/**
+ * The host's form goes in with Start, so a setting changed without pressing
+ * Save (60 rounds, player-written questions) is the game that gets played.
+ * Spy Game's cards are already dealt by then: only the vote's own settings
+ * are taken, never ones the deal was made from.
+ */
+async function applyStartSettings(deps: GameDeps, code: string, adminSecret: string, incoming: Record<string, unknown>): Promise<void> {
+  await deps.store.update(code, room => {
+    if (room.adminSecret !== adminSecret) throw new Error("INVALID_ADMIN")
+    const game = deps.resolveGame(room.gameId)
+    if (game === undefined || room.phase !== IDLE_PHASE) return room
+    let picked: Record<string, unknown> = incoming
+    if (room.gameId === SPY_GAME_ID) {
+      picked = {}
+      for (const key of SPY_VOTE_SETTINGS) if (key in incoming) picked[key] = incoming[key]
+    }
+    return { ...room, settings: normalizeSettings(game, { ...room.settings, ...picked }) }
+  })
 }
 
 export function registerGameHandlers(socket: TypedSocket, deps: GameDeps): void {
   const engine = engineDeps(deps)
 
-  bind(socket, "game:start", GameStartPayload, async ({ code, adminSecret }) => {
+  bind(socket, "game:start", GameStartPayload, async ({ code, adminSecret, settings }) => {
+    if (settings !== undefined) await applyStartSettings(deps, code, adminSecret, settings)
     const room = await deps.store.get(code)
     if (room === null) throw new Error("ROOM_NOT_FOUND")
     if (room.adminSecret !== adminSecret) throw new Error("INVALID_ADMIN")

@@ -27,7 +27,7 @@ describe("socket security regressions", () => {
     })
     store = new MemoryStore()
     clients = []
-    registerHandlers(io, { io, store, resolveGame, resolveEngine, config: { ...config, MAX_PLAYERS_PER_ROOM: 4, MAX_TOTAL_ROOMS: 2 }, rng: Math.random })
+    registerHandlers(io, { io, store, resolveGame, resolveEngine, config: { ...config, MAX_TOTAL_ROOMS: 2 }, rng: Math.random })
     await new Promise<void>(resolve => http.listen(0, "127.0.0.1", resolve))
     base = `http://127.0.0.1:${(http.address() as { port: number }).port}`
   })
@@ -48,8 +48,8 @@ describe("socket security regressions", () => {
     io.sockets.sockets.get(socket.id!)!.data.rateBag?.clear()
     return socket.timeout(2000).emitWithAck(event, data)
   }
-  async function room(host: Socket, approval = false): Promise<CreateRoomData> {
-    const result = await send(host, "admin:create-room", { gameId: "spy-game", hostName: "Host", hostCharacter: "ace", isPublic: true, requireApproval: approval })
+  async function room(host: Socket, approval = false, gameId = "spy-game"): Promise<CreateRoomData> {
+    const result = await send(host, "admin:create-room", { gameId, hostName: "Host", hostCharacter: "ace", isPublic: true, requireApproval: approval })
     expect(result.ok).toBe(true)
     return result.data as CreateRoomData
   }
@@ -58,6 +58,86 @@ describe("socket security regressions", () => {
     expect(result.ok).toBe(true)
     return result.data as JoinedData
   }
+
+  it("deals the selected two vampires to players and keeps the host a moderator on reconnect", async () => {
+    const host = await client(), created = await room(host, false, "vampire-village")
+    const credentials = { code: created.code, adminSecret: created.adminSecret }
+    const hostReveal = vi.fn()
+    host.on("player:role-assigned", hostReveal)
+    expect(created.room.players).toEqual([])
+    const listing = await send(host, "rooms:list", {})
+    expect(listing.data.rooms).toEqual([expect.objectContaining({ hostName: "Host", playerCount: 0, takenCharacters: [] })])
+    for (let i = 0; i < 4; i++) await join(await client(), created.code, `Player ${i}`)
+    const dealt = await send(host, "admin:assign-roles", { ...credentials, settings: { vampireCount: 2, doctor: true, detective: true } })
+    expect(dealt.ok).toBe(true)
+    expect(dealt.data.room.players).toHaveLength(4)
+    expect(dealt.data.room.players.map((p: { role: string }) => p.role).sort()).toEqual(["detective", "doctor", "vampire", "vampire"])
+    expect(dealt.data.room.settings.vampireCount).toBe(2)
+    expect((await store.get(created.code))!.players.find(p => p.id === created.hostPlayerId)?.role).toBeNull()
+    const reconnected = await send(host, "admin:reconnect", credentials)
+    expect(reconnected.data.room.players).toEqual(dealt.data.room.players)
+    expect(hostReveal).not.toHaveBeenCalled()
+    expect(await send(host, "player:join", {
+      code: created.code, name: "Host", playerId: created.hostPlayerId,
+      resumeToken: playerResumeToken(created.adminSecret, created.hostPlayerId)
+    })).toMatchObject({ ok: false, error: "AUTHZ_MISMATCH" })
+    // Older clients can still redeal using the saved settings.
+    expect((await send(host, "admin:assign-roles", credentials)).data.room.players
+      .filter((p: { role: string }) => p.role === "vampire")).toHaveLength(2)
+  })
+
+  it("asks every player for feedback on explicit completion, not on an ordinary role reset", async () => {
+    const host = await client(), created = await room(host, false, "vampire-village")
+    const credentials = { code: created.code, adminSecret: created.adminSecret }
+    const players = [await client(), await client(), await client()]
+    const moderatorFinished = vi.fn()
+    host.on("game:finished", moderatorFinished)
+    const received = players.map(player => { const fn = vi.fn(); player.on("game:finished", fn); return fn })
+    for (let i = 0; i < players.length; i++) await join(players[i]!, created.code, `Player ${i}`)
+    await send(host, "admin:assign-roles", credentials)
+    await send(host, "admin:clear-roles", credentials)
+    expect(received.every(fn => fn.mock.calls.length === 0)).toBe(true)
+    await send(host, "admin:assign-roles", credentials)
+    const finished = players.map(player => new Promise(resolve => player.once("game:finished", resolve)))
+    expect((await send(host, "admin:clear-roles", { ...credentials, finished: true })).ok).toBe(true)
+    expect(await Promise.all(finished)).toEqual(players.map(() => ({ code: created.code, gameId: "vampire-village" })))
+    expect(moderatorFinished).not.toHaveBeenCalled()
+    await send(host, "admin:clear-roles", { ...credentials, finished: true })
+    expect(received.every(fn => fn.mock.calls.length === 1)).toBe(true)
+  })
+
+  it("does not use the vampire moderator to satisfy minimum players or fit excess roles", async () => {
+    const host = await client(), created = await room(host, false, "vampire-village")
+    const credentials = { code: created.code, adminSecret: created.adminSecret }
+    await join(await client(), created.code, "Ada")
+    await join(await client(), created.code, "Bea")
+    expect(await send(host, "admin:assign-roles", credentials)).toMatchObject({ ok: false, error: "NEED_MORE_PLAYERS" })
+    await join(await client(), created.code, "Cem")
+    expect(await send(host, "admin:assign-roles", { ...credentials, settings: { vampireCount: 2 } }))
+      .toMatchObject({ ok: false, error: "TOO_MANY_SPECIAL_ROLES" })
+    const unchanged = (await store.get(created.code))!
+    expect(unchanged.assigned).toBe(false)
+    expect(unchanged.settings.vampireCount).toBe(1)
+    expect(unchanged.players.every(p => p.role === null)).toBe(true)
+    const result = await send(host, "admin:assign-roles", { ...credentials, settings: { vampireCount: 2, detective: false } })
+    expect(result.data.room.players.map((p: { role: string }) => p.role).sort()).toEqual(["doctor", "vampire", "vampire"])
+  })
+
+  it("keeps the vampire moderator outside the player list when approving joins", async () => {
+    const host = await client(), created = await room(host, true, "vampire-village")
+    const credentials = { code: created.code, adminSecret: created.adminSecret }
+    const requests: string[] = []
+    for (let i = 0; i < 4; i++) {
+      const response = await send(await client(), "player:join", { code: created.code, name: `Player ${i}` })
+      expect(response).toMatchObject({ ok: true, data: { status: "pending" } })
+      requests.push(response.data.requestId)
+    }
+    expect(await send(await client(), "player:join", { code: created.code, name: "Another player" })).toMatchObject({ ok: true, data: { status: "pending" } })
+    expect((await send(host, "admin:approve-join", { ...credentials, requestId: requests[0] })).ok).toBe(true)
+    const admitted = await send(host, "admin:update-room", { ...credentials, requireApproval: false })
+    expect(admitted.data.room.players).toHaveLength(5)
+    expect(admitted.data.room.pending).toEqual([])
+  })
 
   it("rejects public player IDs and name-only takeover, even after disconnection", async () => {
     const host = await client(), victim = await client(), attacker = await client()
@@ -103,12 +183,58 @@ describe("socket security regressions", () => {
     expect(io.sockets.sockets.get(waiting.id!)!.data.pendingRequestId).toBeUndefined()
   })
 
-  it("bounds the approval queue and safely admits its reserved seats", async () => {
+  it("admits everyone in the approval queue when approval is disabled", async () => {
     const host = await client(), created = await room(host, true)
     for (let i = 0; i < 3; i++) expect((await send(await client(), "player:join", { code: created.code, name: `Player ${i}` })).ok).toBe(true)
-    expect(await send(await client(), "player:join", { code: created.code, name: "Overflow" })).toMatchObject({ ok: false, error: "ROOM_FULL" })
+    expect(await send(await client(), "player:join", { code: created.code, name: "Another player" })).toMatchObject({ ok: true, data: { status: "pending" } })
     expect((await send(host, "admin:update-room", { code: created.code, adminSecret: created.adminSecret, requireApproval: false })).ok).toBe(true)
-    expect((await store.get(created.code))!.players).toHaveLength(4)
+    expect((await store.get(created.code))!.players).toHaveLength(5)
+  })
+
+  it.each(["vampire-village", "spy-game"])("allows direct joins beyond 500 existing players in %s", async gameId => {
+    const host = await client(), created = await room(host, false, gameId)
+    await store.update(created.code, r => ({
+      ...r,
+      players: [...r.players, ...Array.from({ length: 500 }, (_, i) => ({
+        id: `existing-${i}`, name: `Existing ${i}`, role: null, connected: true, character: ""
+      }))]
+    }))
+    const newcomer = await client()
+    const result = await join(newcomer, created.code, "Newcomer")
+    expect(result.room.players).toHaveLength(gameId === "vampire-village" ? 501 : 502)
+    expect(result.player.name).toBe("Newcomer")
+    const resumed = await send(newcomer, "player:join", {
+      code: created.code, name: "Newcomer", playerId: result.player.id, resumeToken: result.resumeToken
+    })
+    expect(resumed).toMatchObject({ ok: true, data: { player: { id: result.player.id } } })
+  })
+
+  it("accepts and approves joins beyond 500 players and 500 pending requests", async () => {
+    const host = await client(), created = await room(host, true, "vampire-village")
+    const credentials = { code: created.code, adminSecret: created.adminSecret }
+    // Seed a large room, then exercise the real socket join and approval paths.
+    await store.update(created.code, r => ({
+      ...r,
+      players: [...r.players, ...Array.from({ length: 500 }, (_, i) => ({
+        id: `existing-${i}`, name: `Existing ${i}`, role: null, connected: true, character: ""
+      }))],
+      pending: Array.from({ length: 500 }, (_, i) => ({
+        id: `pending-${i}`, name: `Waiting ${i}`, requestedAt: Date.now(), character: ""
+      }))
+    }))
+    const newcomer = await client()
+    const queued = await send(newcomer, "player:join", { code: created.code, name: "Newcomer" })
+    expect(queued).toMatchObject({ ok: true, data: { status: "pending" } })
+    expect((await store.get(created.code))!.pending).toHaveLength(501)
+    const approvedEvent = new Promise<JoinedData>(resolve => newcomer.once("player:join-approved", resolve))
+    const approved = await send(host, "admin:approve-join", { ...credentials, requestId: queued.data.requestId })
+    expect(approved.ok).toBe(true)
+    expect(approved.data.room.players).toHaveLength(501)
+    expect((await approvedEvent).player.name).toBe("Newcomer")
+    const admitted = await send(host, "admin:update-room", { ...credentials, requireApproval: false })
+    expect(admitted.ok).toBe(true)
+    expect(admitted.data.room.players).toHaveLength(1001)
+    expect(admitted.data.room.pending).toEqual([])
   })
 
   it("drops old admin and private player subscriptions when switching rooms", async () => {

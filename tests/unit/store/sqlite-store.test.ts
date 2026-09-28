@@ -20,6 +20,23 @@ describe("SqliteStore — engine specifics", () => {
     }
   })
 
+  it("keeps the frozen resume key across a host handover", async () => {
+    const store = new SqliteStore(":memory:")
+    const now = Date.now()
+    await store.create({
+      code: "ABCDE", gameId: "spy-game", adminSecret: "first", assigned: false, settings: {},
+      players: [], createdAt: now, updatedAt: now, hostPlayerId: "", isPublic: false,
+      requireApproval: false, pending: [], phase: "idle", phaseSeq: 0, phaseEndsAt: null,
+      round: 0, gameState: {}, scores: {}
+    })
+    expect((await store.get("ABCDE"))!.resumeSecret).toBeUndefined()
+    await store.update("ABCDE", r => ({ ...r, adminSecret: "second", resumeSecret: "first" }))
+    const room = (await store.get("ABCDE"))!
+    expect(room.adminSecret).toBe("second")
+    expect(room.resumeSecret).toBe("first")
+    void store.close()
+  })
+
   it("survives reopen — schema is idempotent", () => {
     const dir = mkdtempSync(path.join(os.tmpdir(), "rooms-"))
     const dbPath = path.join(dir, "rooms.db")

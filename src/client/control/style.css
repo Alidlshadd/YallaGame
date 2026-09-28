@@ -2167,3 +2167,7 @@ dialog::backdrop {
     transition: none !important;
   }
 }
+/* Player comments remain text and wrap even when someone pastes a long URL. */
+.feedback-record { padding: 20px 0; border-bottom: 1px solid var(--border, #8884); }
+.feedback-record h2 { font-size: 18px; }
+.feedback-comment { white-space: pre-wrap; overflow-wrap: anywhere; }

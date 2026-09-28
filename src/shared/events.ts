@@ -53,9 +53,11 @@ export interface ClientToServerEvents {
   "admin:reconnect":       (p: { code: string; adminSecret: string },                               cb: Ack<AdminRoomData>)  => void
   "admin:update-settings": (p: { code: string; adminSecret: string; settings: Partial<Settings> },  cb: Ack<AdminRoomData>)  => void
   "admin:update-room":     (p: { code: string; adminSecret: string; isPublic?: boolean; requireApproval?: boolean }, cb: Ack<AdminRoomData>) => void
-  "admin:assign-roles":    (p: { code: string; adminSecret: string },                               cb: Ack<AdminRoomData>)  => void
-  "admin:clear-roles":     (p: { code: string; adminSecret: string },                               cb: Ack<AdminRoomData>)  => void
+  "admin:assign-roles":    (p: { code: string; adminSecret: string; settings?: Partial<Settings> }, cb: Ack<AdminRoomData>)  => void
+  "admin:clear-roles":     (p: { code: string; adminSecret: string; finished?: boolean },           cb: Ack<AdminRoomData>)  => void
   "admin:kick-player":     (p: { code: string; adminSecret: string; playerId: string },             cb: Ack<AdminRoomData>)  => void
+  /** Hand the room to another player; the caller becomes an ordinary player. */
+  "admin:transfer-host":   (p: { code: string; adminSecret: string; playerId: string },             cb: Ack<AdminRoomData>)  => void
   "admin:approve-join":    (p: { code: string; adminSecret: string; requestId: string },            cb: Ack<AdminRoomData>)  => void
   "admin:reject-join":     (p: { code: string; adminSecret: string; requestId: string },            cb: Ack<AdminRoomData>)  => void
   "admin:close-room":      (p: { code: string; adminSecret: string },                               cb: Ack<{ closed: true }>) => void
@@ -65,7 +67,7 @@ export interface ClientToServerEvents {
   /** One room by code, for the join screen reached with a code rather than a list row. */
   "rooms:peek":            (p: { code: string },                                                    cb: Ack<{ room: RoomSummary }>) => void
 
-  "game:start":            (p: { code: string; adminSecret: string },                    cb: Ack<{ phase: Phase; seq: number }>) => void
+  "game:start":            (p: { code: string; adminSecret: string; settings?: Partial<Settings> }, cb: Ack<{ phase: Phase; seq: number }>) => void
   /** `seq` is the phase the player was looking at; a stale one is refused. */
   "game:action":           (p: { code: string; seq: number; action: GameAction },        cb: Ack<{ accepted: true }>) => void
   /** Host closes a phase that has no countdown of its own. */
@@ -90,11 +92,16 @@ export interface ServerToClientEvents {
   "player:role-assigned": (payload: RoleAssignedPayload) => void
   "player:role-cleared":  () => void
   "player:kicked":        () => void
+  /** This player is now the room's host. */
+  "player:host-granted":  (data: { code: string; adminSecret: string; room: VisibleRoom }) => void
+  /** The host handed the room over and is now this ordinary seat. */
+  "admin:host-revoked":   (data: JoinedData) => void
   "player:join-approved": (data: JoinedData) => void
   "player:join-rejected": () => void
   "room:closed":          () => void
   "game:phase":           (payload: PhaseEvent) => void
   "game:over":            (payload: GameOverEvent) => void
+  "game:finished":        (payload: { code: string; gameId: string }) => void
 }
 
 export type InterServerEvents = Record<string, never>

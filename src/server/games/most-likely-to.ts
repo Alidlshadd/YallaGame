@@ -84,7 +84,11 @@ export interface MostLikelyToState extends GameState {
   customQuestionText: string | null
   /** Whichever connected player already chose "pass" this prompt. */
   passedPlayerIds: string[]
-  /** Who is behind `customQuestionText`, kept only to answer that one player's own view — never broadcast. */
+  /**
+   * Who is behind `customQuestionText`. Kept for that player's own prompt
+   * view, and named to the table only when the host turned
+   * `customQuestionShowAuthor` on (see `authorOf`).
+   */
   customQuestionWriterId: string | null
 }
 
@@ -157,9 +161,11 @@ function openCustomPrompt(state: MostLikelyToState): MostLikelyToState {
  */
 function resolveCustomOrRandom(state: MostLikelyToState, rng: () => number): MostLikelyToState {
   if (state.customQuestionText !== null && state.customQuestionText !== "") {
+    // The writer is kept with the round so a host who asked for it can name
+    // them; `authorOf` decides whether that ever leaves the server.
     return {
       questionId: CUSTOM_QUESTION_ID, asked: state.asked, votes: [],
-      customQuestionText: state.customQuestionText, passedPlayerIds: [], customQuestionWriterId: null
+      customQuestionText: state.customQuestionText, passedPlayerIds: [], customQuestionWriterId: state.customQuestionWriterId
     }
   }
   return openRound(state.asked, rng)
@@ -227,6 +233,14 @@ export function tally(room: Room): MostLikelyToResult {
     winnerPlayerIds,
     isTie: winnerPlayerIds.length > 1
   }
+}
+
+/** The writer of this round's player-written question, only when the host chose to show it. */
+function authorOf(room: Room, state: MostLikelyToState): { customQuestionAuthor?: string } {
+  if (room.settings["customQuestionShowAuthor"] !== true) return {}
+  if (state.questionId !== CUSTOM_QUESTION_ID || state.customQuestionWriterId === null) return {}
+  const name = room.players.find(p => p.id === state.customQuestionWriterId)?.name
+  return name === undefined ? {} : { customQuestionAuthor: name }
 }
 
 function roster(room: Room): MostLikelyToPlayer[] {
@@ -361,7 +375,8 @@ export const mostLikelyToEngine: GameEngine = {
         roundNumber: room.round,
         question: question.text,
         ...(question.category !== undefined ? { category: question.category } : {}),
-        roster: roster(room)
+        roster: roster(room),
+        ...authorOf(room, state)
       }
     }
 
@@ -378,10 +393,11 @@ export const mostLikelyToEngine: GameEngine = {
         // still in the room right now — counting it here would let the
         // numerator outrun the denominator.
         votedCount: state.votes.filter(v => room.players.some(p => p.connected && p.id === v.voterId)).length,
-        totalPlayers: room.players.filter(p => p.connected).length
+        totalPlayers: room.players.filter(p => p.connected).length,
+        ...authorOf(room, state)
       }
     }
 
-    return { kind: room.phase === GAME_OVER ? "over" : "result", roster: roster(room), ...tally(room) }
+    return { kind: room.phase === GAME_OVER ? "over" : "result", roster: roster(room), ...tally(room), ...authorOf(room, state) }
   }
 }

@@ -46,7 +46,7 @@ test("accessories survive host creation, approval and player reconnection", asyn
   host.on("pageerror", e => errors.push(e.message))
   player.on("pageerror", e => errors.push(e.message))
   await host.addInitScript(() => localStorage.setItem("role-room:last-accessory", "crown"))
-  const code = await createRoom(host, { requireApproval: true })
+  const code = await createRoom(host, { requireApproval: true, theme: "spy-game" })
   await expect(host.locator('.player-row [data-avatar="ace"]')).toHaveAttribute("data-accessory", "crown")
   await openDoorstep(player, code)
   await player.fill("#joinSetupName", "Mira")
@@ -72,7 +72,7 @@ test("accessories survive host creation, approval and player reconnection", asyn
 test("mobile avatar studio has 23 faces, removable accessories and usable tabs", async ({ browser }) => {
   const hostContext = await browser.newContext()
   const host = await hostContext.newPage()
-  const code = await createRoom(host)
+  const code = await createRoom(host, { theme: "spy-game" })
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, deviceScaleFactor: 1 })
   const page = await context.newPage()
   await page.addInitScript(() => localStorage.setItem("role-room:lang", "tr"))

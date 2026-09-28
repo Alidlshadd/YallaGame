@@ -23,7 +23,8 @@ CREATE TABLE IF NOT EXISTS rooms (
   phase_ends_at    INTEGER,
   round            INTEGER NOT NULL DEFAULT 0,
   game_state_json  TEXT NOT NULL DEFAULT '{}',
-  scores_json      TEXT NOT NULL DEFAULT '{}'
+  scores_json      TEXT NOT NULL DEFAULT '{}',
+  resume_secret    TEXT NOT NULL DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS rooms_created_at_idx ON rooms(created_at);
 `
@@ -54,7 +55,9 @@ const ADDED_COLUMNS: Array<[string, string]> = [
   ["phase_ends_at",    "INTEGER"],
   ["round",            "INTEGER NOT NULL DEFAULT 0"],
   ["game_state_json",  "TEXT NOT NULL DEFAULT '{}'"],
-  ["scores_json",      "TEXT NOT NULL DEFAULT '{}'"]
+  ["scores_json",      "TEXT NOT NULL DEFAULT '{}'"],
+  // Set once the host hands the room to somebody else; '' means "the admin secret".
+  ["resume_secret",    "TEXT NOT NULL DEFAULT ''"]
 ]
 
 interface RoomRow {
@@ -76,6 +79,7 @@ interface RoomRow {
   round: number
   game_state_json: string
   scores_json: string
+  resume_secret?: string
 }
 
 function rowToRoom(row: RoomRow): Room {
@@ -97,7 +101,8 @@ function rowToRoom(row: RoomRow): Room {
     phaseEndsAt: row.phase_ends_at,
     round: row.round,
     gameState: JSON.parse(row.game_state_json),
-    scores: JSON.parse(row.scores_json)
+    scores: JSON.parse(row.scores_json),
+    ...(row.resume_secret ? { resumeSecret: row.resume_secret } : {})
   }
 }
 
@@ -123,10 +128,10 @@ export class SqliteStore implements RoomStore {
     this.stmtInsert = this.db.prepare(`
       INSERT INTO rooms (code, game_id, admin_secret, assigned, settings_json, players_json,
                          created_at, updated_at, host_player_id, is_public, require_approval, pending_json,
-                         phase, phase_seq, phase_ends_at, round, game_state_json, scores_json)
+                         phase, phase_seq, phase_ends_at, round, game_state_json, scores_json, resume_secret)
       VALUES (@code, @gameId, @adminSecret, @assigned, @settings, @players,
               @createdAt, @updatedAt, @hostPlayerId, @isPublic, @requireApproval, @pending,
-              @phase, @phaseSeq, @phaseEndsAt, @round, @gameState, @scores)
+              @phase, @phaseSeq, @phaseEndsAt, @round, @gameState, @scores, @resumeSecret)
     `)
     this.stmtGet = this.db.prepare(`SELECT * FROM rooms WHERE code = ?`)
     this.stmtUpdate = this.db.prepare(`
@@ -136,7 +141,8 @@ export class SqliteStore implements RoomStore {
              host_player_id = @hostPlayerId, is_public = @isPublic,
              require_approval = @requireApproval, pending_json = @pending,
              phase = @phase, phase_seq = @phaseSeq, phase_ends_at = @phaseEndsAt,
-             round = @round, game_state_json = @gameState, scores_json = @scores
+             round = @round, game_state_json = @gameState, scores_json = @scores,
+             resume_secret = @resumeSecret
        WHERE code = @code
     `)
     this.stmtDelete = this.db.prepare(`DELETE FROM rooms WHERE code = ?`)
@@ -172,7 +178,8 @@ export class SqliteStore implements RoomStore {
       phaseEndsAt: room.phaseEndsAt,
       round: room.round,
       gameState: JSON.stringify(room.gameState),
-      scores: JSON.stringify(room.scores)
+      scores: JSON.stringify(room.scores),
+      resumeSecret: room.resumeSecret ?? ""
     })
   }
 
@@ -203,7 +210,8 @@ export class SqliteStore implements RoomStore {
         phaseEndsAt: updated.phaseEndsAt,
         round: updated.round,
         gameState: JSON.stringify(updated.gameState),
-        scores: JSON.stringify(updated.scores)
+        scores: JSON.stringify(updated.scores),
+        resumeSecret: updated.resumeSecret ?? ""
       })
       return updated
     }).immediate

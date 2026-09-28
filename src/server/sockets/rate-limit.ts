@@ -5,6 +5,7 @@ const COOLDOWNS_MS: Record<string, number> = {
   "admin:assign-roles":    200,
   "admin:clear-roles":     200,
   "admin:kick-player":     200,
+  "admin:transfer-host":   500,
   "admin:reconnect":       200,
   // The lobby polls every 15s; this only has to stop the Refresh button being
   // hammered, and a person who taps it twice in a second means it.

@@ -89,8 +89,11 @@ describe("avatar customization", () => {
     picker.setTaken(CHARACTERS.filter(c => c.id !== "mochi").map(c => c.id))
     click(".avatar-surprise")
     expect(picker.value()).toBe("mochi")
+    // Once every face is claimed they are shared, so a big table is never locked out.
     picker.setTaken(CHARACTERS.map(c => c.id))
-    expect(document.querySelector<HTMLButtonElement>(".avatar-surprise")?.disabled).toBe(true)
+    expect(picker.value()).toBe("mochi")
+    expect(document.querySelector<HTMLButtonElement>(".avatar-surprise")?.disabled).toBe(false)
+    expect(document.querySelector<HTMLButtonElement>('[data-character="ace"]')?.disabled).toBe(false)
   })
   it("renders all combinations with unique SVG ids and recovers from unavailable art", () => {
     for (const character of CHARACTERS) for (const accessory of ACCESSORIES) {

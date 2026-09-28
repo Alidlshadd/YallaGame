@@ -100,7 +100,6 @@ export const GAME_CATALOG: readonly Game[] = [
         type: "number",
         key: "vampireCount",
         min: 1,
-        max: 5,
         label: { ku: "ژمارەی ڤامپایەر", ar: "عدد مصاصي الدماء", en: "Vampire Count", tr: "Vampir Sayısı" }
       },
       {
@@ -232,7 +231,7 @@ export const GAME_CATALOG: readonly Game[] = [
     defaultSettings: {
       spyCount: 1, roundMinutes: 5, guessAttempts: 1,
       spyCategories: ["iraq-kurdistan-cities", "food-drinks", "jobs", "objects"],
-      spyCustomWords: ""
+      spyCustomWords: "", spyVoteSeconds: 60, spyShowVoters: false
     },
     title: { ku: "سیخوڕ", ar: "الجاسوس", en: "Spy Game", tr: "Casus Oyunu" },
     subtitle: {
@@ -312,8 +311,24 @@ export const GAME_CATALOG: readonly Game[] = [
         type: "number",
         key: "spyCount",
         min: 1,
-        max: 4,
+        // Big tables want several spies; a count the room cannot fit is
+        // refused at deal time (TOO_MANY_SPECIAL_ROLES), not clamped here.
+        max: 10,
         label: { ku: "ژمارەی سیخوڕ", ar: "عدد الجواسيس", en: "Spy Count", tr: "Casus Sayısı" }
+      },
+      {
+        type: "number",
+        key: "spyVoteSeconds",
+        min: 15,
+        max: 300,
+        label: { ku: "کاتی دەنگدان (چرکە)", ar: "وقت التصويت (ثانية)", en: "Voting Time (sec)", tr: "Oylama Süresi (sn)" }
+      },
+      {
+        // Off: the result says how many votes each person got, never who
+        // cast them. On: every voter's name is shown. The host decides.
+        type: "boolean",
+        key: "spyShowVoters",
+        label: { ku: "ناوی دەنگدەران پیشان بدە", ar: "إظهار أسماء المصوّتين", en: "Show Voter Names", tr: "Oy Verenlerin İsimleri Görünsün" }
       },
       {
         type: "categories",
@@ -508,7 +523,8 @@ export const GAME_CATALOG: readonly Game[] = [
     turnBased: true,
     defaultSettings: {
       votingSeconds: 20, roundCount: 5, showVoters: false,
-      customQuestionsEnabled: false, customQuestionSeconds: 30, customQuestionMaxLength: 100
+      customQuestionsEnabled: false, customQuestionSeconds: 30, customQuestionMaxLength: 100,
+      customQuestionShowAuthor: false
     },
     title: {
       ku: "کێ زۆرترین ئەگەری هەیە؟",
@@ -568,7 +584,8 @@ export const GAME_CATALOG: readonly Game[] = [
         type: "number",
         key: "roundCount",
         min: 1,
-        max: 20,
+        // Long evenings run past the question bank; it reopens once used up.
+        max: 100,
         label: {
           ku: "ژمارەی خولەکان",
           ar: "عدد الجولات",
@@ -624,6 +641,17 @@ export const GAME_CATALOG: readonly Game[] = [
           ar: "الحد الأقصى لحروف السؤال",
           en: "Max Question Length",
           tr: "Maksimum Soru Uzunluğu"
+        }
+      },
+      {
+        // Off keeps a player-written question anonymous; on names its writer.
+        type: "boolean",
+        key: "customQuestionShowAuthor",
+        label: {
+          ku: "ناوی نووسەری پرسیار پیشان بدە",
+          ar: "إظهار اسم كاتب السؤال",
+          en: "Show Who Wrote the Question",
+          tr: "Soruyu Yazan Görünsün"
         }
       }
     ]

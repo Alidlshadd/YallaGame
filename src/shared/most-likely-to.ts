@@ -43,6 +43,11 @@ export interface MostLikelyToResult {
   /** More than one on a tie; empty when nobody voted. */
   winnerPlayerIds: string[]
   isTie: boolean
+  /**
+   * Who wrote a player-written question. Present only when the host turned
+   * `customQuestionShowAuthor` on; otherwise the question stays anonymous.
+   */
+  customQuestionAuthor?: string
 }
 
 export interface MostLikelyToQuestionView {
@@ -52,6 +57,11 @@ export interface MostLikelyToQuestionView {
   /** Absent for a question a player wrote themselves — it was never sorted into one. */
   category?: MostLikelyToCategory
   roster: MostLikelyToPlayer[]
+  /**
+   * Who wrote a player-written question. Present only when the host turned
+   * `customQuestionShowAuthor` on; otherwise the question stays anonymous.
+   */
+  customQuestionAuthor?: string
 }
 
 export interface MostLikelyToVotingView {
@@ -65,6 +75,11 @@ export interface MostLikelyToVotingView {
   myVote: string | null
   votedCount: number
   totalPlayers: number
+  /**
+   * Who wrote a player-written question. Present only when the host turned
+   * `customQuestionShowAuthor` on; otherwise the question stays anonymous.
+   */
+  customQuestionAuthor?: string
 }
 
 export type MostLikelyToRevealView = {

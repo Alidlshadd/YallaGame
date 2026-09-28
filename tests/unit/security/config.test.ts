@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest"
 import { Schema } from "../../../src/server/config.js"
 
+it("ignores the retired room player limit even when present in an old environment", () => {
+  expect(Schema.parse({ MAX_PLAYERS_PER_ROOM: "10" })).not.toHaveProperty("MAX_PLAYERS_PER_ROOM")
+})
+
 describe("production origin policy", () => {
   const production = { NODE_ENV: "production", DB_PATH: "/var/lib/yalla/rooms.db" }
   it("requires an exact HTTPS public origin", () => {

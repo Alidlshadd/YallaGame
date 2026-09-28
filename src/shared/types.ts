@@ -9,7 +9,8 @@ export interface SettingNumber {
   type: "number"
   key: string
   min: number
-  max: number
+  /** Absent when only the available player count limits this setting. */
+  max?: number
   label: LocalizedText
 }
 export interface SettingBoolean {
@@ -112,7 +113,7 @@ export interface Room {
   players: Player[]
   createdAt: number
   updatedAt: number
-  /** The host plays too: this is their entry in `players`. */
+  /** Stored host identity in `players`; Vampire Village hosts only moderate (see playingPlayers). */
   hostPlayerId: string
   /** Listed in the public room browser. Private rooms are code-only. */
   isPublic: boolean
@@ -132,6 +133,12 @@ export interface Room {
   round: number
   gameState: GameState
   scores: Scores
+  /**
+   * What players' resume tokens are signed with. Absent until the host hands
+   * the room over: the admin secret is rotated then, and the seats already
+   * handed out must keep working, so the old secret is frozen here.
+   */
+  resumeSecret?: string
 }
 
 export type Viewer =

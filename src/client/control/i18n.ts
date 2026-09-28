@@ -2,6 +2,12 @@
 export const languages = ["en", "tr", "ar", "ku"] as const
 export type Language = (typeof languages)[number]
 export const dictionary = {
+  feedback: ["Player feedback", "Oyuncu değerlendirmeleri", "تقييمات اللاعبين", "هەڵسەنگاندنی یاریزانان"],
+  feedbackDesc: ["Ratings, suggestions and problems shared after a game.", "Oyun sonunda gönderilen puanlar, öneriler ve sorunlar.", "التقييمات والاقتراحات والمشاكل المرسلة بعد اللعب.", "نمرە و پێشنیار و کێشە نێردراوەکان دوای یاری."],
+  feedbackEmpty: ["No feedback yet.", "Henüz değerlendirme yok.", "لا توجد تقييمات بعد.", "هێشتا هەڵسەنگاندن نییە."],
+  feedbackRating: ["Rating", "Puan", "التقييم", "نمرە"],
+  feedbackComment: ["Comment", "Yorum", "التعليق", "لێدوان"],
+  feedbackSummary: ["{count} reviews · {average}/5 average", "{count} değerlendirme · {average}/5 ortalama", "{count} تقييم · المتوسط {average}/5", "{count} هەڵسەنگاندن · تێکڕا {average}/5"],
   overview: ["Overview", "Genel bakış", "نظرة عامة", "پوختە"],
   analytics: ["Analytics", "Analitik", "التحليلات", "شیکاری"],
   history: ["Game history", "Oyun geçmişi", "سجل الألعاب", "مێژووی یاری"],

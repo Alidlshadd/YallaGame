@@ -11,6 +11,7 @@ import { showReveal } from "../ui/roleReveal.js"
 import { getGames } from "./home.js"
 import { worldCoverPath } from "../data/assets.js"
 import { buildRolePool, assignRolesLocally, type LocalAssignment } from "../domain/local-roles.js"
+import { offerGameFeedback } from "../ui/gameFeedback.js"
 import { SPY_WORD_CATEGORIES, pickSpyWordWithCategory } from "../domain/spy-data.js"
 import { getCategoryByKey, rememberRecentWord } from "@shared/word-categories.js"
 import {
@@ -867,6 +868,7 @@ export const localPlayView = {
       updateBackLabel()
       wakeLock = syncWakeLock(IN_PLAY_STEPS.has(state.step), wakeLock)
       saveState()
+      if (game && ["result", "whoTimeUp", "footballSummary"].includes(state.step)) offerGameFeedback(game)
     }
 
     function updateBackLabel(): void {
@@ -1124,6 +1126,8 @@ function buildSetupHeader(eyebrow: string, title: string, subtitle?: string): HT
   return el("div", { class: "lp-header" }, children)
 }
 
+const ONLINE_ONLY_SETTINGS = new Set(["spyVoteSeconds", "spyShowVoters"])
+
 function renderSettings(container: HTMLDivElement, lang: LangCode, render: () => void, game: Game): void {
   if (isFootballGame(game)) {
     renderFootballSettings(container, lang, render, game)
@@ -1140,6 +1144,8 @@ function renderSettings(container: HTMLDivElement, lang: LangCode, render: () =>
     // Local play keeps its own bespoke word/category UI above (renderSpyWordSettings)
     // rather than the generic online-room widgets these two setting types drive.
     if (def.type === "categories" || def.type === "text") continue
+    // The online vote needs a phone per player; a passed-around phone has none.
+    if (ONLINE_ONLY_SETTINGS.has(def.key)) continue
     const id = `lp-setting-${def.key}`
     const labelText = def.label[lang]
     const value = state.settings[def.key]
@@ -1147,11 +1153,11 @@ function renderSettings(container: HTMLDivElement, lang: LangCode, render: () =>
     if (def.type === "number") {
       const input = el("input", {
         id, type: "number",
-        min: String(def.min), max: String(def.max),
+        min: String(def.min), ...(def.max === undefined ? {} : { max: String(def.max) }),
         value: String(value ?? def.min)
       }) as HTMLInputElement
       input.addEventListener("input", () => {
-        state.settings[def.key] = Math.max(def.min, Math.min(def.max, Number(input.value) || def.min))
+        state.settings[def.key] = Math.max(def.min, Math.min(def.max ?? Infinity, Number(input.value) || def.min))
       })
       row.appendChild(input)
     } else {
@@ -1491,6 +1497,8 @@ function renderSpyResult(container: HTMLDivElement, lang: LangCode, render: () =
 }
 
 function renderDone(container: HTMLDivElement, lang: LangCode, render: () => void, game: Game): void {
+  const finishBtn = el("button", { class: "lp-primary", type: "button" }, [t("mltEndGame")])
+  finishBtn.addEventListener("click", () => offerGameFeedback(game))
   const list = el("div", { class: "lp-done-list" })
   for (const a of state.assignments) {
     const role = game.roles.find(r => r.id === a.roleId)
@@ -1517,7 +1525,7 @@ function renderDone(container: HTMLDivElement, lang: LangCode, render: () => voi
     el("h2", { class: "lp-title" }, [localReviewText(lang, "doneTitle")]),
     el("p", { class: "lp-sub" }, [localReviewText(lang, "doneHint")]),
     list,
-    el("div", { class: "lp-actions" }, [homeBtn, restartBtn])
+    el("div", { class: "lp-actions" }, [homeBtn, restartBtn, finishBtn])
   )
 }
 

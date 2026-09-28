@@ -1,5 +1,6 @@
 import type Database from "better-sqlite3"
 import type { Room } from "../../shared/types.js"
+import { playingPlayers } from "../../shared/room-players.js"
 import type { RoomStore } from "../store/store.js"
 import { hash } from "./auth.js"
 import { logger } from "../logger.js"
@@ -27,7 +28,7 @@ export class Analytics {
         event,
         room.gameId,
         roomReference(room),
-        room.players.filter(p => p.connected).length,
+        playingPlayers(room).filter(p => p.connected).length,
         name?.slice(0, 80) ?? null,
         Date.now()
       )
@@ -58,20 +59,20 @@ export class Analytics {
     this.safe(() =>
       this.db.transaction(() => {
         this.event("room_created", room)
-        for (const p of room.players) this.event("player_joined", room, p.name)
+        for (const p of playingPlayers(room)) this.event("player_joined", room, p.name)
       })()
     )
   }
   changed(before: Room, after: Room): void {
     this.safe(() =>
       this.db.transaction(() => {
-        for (const p of after.players)
+        for (const p of playingPlayers(after))
           if (!before.players.some(old => old.id === p.id)) this.event("player_joined", after, p.name)
         const started =
           (before.phase === "idle" && after.phase !== "idle") || (!before.assigned && after.assigned)
         if (started) {
           this.finish(before, "abandoned")
-          const players = after.players.filter(p => p.connected).map(p => p.name.slice(0, 80))
+          const players = playingPlayers(after).filter(p => p.connected).map(p => p.name.slice(0, 80))
           this.db
             .prepare(
               `INSERT INTO game_sessions(game_id,room_ref,players,player_count,started_at,status,room_created_at)

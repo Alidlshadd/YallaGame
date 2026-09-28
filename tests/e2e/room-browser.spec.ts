@@ -21,8 +21,8 @@ test("a public room shows up in the browser with its host and game; a private on
   const row = player.locator(".lobby-row", { hasText: code })
   await expect(row).toBeVisible()
   await expect(row).toContainText("Zeynep")
-  // The host counts as a player, so an untouched room already reads as 1.
-  await expect(row.locator(".lobby-count")).toContainText("1")
+  // Vampire hosts moderate, so the room has no players until someone joins.
+  await expect(row.locator(".lobby-count")).toContainText("0")
 
   await expect(player.locator(".lobby-row", { hasText: privateCode })).toHaveCount(0)
 
@@ -193,10 +193,10 @@ test("closing a room drops it out of the browser immediately", async ({ browser 
   await hostCtx.close(); await playerCtx.close()
 })
 
-test("the host holds a seat and is dealt a role like everyone else", async ({ browser }) => {
+test("the spy host holds a seat and is dealt a role like everyone else", async ({ browser }) => {
   const hostCtx = await browser.newContext()
   const host = await hostCtx.newPage()
-  const code = await createRoom(host, { hostName: "Zeynep" })
+  const code = await createRoom(host, { hostName: "Zeynep", theme: "spy-game" })
 
   await expect(host.locator("#adminPlayersList")).toContainText("Zeynep")
   // The host's own row carries the badge and no kick button.
@@ -245,8 +245,8 @@ test("a room cannot be created without a character either", async ({ page }) => 
 test("a character already in the room cannot be picked again", async ({ browser }) => {
   const hostCtx = await browser.newContext()
   const host = await hostCtx.newPage()
-  // The host takes the Owl when the room is made.
-  const code = await createRoom(host, { hostName: "Zeynep", hostCharacter: "ace", isPublic: true })
+  // A playing host reserves their character too.
+  const code = await createRoom(host, { hostName: "Zeynep", hostCharacter: "ace", isPublic: true, theme: "spy-game" })
 
   const playerCtx = await browser.newContext()
   const player = await playerCtx.newPage()

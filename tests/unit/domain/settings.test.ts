@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest"
 import { normalizeSettings } from "@server/domain/settings.js"
+import { resolveGame } from "@server/games/catalog.js"
 import type { Game } from "@shared/types.js"
 
 const game: Game = {
@@ -29,6 +30,11 @@ const spyGame: Game = {
 }
 
 describe("normalizeSettings", () => {
+  it("preserves vampire counts above five without imposing a fixed maximum", () => {
+    const vampire = resolveGame("vampire-village")!
+    expect(normalizeSettings(vampire, { vampireCount: 12 }).vampireCount).toBe(12)
+    expect(normalizeSettings(vampire, { vampireCount: 1000 }).vampireCount).toBe(1000)
+  })
   it("clamps number values to [min, max]", () => {
     expect(normalizeSettings(game, { count: 99 }).count).toBe(5)
     expect(normalizeSettings(game, { count: -5 }).count).toBe(1)

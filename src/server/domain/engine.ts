@@ -39,6 +39,11 @@ export interface GameEngine {
   pending(room: Room): string[]
   /** Everything this one player is allowed to see right now, and nothing else. */
   view(room: Room, playerId: string): unknown
+  /**
+   * What the room keeps once the game stops. Absent means nothing: a game
+   * whose rounds live beside a deal of roles (Spy Game's vote) hands the deal back.
+   */
+  idleState?(room: Room): GameState
 }
 
 export type EngineResolver = (gameId: string) => GameEngine | undefined
@@ -49,6 +54,7 @@ export interface EngineDeps {
   rng: () => number
   emitPhase(code: string, playerId: string, payload: PhaseEvent): void
   emitOver(code: string, payload: GameOverEvent): void
+  emitFinished?(room: Room): void
 }
 
 /**
@@ -149,7 +155,10 @@ export async function advance(
   else cancelTimer(code)   // a decided game keeps its final screen up
 
   broadcast(deps, room)
-  if (out.over !== null) deps.emitOver(code, out.over)
+  if (out.over !== null) {
+    deps.emitOver(code, out.over)
+    deps.emitFinished?.(room)
+  }
   return room
 }
 
@@ -216,18 +225,21 @@ export async function hostAdvance(
 
 /** Host stops the game. Scores stay up; the next start clears them. */
 export async function stopGame(deps: EngineDeps, code: string, adminSecret: string): Promise<Room> {
+  let wasRunning = false
   const room = await deps.store.update(code, current => {
     if (current.adminSecret !== adminSecret) throw new Error("INVALID_ADMIN")
+    wasRunning = current.phase !== IDLE_PHASE
     return {
       ...current,
       phase: IDLE_PHASE,
       phaseSeq: current.phaseSeq + 1,
       phaseEndsAt: null,
-      gameState: {}
+      gameState: deps.resolveEngine(current.gameId)?.idleState?.(current) ?? {}
     }
   })
   cancelTimer(code)
   broadcast(deps, room)
+  if (wasRunning) deps.emitFinished?.(room)
   return room
 }
 

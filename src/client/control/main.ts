@@ -37,6 +37,7 @@ const navItems: readonly [string, Key, Icon][] = [
   ["/admin/analytics", "analytics", "BarChart3"],
   ["/admin/games/history", "history", "Clock3"],
   ["/admin/players", "players", "Users"],
+  ["/admin/feedback", "feedback", "Sparkles"],
   ["/admin/games", "library", "Gamepad2"],
   ["/admin/avatars", "avatars", "SmilePlus"],
   ["/admin/settings/branding", "branding", "Palette"],
@@ -1335,6 +1336,47 @@ async function branding(main: HTMLElement): Promise<void> {
       })
   }
 }
+async function feedback(main: HTMLElement): Promise<void> {
+  main.append(heading(t("feedback"), t("feedbackDesc")))
+  const content = node("section", "", "panel")
+  main.append(content)
+  let page = 1
+  const refresh = async () => {
+    const data = await api<{
+      rows: { id: number; game_id: string; rating: number; comment: string; created_at: number }[]
+      total: number; average: number | null; pageSize: number
+    }>(`/api/admin/feedback?page=${page}`)
+    content.replaceChildren()
+    content.append(node("p", t("feedbackSummary", {
+      count: () => number(data.total), average: () => data.average === null ? "—" : number(data.average)
+    })))
+    if (!data.rows.length) { content.append(node("p", t("feedbackEmpty"), "muted")); return }
+    for (const row of data.rows) {
+      const card = node("article", "", "feedback-record")
+      const game = catalog.find(g => g.id === row.game_id)
+      card.append(
+        node("h2", () => game?.title[language] ?? row.game_id),
+        node("p", () => `${t("feedbackRating")()}: ${"★".repeat(row.rating)}${"☆".repeat(5 - row.rating)} (${row.rating}/5)`),
+        node("time", () => date(row.created_at), "muted"),
+        node("p", row.comment || "—", "feedback-comment")
+      )
+      content.append(card)
+    }
+    const navigation = node("div", "", "toolbar")
+    const previous = button(t("previous"), () => {
+      page--; void refresh().catch(error => toast(errorCopy(error), true))
+    }, "button", "ArrowLeft")
+    const next = button(t("next"), () => {
+      page++; void refresh().catch(error => toast(errorCopy(error), true))
+    }, "button", "ArrowRight")
+    previous.disabled = page <= 1
+    next.disabled = page * data.pageSize >= data.total
+    navigation.append(previous, node("span", () => `${number(page)} / ${number(Math.ceil(data.total / data.pageSize))}`), next)
+    content.append(navigation)
+  }
+  await refresh()
+}
+
 async function system(main: HTMLElement): Promise<void> {
   main.append(heading(t("systemTitle"), t("systemDesc")))
   const data = await api<Runtime>("/api/admin/system"),
@@ -1388,6 +1430,9 @@ async function start(): Promise<void> {
   catalog = (await api<{ catalog: Game[] }>("/api/admin/games")).catalog
   updateBrand()
   switch (location.pathname) {
+    case "/admin/feedback":
+      await feedback(main)
+      break
     case "/admin":
     case "/admin/analytics":
       await dashboard(main)

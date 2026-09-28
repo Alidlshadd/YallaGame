@@ -32,8 +32,10 @@ export function buildCharacterPicker(lang: LangCode, taken: string[], onChange: 
   const id = `avatar-picker-${pickerId++}`
   const list = pickableCharacters()
   let claimed = new Set(taken)
+  /** Taken by somebody else — unless every face is, then faces are shared so nobody is locked out. */
+  const isClaimed = (charId: string): boolean => claimed.has(charId) && list.some(c => !claimed.has(c.id))
   const saved = read(LAST_CHARACTER_KEY)
-  let chosen = list.some(c => c.id === saved) && !claimed.has(saved) ? saved : ""
+  let chosen = list.some(c => c.id === saved) && !isClaimed(saved) ? saved : ""
   const savedAccessory = read(LAST_ACCESSORY_KEY)
   let accessory = isAccessoryId(savedAccessory) ? savedAccessory : ""
   let activeTab = "characters"
@@ -60,15 +62,15 @@ export function buildCharacterPicker(lang: LangCode, taken: string[], onChange: 
     preview.replaceChildren(buildAvatar(def?.id ?? list[0]!.id, "", lang, { size: 100, accessory, lazy: false }))
     previewName.textContent = def?.name[lang] ?? t("chooseCharacter")
     previewDetail.textContent = allowsAccessories(chosen) ? findAccessory(accessory)?.name[lang] ?? t("avatarMakeItYours") : t("avatarNoAccessory")
-    surprise.disabled = list.every(c => claimed.has(c.id))
+    surprise.disabled = list.every(c => isClaimed(c.id))
   }
   function renderCharacters(): void {
     const focused = grid.querySelector<HTMLElement>(":focus")?.dataset.character
     const scroll = grid.scrollTop
     clear(grid)
-    const focusId = chosen || list.find(c => !claimed.has(c.id))?.id
+    const focusId = chosen || list.find(c => !isClaimed(c.id))?.id
     for (const def of list) {
-      const isTaken = claimed.has(def.id)
+      const isTaken = isClaimed(def.id)
       const tile = el("button", {
         class: `char-tile${isTaken ? " is-taken" : ""}`, type: "button", role: "radio",
         "aria-checked": String(chosen === def.id), "aria-label": `${def.name[lang]}${isTaken ? ` · ${t("characterTaken")}` : ""}`,
@@ -143,7 +145,7 @@ export function buildCharacterPicker(lang: LangCode, taken: string[], onChange: 
     buttons[next]?.click()
   })
   surprise.addEventListener("click", () => {
-    const free = list.filter(c => !claimed.has(c.id))
+    const free = list.filter(c => !isClaimed(c.id))
     if (!free.length) return
     chosen = free[Math.floor(Math.random() * free.length)]!.id
     accessory = characterAccessory(chosen, ACCESSORIES[Math.floor(Math.random() * ACCESSORIES.length)]!.id)
@@ -157,7 +159,7 @@ export function buildCharacterPicker(lang: LangCode, taken: string[], onChange: 
     setTaken(next) {
       if (next.length === claimed.size && next.every(id => claimed.has(id))) return
       claimed = new Set(next)
-      if (chosen && claimed.has(chosen)) { chosen = ""; onChange("") }
+      if (chosen && isClaimed(chosen)) { chosen = ""; onChange("") }
       renderCharacters(); renderAccessories(); renderPreview()
     }
   }

@@ -14,7 +14,6 @@ export const Schema = z.object({
   LOG_LEVEL:             z.enum(["fatal","error","warn","info","debug","trace"]).default("info"),
   MAX_ROOMS_PER_SOCKET:  z.coerce.number().int().positive().default(5),
   MAX_TOTAL_ROOMS:       z.coerce.number().int().positive().default(10_000),
-  MAX_PLAYERS_PER_ROOM:  z.coerce.number().int().positive().default(30),
   /** How many public rooms the browser returns per refresh. */
   ROOM_LIST_LIMIT:       z.coerce.number().int().positive().max(200).default(40)
 }).superRefine((v, ctx) => {

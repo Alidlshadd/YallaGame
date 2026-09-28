@@ -15,6 +15,7 @@ import { watchConnection } from "../services/connection.js"
 import { holdWakeLock } from "../services/wakeLock.js"
 import { vibrate } from "../ui/haptics.js"
 import type { JoinedData, RoleAssignedPayload } from "@shared/events.js"
+import type { VisibleRoom } from "@shared/types.js"
 
 export const playerRoomView = {
   id: "playerRoomView" as const,
@@ -85,6 +86,15 @@ export const playerRoomView = {
       renderSettled()
     }
 
+    // The host handed this player the room: carry on as its admin.
+    const onHostGranted = (data: { code: string; adminSecret: string; room: VisibleRoom }) => {
+      if (!ctx.initial || data.code !== ctx.initial.room.code) return
+      session.save({ kind: "admin", code: data.code, adminSecret: data.adminSecret })
+      vibrate("reveal")
+      showToast(t("youAreHost"))
+      void setView("adminView", { initial: data.room }, { mode: "root" })
+    }
+
     const onKicked = () => {
       session.clear()
       clearTheme()
@@ -106,6 +116,7 @@ export const playerRoomView = {
     socket.on("player:role-assigned", onAssigned)
     socket.on("player:role-cleared",  onCleared)
     socket.on("player:kicked",        onKicked)
+    socket.on("player:host-granted",  onHostGranted)
 
     // Both the Leave button and the phone's back gesture ask the same
     // localized question before dropping the player out of the room.
@@ -144,6 +155,7 @@ export const playerRoomView = {
       socket.off("player:role-assigned", onAssigned)
       socket.off("player:role-cleared",  onCleared)
       socket.off("player:kicked",        onKicked)
+      socket.off("player:host-granted",  onHostGranted)
       leaveBtn.removeEventListener("click", onLeave)
     }
   }

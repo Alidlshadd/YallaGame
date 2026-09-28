@@ -59,6 +59,28 @@ export function mountControl(
     res.set({ "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow" })
     next()
   }
+  const feedbackVisitor = (req: Request, res: Response): string => {
+    let visitor = cookies(req)["yalla-visitor"]
+    if (!visitor || !/^[a-f0-9]{64}$/.test(visitor)) {
+      visitor = token()
+      res.cookie("yalla-visitor", visitor, { httpOnly: true, secure, sameSite: "lax", path: "/", maxAge: 365 * 86400_000 })
+    }
+    return hash(visitor)
+  }
+  app.post("/api/feedback", noStore, express.json({ limit: "16kb", inflate: false }), (req, res) => {
+    if (!auth.sameOrigin(req)) { res.sendStatus(403); return }
+    if (!limited(req, "feedback", 600, 60_000)) { res.sendStatus(429); return }
+    const parsed = z.object({
+      gameId: z.string().max(64).refine(id => resolveGame(id) !== undefined),
+      rating: z.number().int().min(1).max(5),
+      comment: z.string().trim().max(2000).default("")
+    }).strict().safeParse(req.body)
+    if (!parsed.success) { res.sendStatus(400); return }
+    const { gameId, rating, comment } = parsed.data
+    db.prepare("INSERT INTO game_feedback(visitor_id,game_id,rating,comment,created_at) VALUES(?,?,?,?,?) ON CONFLICT(visitor_id,game_id) DO NOTHING")
+      .run(feedbackVisitor(req, res), gameId, rating, comment, Date.now())
+    res.json({ saved: true })
+  })
   app.use(["/admin", "/api/admin", "/api/auth"], noStore)
   app.get("/api/public-config", (_req, res) => {
     res.set("Cache-Control", "no-store").json(publicConfiguration(db))
@@ -201,6 +223,15 @@ export function mountControl(
   const api = express.Router()
   app.use("/api/admin", api)
   api.use(auth.requireAdmin, auth.csrf)
+  api.get("/feedback", (req, res) => {
+    const parsed = z.object({ page: z.coerce.number().int().min(1).max(100000).default(1) }).safeParse(req.query)
+    if (!parsed.success) { res.sendStatus(400); return }
+    const pageSize = 30
+    const rows = db.prepare("SELECT id,game_id,rating,comment,created_at FROM game_feedback ORDER BY created_at DESC,id DESC LIMIT ? OFFSET ?")
+      .all(pageSize, (parsed.data.page - 1) * pageSize)
+    const summary = db.prepare("SELECT COUNT(*) total, ROUND(AVG(rating),2) average FROM game_feedback").get() as { total: number; average: number | null }
+    res.json({ rows, ...summary, page: parsed.data.page, pageSize })
+  })
   api.get("/session", (req, res) => {
     const admin = res.locals.admin as AdminSession
     const csrf = auth.csrfFor(req)
@@ -545,6 +576,7 @@ export function mountControl(
     "/admin/games/history",
     "/admin/avatars",
     "/admin/players",
+    "/admin/feedback",
     "/admin/settings/branding",
     "/admin/settings/system",
     "/admin/audit-logs",
@@ -567,7 +599,7 @@ export function mountControl(
   })
   // Express 4 needs an explicit async boundary; never include stack traces or request bodies.
   app.use(
-    ["/api/admin", "/api/auth", "/api/analytics"],
+    ["/api/admin", "/api/auth", "/api/analytics", "/api/feedback"],
     (
       error: { status?: number; type?: string },
       _req: Request,

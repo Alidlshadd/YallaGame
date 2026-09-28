@@ -1,4 +1,5 @@
 import type { Game, GameId, Room, RoomSummary, VisibleRoom, Viewer } from "@shared/types.js"
+import { playingPlayers } from "../../shared/room-players.js"
 
 export type GameResolver = (id: GameId) => Game | undefined
 
@@ -18,7 +19,7 @@ export function projectRoomFor(room: Room, viewer: Viewer, resolveGame: GameReso
     if (viewer.adminSecret !== room.adminSecret) throw new Error("AUTHZ_MISMATCH")
     return {
       ...shared,
-      players: room.players.map(p => ({
+      players: playingPlayers(room).map(p => ({
         id: p.id, name: p.name, connected: p.connected, role: p.role, character: p.character, accessory: p.accessory ?? ""
       })),
       // Only the host decides who gets in, so only the host sees the queue.
@@ -31,7 +32,7 @@ export function projectRoomFor(room: Room, viewer: Viewer, resolveGame: GameReso
 
   return {
     ...shared,
-    players: room.players.map(p => ({
+    players: playingPlayers(room).map(p => ({
       id: p.id, name: p.name, connected: p.connected,
       role: p.id === viewer.playerId ? p.role : null,
       character: p.character, accessory: p.accessory ?? ""
@@ -55,7 +56,7 @@ export function summarizeRoom(room: Room, resolveGame: GameResolver): RoomSummar
     gameIcon: game.icon,
     theme: game.theme,
     hostName: host?.name ?? "",
-    playerCount: room.players.filter(p => p.connected).length,
+    playerCount: playingPlayers(room).filter(p => p.connected).length,
     requireApproval: room.requireApproval,
     assigned: room.assigned,
     createdAt: room.createdAt,
@@ -70,7 +71,7 @@ export function summarizeRoom(room: Room, resolveGame: GameResolver): RoomSummar
  */
 export function takenCharacters(room: Room): string[] {
   const taken = new Set<string>()
-  for (const p of room.players) if (p.character) taken.add(p.character)
+  for (const p of playingPlayers(room)) if (p.character) taken.add(p.character)
   for (const r of room.pending) if (r.character) taken.add(r.character)
   return [...taken]
 }

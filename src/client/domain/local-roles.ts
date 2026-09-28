@@ -9,6 +9,7 @@ export function buildRolePool(game: Game, settings: Settings, playerCount: numbe
     if (role.filler) continue
     if (role.countSetting) {
       const count = Number(settings[role.countSetting] ?? 0)
+      if (count > playerCount - pool.length) throw new Error("TOO_MANY_SPECIAL_ROLES")
       for (let i = 0; i < count; i++) pool.push(role.id)
     }
     if (role.enabledSetting && settings[role.enabledSetting]) pool.push(role.id)

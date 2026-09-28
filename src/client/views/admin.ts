@@ -13,8 +13,9 @@ import { setView, setViewBackHandler } from "../router.js"
 import { showReveal } from "../ui/roleReveal.js"
 import { buildAvatar } from "../ui/avatar.js"
 import { mountGameStage } from "../ui/gameStage.js"
-import type { RoleAssignedPayload } from "@shared/events.js"
+import type { JoinedData, RoleAssignedPayload } from "@shared/events.js"
 import type { VisibleRoom } from "@shared/types.js"
+import { isModerator } from "@shared/room-players.js"
 import { getCategoriesForGame, type SupportedGame } from "@shared/word-categories.js"
 
 export const adminView = {
@@ -35,6 +36,8 @@ export const adminView = {
     const listEl     = $<HTMLDivElement>("#adminPlayersList")
     const assignBtn  = $<HTMLButtonElement>("#assignRolesBtn")
     const clearBtn   = $<HTMLButtonElement>("#clearRolesBtn")
+    const finishBtn = el("button", { id: "finishGameBtn", class: "btn btn-primary", type: "button" }, [t("mltEndGame")])
+    clearBtn.after(finishBtn)
     const startBtn   = $<HTMLButtonElement>("#startGameBtn")
     const requestsPanel = $<HTMLDivElement>("#joinRequestsPanel")
     const requestsList  = $<HTMLDivElement>("#joinRequestsList")
@@ -76,7 +79,7 @@ export const adminView = {
         if (def.type === "number") {
           const input = el("input", {
             id, type: "number",
-            min: String(def.min), max: String(def.max),
+            min: String(def.min), ...(def.max === undefined ? {} : { max: String(def.max) }),
             value: String(value ?? def.min)
           }) as HTMLInputElement
           row.appendChild(input)
@@ -137,12 +140,31 @@ export const adminView = {
           const r = await emit("admin:kick-player", { code: room.code, adminSecret: s.adminSecret, playerId: p.id })
           if (!r.ok) showToast(t("errorGeneric"))
         })
+        // Hand the room to this player; the host sits down as an ordinary one.
+        const hostBtn = el("button", {
+          class: "kick-btn host-btn", type: "button", title: t("makeHost"), "aria-label": `${t("makeHost")} ${p.name}`
+        }, ["👑"])
+        hostBtn.hidden = isHost || !p.connected
+        hostBtn.addEventListener("click", async () => {
+          if (!room) return
+          const s = session.load(); if (s?.kind !== "admin") return
+          const confirmed = await confirmDialog({
+            title: "makeHostTitle",
+            body: "makeHostBody",
+            confirmKey: "makeHost",
+            cancelKey: "cancel"
+          })
+          if (!confirmed || !room) return
+          const r = await emit("admin:transfer-host", { code: room.code, adminSecret: s.adminSecret, playerId: p.id })
+          if (!r.ok) showToast(t(r.error === "INVALID_INPUT" ? "errorTransferHost" : "errorGeneric"))
+        })
         const nameCell = el("span", { class: "player-name" }, [p.name])
         if (isHost) nameCell.appendChild(el("span", { class: "player-badge" }, [t("hostBadge")]))
         const row = el("div", { class: `player-row ${p.connected ? "" : "off"}${isHost ? " is-host" : ""}` }, [
           buildAvatar(p.character, p.name, lang, { size: 30, accessory: p.accessory }),
           nameCell,
           el("span", { class: "player-role" }, [roleName(p.role)]),
+          hostBtn,
           kickBtn
         ])
         listEl.appendChild(row)
@@ -206,9 +228,14 @@ export const adminView = {
      */
     function renderActions() {
       const turnBased = room?.game.turnBased === true
+      // Spy Game is dealt like the others, and once the cards are out the
+      // same Start button opens the online vote on who the spy is.
+      const spyVote = room?.gameId === "spy-game" && room.assigned
       assignBtn.hidden = turnBased
       clearBtn.hidden  = turnBased
-      startBtn.hidden  = !turnBased
+      finishBtn.hidden = turnBased || !room?.assigned
+      startBtn.hidden  = !turnBased && !spyVote
+      startBtn.textContent = spyVote ? t("spyStartVote") : t("mltStartGame")
     }
 
     function renderAll() { renderHeader(); renderSettings(); renderPlayers(); renderRequests(); renderPrivacy(); renderActions() }
@@ -224,6 +251,7 @@ export const adminView = {
           || JSON.stringify(previous.players) !== JSON.stringify(next.players)) {
           renderHeader()
           renderPlayers()
+          renderActions()
         }
         if (previous.requireApproval !== next.requireApproval
           || JSON.stringify(previous.pending) !== JSON.stringify(next.pending)) renderRequests()
@@ -236,6 +264,7 @@ export const adminView = {
     // The host holds a seat like everyone else, so they get the same flip-card
     // reveal on their own screen rather than reading their role off the list.
     const onRoleAssigned = async (payload: RoleAssignedPayload) => {
+      if (room && isModerator(room, room.hostPlayerId)) return
       vibrate("reveal")
       await showReveal({ payload, lang })
     }
@@ -251,6 +280,15 @@ export const adminView = {
     }
     socket.on("room:closed", onRoomClosed)
 
+    // The host handed the room over: this phone is an ordinary seat now.
+    const onHostRevoked = (data: JoinedData) => {
+      if (!room || data.room.code !== room.code) return
+      session.save({ kind: "player", code: data.room.code, playerId: data.player.id, name: data.player.name, resumeToken: data.resumeToken })
+      showToast(t("hostHandedOver"))
+      void setView("playerRoomView", { initial: data }, { mode: "root" })
+    }
+    socket.on("admin:host-revoked", onHostRevoked)
+
     // The host watches the player list fill up without touching the screen.
     const releaseWakeLock = holdWakeLock()
     const stopWatchingConnection = watchConnection()
@@ -258,7 +296,7 @@ export const adminView = {
     // The host holds a seat and plays along, so a running turn is drawn over
     // this screen rather than on one of its own.
     const hostSession = session.load()
-    const releaseGameStage = room !== null && hostSession?.kind === "admin"
+    const releaseGameStage = room !== null && !isModerator(room, room.hostPlayerId) && hostSession?.kind === "admin"
       ? mountGameStage({
           code: room.code,
           myPlayerId: room.hostPlayerId,
@@ -268,11 +306,9 @@ export const adminView = {
 
     if (room) renderAll()
 
-    const onSave = async () => {
-      if (!room) return
-      const s = session.load()
-      if (s?.kind !== "admin") return
+    const readSettings = () => {
       const incoming: Record<string, number | boolean | string | string[]> = {}
+      if (!room) return incoming
       for (const def of room.game.settings) {
         if (def.type === "categories") {
           const checkboxes = Array.from(
@@ -286,6 +322,14 @@ export const adminView = {
         if (def.type === "boolean") incoming[def.key] = input.checked
         if (def.type === "text")    incoming[def.key] = input.value
       }
+      return incoming
+    }
+
+    const onSave = async () => {
+      if (!room) return
+      const s = session.load()
+      if (s?.kind !== "admin") return
+      const incoming = readSettings()
       const r = await emit("admin:update-settings", { code: room.code, adminSecret: s.adminSecret, settings: incoming })
       if (!r.ok) showToast(t("errorGeneric"))
       // A clamped value can equal the previous server value, so the room
@@ -298,7 +342,7 @@ export const adminView = {
       const s = session.load(); if (s?.kind !== "admin") return
       assignBtn.classList.add("curtain-fill")
       window.setTimeout(() => assignBtn.classList.remove("curtain-fill"), 1500)
-      const r = await emit("admin:assign-roles", { code: room.code, adminSecret: s.adminSecret })
+      const r = await emit("admin:assign-roles", { code: room.code, adminSecret: s.adminSecret, settings: readSettings() })
       if (!r.ok) {
         if (r.error === "NEED_MORE_PLAYERS")           showToast(t("errorNeedMorePlayers"))
         else if (r.error === "TOO_MANY_SPECIAL_ROLES") showToast(t("errorTooManySpecial"))
@@ -316,10 +360,21 @@ export const adminView = {
     const onStartGame = async () => {
       if (!room) return
       const s = session.load(); if (s?.kind !== "admin") return
-      const r = await emit("game:start", { code: room.code, adminSecret: s.adminSecret })
+      // Settings are read off the form so the game played is the one on screen,
+      // even when the host never pressed Save.
+      const r = await emit("game:start", { code: room.code, adminSecret: s.adminSecret, settings: readSettings() })
       if (!r.ok) {
         showToast(r.error === "NEED_MORE_PLAYERS" ? t("errorNeedMorePlayers") : t("errorGeneric"))
       }
+    }
+
+    const onFinish = async () => {
+      if (!room) return
+      const s = session.load(); if (s?.kind !== "admin") return
+      finishBtn.disabled = true
+      const r = await emit("admin:clear-roles", { code: room.code, adminSecret: s.adminSecret, finished: true })
+      finishBtn.disabled = false
+      if (!r.ok) showToast(t("errorGeneric"))
     }
 
     const onPrivacyChange = async () => {
@@ -394,6 +449,7 @@ export const adminView = {
     saveBtn.addEventListener("click", onSave)
     assignBtn.addEventListener("click", onAssign)
     clearBtn.addEventListener("click", onClear)
+    finishBtn.addEventListener("click", onFinish)
     startBtn.addEventListener("click", onStartGame)
     copyBtn.addEventListener("click", onCopy)
     shareBtn.addEventListener("click", onShare)
@@ -407,11 +463,13 @@ export const adminView = {
       socket.off("admin:room-updated", onUpdated)
       socket.off("player:role-assigned", onRoleAssigned)
       socket.off("room:closed", onRoomClosed)
+      socket.off("admin:host-revoked", onHostRevoked)
       publicToggle.removeEventListener("change", onToggle)
       approvalToggle.removeEventListener("change", onToggle)
       saveBtn.removeEventListener("click", onSave)
       assignBtn.removeEventListener("click", onAssign)
       clearBtn.removeEventListener("click", onClear)
+      finishBtn.remove()
       startBtn.removeEventListener("click", onStartGame)
       releaseGameStage()
       copyBtn.removeEventListener("click", onCopy)
