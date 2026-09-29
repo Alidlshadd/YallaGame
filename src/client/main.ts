@@ -4,8 +4,6 @@ import { refreshCurrentView, register, registerLazy, setView, type ViewId } from
 import { initNavigation } from "./services/navigation.js"
 import { loadPublicConfiguration } from "./services/publicConfig.js"
 import { initAnalytics } from "./services/analytics.js"
-import { socket } from "./services/socket.js"
-import { offerGameFeedback } from "./ui/gameFeedback.js"
 import { prefetchOfflineBundles, registerServiceWorker } from "./services/pwa.js"
 import { homeView, loadCatalog, getGames } from "./views/home.js"
 import { applyTheme, clearTheme } from "./themes/loader.js"
@@ -23,11 +21,6 @@ async function bootstrap() {
   // Must run before the first setView so the base history entry is labelled and
   // the hardware/gesture back button is wired up from the very first screen.
   initNavigation()
-  socket.on("game:finished", ({ code, gameId }) => {
-    if (session.load()?.code !== code) return
-    const game = getGames().find(g => g.id === gameId)
-    if (game) offerGameFeedback(game)
-  })
   registerServiceWorker()
   ensureAtmosphere()
   applyPerformanceProfile()

@@ -146,6 +146,23 @@ describe("startGame", () => {
 })
 
 describe("advance", () => {
+  it("notifies completion only after the final result, and manual end notifies only a running game", async () => {
+    const h = await harness()
+    const finished = vi.fn()
+    h.deps.emitFinished = finished
+    const started = await startGame(h.deps, "ABCDE", "s3cret")
+    expect(finished).not.toHaveBeenCalled()
+    await advance(h.deps, "ABCDE", { phase: started.phase, seq: started.phaseSeq }, () => ({
+      phase: "DONE", state: { votes: {}, secret: "answer" }, ms: null, winner: "table"
+    }))
+    expect(finished).toHaveBeenCalledWith(expect.objectContaining({ gameId: "fake", phase: "DONE" }))
+    finished.mockClear()
+    await stopGame(h.deps, "ABCDE", "s3cret")
+    expect(finished).toHaveBeenCalledTimes(1)
+    await stopGame(h.deps, "ABCDE", "s3cret")
+    expect(finished).toHaveBeenCalledTimes(1)
+  })
+
   it("applies a transition exactly once when two callers race", async () => {
     const h = await harness()
     const started = await startGame(h.deps, "ABCDE", "s3cret")

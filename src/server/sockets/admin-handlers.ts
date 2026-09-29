@@ -17,7 +17,7 @@ import { dealSpyWord, SPY_GAME_ID } from "../domain/spyWords.js"
 import { makeRoomCode, makeSecret, playerResumeToken, resumeKey } from "../domain/codes.js"
 import { bindIdentity, revokeRoomSubscriptions } from "./membership.js"
 import { cancelTimer } from "../domain/scheduler.js"
-import { sendPhaseTo, type EngineResolver } from "../domain/engine.js"
+import { onPlayerLeft, sendPhaseTo, type EngineResolver } from "../domain/engine.js"
 import { engineDeps } from "./game-handlers.js"
 import {
   CreateRoomPayload,
@@ -237,6 +237,8 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
     deps.io.to(`p:${code}:${playerId}`).emit("player:kicked")
     deps.io.in(`p:${code}:${playerId}`).socketsLeave([`room:${code}`, `p:${code}:${playerId}`])
     await broadcastRoom(deps, updated)
+    // The one person a running vote was still waiting on may be the one who left.
+    await onPlayerLeft(engineDeps(deps), code)
     logger.info({ code, playerId }, "player kicked")
     return { room: projectRoomFor(updated, { kind: "admin", adminSecret }, deps.resolveGame) }
   })
@@ -316,7 +318,9 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
         next.players = [
           ...room.players,
           ...room.pending.map(r => {
-            const free = r.character && !claimed.has(r.character)
+            // Same rule as a direct join: a face is shared only once all are taken.
+            const cast = deps.selectableCharacters?.() ?? CHARACTERS.map(c => c.id)
+            const free = r.character && (!claimed.has(r.character) || cast.every(id => claimed.has(id)))
             if (free) claimed.add(r.character)
             return { id: r.id, name: r.name, role: null, connected: true, character: free ? r.character : "", accessory: r.accessory ?? "" }
           })
@@ -413,7 +417,9 @@ export function registerAdminHandlers(socket: TypedSocket, deps: AdminDeps): voi
     let completed = false
     const updated = await deps.store.update(code, room => {
       if (room.adminSecret !== adminSecret) throw new Error("INVALID_ADMIN")
-      if (finished && room.phase !== IDLE_PHASE) throw new Error("INVALID_INPUT")
+      // A running turn (a Spy Game vote, say) is built on the dealt cards;
+      // taking them back underneath it would leave a vote over nobody.
+      if (room.phase !== IDLE_PHASE) throw new Error("INVALID_INPUT")
       completed = finished === true && room.assigned
       return { ...room, assigned: false, players: room.players.map(p => ({ ...p, role: null })) }
     })

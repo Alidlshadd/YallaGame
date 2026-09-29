@@ -817,6 +817,9 @@ export function mountGameStage(opts: GameStageOptions): () => void {
 
     stage.hidden = false
     document.body.classList.add("stage-open")
+    // A role card still open (Spy Game deals before its vote) would sit over
+    // the buttons this phase needs; the card is always back in the room view.
+    for (const close of document.querySelectorAll<HTMLButtonElement>(".reveal-overlay .reveal-close")) close.click()
 
     const lang = getLang()
     const panel = el("div", { class: "mlt" })

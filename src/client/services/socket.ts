@@ -5,6 +5,17 @@ type TypedSocket = Socket<ServerToClientEvents, ClientToServerEvents>
 
 export const socket: TypedSocket = io({ reconnection: true, reconnectionAttempts: Infinity })
 
+// Keep completion handling across view remounts without opening a connection on the home page.
+socket.on("game:finished", ({ code, gameId }) => {
+  void Promise.all([
+    import("../ui/gameFeedback.js"), import("../views/home.js"), import("./session.js")
+  ]).then(([{ offerGameFeedback }, { getGames }, session]) => {
+    if (session.load()?.code !== code) return
+    const game = getGames().find(g => g.id === gameId)
+    if (game) offerGameFeedback(game)
+  }).catch(() => { /* A failed optional prompt must not interrupt the room. */ })
+})
+
 /**
  * The last phase the server sent, held from the moment this module loads.
  *

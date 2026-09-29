@@ -2819,7 +2819,8 @@ body[data-perf="low"] *::after {
 .player-row .player-name { font-weight: 600; }
 .player-row .player-role { color: var(--text-muted); font-size: var(--type-sm); }
 
-.player-row .kick-btn {
+.player-row .kick-btn,
+.player-row .host-btn {
   width: 26px;
   height: 26px;
   line-height: 1;

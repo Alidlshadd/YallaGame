@@ -69,7 +69,9 @@ export function mountControl(
   }
   app.post("/api/feedback", noStore, express.json({ limit: "16kb", inflate: false }), (req, res) => {
     if (!auth.sameOrigin(req)) { res.sendStatus(403); return }
-    if (!limited(req, "feedback", 600, 60_000)) { res.sendStatus(429); return }
+    // One rating per player per game. A clearable cookie is no brake, so this
+    // is the real ceiling — sized for a whole table sharing one Wi-Fi.
+    if (!limited(req, "feedback", 40, 600_000)) { res.sendStatus(429); return }
     const parsed = z.object({
       gameId: z.string().max(64).refine(id => resolveGame(id) !== undefined),
       rating: z.number().int().min(1).max(5),

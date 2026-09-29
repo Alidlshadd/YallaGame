@@ -162,6 +162,11 @@ export interface VisibleRoom {
   settings: Settings
   players: VisiblePlayer[]
   hostPlayerId: string
+  /**
+   * The host's avatar. Carried on its own because a moderating host (Vampire
+   * Village) is not in `players`, yet their screen still wears their theme.
+   */
+  hostCharacter: string
   isPublic: boolean
   requireApproval: boolean
   /** Only ever populated for the host; players receive an empty list. */

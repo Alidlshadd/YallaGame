@@ -142,7 +142,7 @@ export const adminView = {
         })
         // Hand the room to this player; the host sits down as an ordinary one.
         const hostBtn = el("button", {
-          class: "kick-btn host-btn", type: "button", title: t("makeHost"), "aria-label": `${t("makeHost")} ${p.name}`
+          class: "host-btn", type: "button", title: t("makeHost"), "aria-label": `${t("makeHost")} ${p.name}`
         }, ["👑"])
         hostBtn.hidden = isHost || !p.connected
         hostBtn.addEventListener("click", async () => {
@@ -214,7 +214,7 @@ export const adminView = {
     }
 
     function renderHeader() {
-      applyCharacterTheme(room?.players.find(p => p.id === room?.hostPlayerId)?.character)
+      applyCharacterTheme(room?.hostCharacter)
       if (!room) return
       codeEl.textContent     = room.code
       gameNameEl.textContent = room.game.title[lang]

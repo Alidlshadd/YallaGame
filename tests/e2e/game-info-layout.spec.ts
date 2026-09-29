@@ -11,7 +11,9 @@ for (const size of sizes) {
       await page.setViewportSize(size)
       await page.emulateMedia({ reducedMotion: "reduce" })
       await page.goto("/", { waitUntil: "domcontentloaded" })
-      await page.locator(`.shelf-card[data-game="${game.id}"]`).click()
+      // Home only teases the first three worlds; every game lives on Worlds.
+      await page.getByRole("navigation", { name: "Primary" }).getByRole("button", { name: "Worlds" }).click()
+      await page.locator(`.shelf-card[data-game="${game.id}"]`).first().click()
       let reference: unknown
       const measurements = []
       for (const lang of languages) {

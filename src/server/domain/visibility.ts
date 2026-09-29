@@ -11,6 +11,7 @@ export function projectRoomFor(room: Room, viewer: Viewer, resolveGame: GameReso
     code: room.code, gameId: room.gameId, game,
     assigned: room.assigned, settings: room.settings,
     hostPlayerId: room.hostPlayerId,
+    hostCharacter: room.players.find(p => p.id === room.hostPlayerId)?.character ?? "",
     isPublic: room.isPublic,
     requireApproval: room.requireApproval
   }

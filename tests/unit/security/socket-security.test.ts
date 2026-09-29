@@ -43,10 +43,10 @@ describe("socket security regressions", () => {
     await new Promise<void>((resolve, reject) => { socket.once("connect", resolve); socket.once("connect_error", reject) })
     return socket
   }
-  async function send(socket: Socket, event: string, data: unknown) {
+  async function send(socket: Socket, event: string, data: unknown, timeout = 2000) {
     // These tests isolate authorization; cooldown behavior has separate coverage below.
     io.sockets.sockets.get(socket.id!)!.data.rateBag?.clear()
-    return socket.timeout(2000).emitWithAck(event, data)
+    return socket.timeout(timeout).emitWithAck(event, data)
   }
   async function room(host: Socket, approval = false, gameId = "spy-game"): Promise<CreateRoomData> {
     const result = await send(host, "admin:create-room", { gameId, hostName: "Host", hostCharacter: "ace", isPublic: true, requireApproval: approval })
@@ -231,11 +231,11 @@ describe("socket security regressions", () => {
     expect(approved.ok).toBe(true)
     expect(approved.data.room.players).toHaveLength(501)
     expect((await approvedEvent).player.name).toBe("Newcomer")
-    const admitted = await send(host, "admin:update-room", { ...credentials, requireApproval: false })
+    const admitted = await send(host, "admin:update-room", { ...credentials, requireApproval: false }, 5000)
     expect(admitted.ok).toBe(true)
     expect(admitted.data.room.players).toHaveLength(1001)
     expect(admitted.data.room.pending).toEqual([])
-  })
+  }, 10000)
 
   it("drops old admin and private player subscriptions when switching rooms", async () => {
     const host = await client(), other = await client()

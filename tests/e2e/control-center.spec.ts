@@ -80,6 +80,21 @@ async function login(page: Page) {
   await page.getByRole("button", { name: "Sign in" }).click()
   await expect(page.getByRole("heading", { name: "Workspace overview" })).toBeVisible()
 }
+test("feedback is saved and visible in the private admin page as plain text", async ({ page }) => {
+  await page.goto(base)
+  const response = await page.request.post(base + "/api/feedback", {
+    headers: { Origin: base },
+    data: { gameId: "vampire-village", rating: 4, comment: '<img src=x onerror="alert(1)"> Please add more roles.' }
+  })
+  expect(response.ok()).toBe(true)
+  await login(page)
+  await page.goto(base + "/admin/feedback")
+  await expect(page.getByRole("heading", { name: "Player feedback" })).toBeVisible()
+  await expect(page.locator(".feedback-record")).toContainText("★★★★☆ (4/5)")
+  await expect(page.locator(".feedback-comment")).toContainText('<img src=x onerror="alert(1)">')
+  await expect(page.locator(".feedback-comment img")).toHaveCount(0)
+})
+
 test("protects routes, renders desktop/mobile/RTL and signs out", async ({ page }) => {
   await page.goto(base + "/admin/settings/system")
   await expect(page).toHaveURL(base + "/admin/login")
@@ -347,7 +362,7 @@ test("all four languages and both themes cover every admin route, retain prefere
         await expect(page.locator("html")).toHaveAttribute("dir", locale.dir)
         await expect(page.locator("html")).toHaveAttribute("data-theme", theme)
         await expect(page.locator("h1")).toHaveText(locale.titles[index]!)
-        await expect(page.locator(".sidebar nav a")).toHaveCount(9)
+        await expect(page.locator(".sidebar nav a")).toHaveCount(10)
         await expect(page.locator('.sidebar nav a[href="/admin/avatars"]')).toHaveCount(1)
         if (index < 8) await expect(page.locator(".sidebar nav a[aria-current='page']")).toHaveCount(1)
         if (route === "/admin") {
@@ -381,12 +396,18 @@ test("all four languages and both themes cover every admin route, retain prefere
           expect(colors.field).toBe(colors.surface)
           const ratios = await page.evaluate(() => {
             const style = getComputedStyle(document.documentElement)
-            const luminance = (token: string) => {
+            const channels = (token: string): number[] => {
               const hex = style.getPropertyValue(token).trim().slice(1)
-              const rgb = (hex.length === 3 ? [...hex].map(c => c + c).join("") : hex)
-                .match(/../g)!
-                .map(c => parseInt(c, 16) / 255)
-                .map(c => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
+              const full = hex.length === 3 ? [...hex].map(c => c + c).join("") : hex
+              const [r, g, b, a] = full.match(/../g)!.map(c => parseInt(c, 16) / 255)
+              // A translucent token (#rrggbbaa, e.g. --accent-soft) is only ever
+              // seen over the surface, so measure it composited onto that.
+              if (a === undefined) return [r!, g!, b!]
+              const base = channels("--surface")
+              return [r!, g!, b!].map((c, i) => c * a + base[i]! * (1 - a))
+            }
+            const luminance = (token: string) => {
+              const rgb = channels(token).map(c => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
               return rgb[0]! * 0.2126 + rgb[1]! * 0.7152 + rgb[2]! * 0.0722
             }
             return [
