@@ -4,7 +4,7 @@ import type { Room } from "@shared/types.js"
 import { MemoryStore } from "@server/store/memory-store.js"
 import { cancelAllTimers } from "@server/domain/scheduler.js"
 import {
-  hostAdvance, onPlayerLeft, startGame, submitAction, type EngineDeps
+  hostAdvance, onPlayerLeft, startGame, stopGame, submitAction, type EngineDeps
 } from "@server/domain/engine.js"
 import { isTurnBased, resolveEngine } from "@server/games/engines.js"
 import { resolveGame } from "@server/games/catalog.js"
@@ -149,6 +149,57 @@ describe("a round", () => {
     expect(asked.size).toBe(4)
   })
 
+  it("remembers questions across two seven-question games and persisted lobby state", async () => {
+    const h = await harness(mkRoom({ settings: { votingSeconds: 20, roundCount: 7 } }))
+    const seen = new Set<string>()
+    for (let game = 0; game < 2; game++) {
+      await startGame(h.deps, "MLT01", "s3cret")
+      for (let round = 1; round <= 7; round++) {
+        const room = await h.room()
+        expect(room.phase).toBe(QUESTION_DISPLAY)
+        expect(room.round).toBe(round)
+        const id = room.gameState.questionId as string
+        expect(seen.has(id)).toBe(false)
+        seen.add(id)
+        await vi.advanceTimersByTimeAsync(READ_MS + VOTING_MS)
+        await hostAdvance(h.deps, "MLT01", "s3cret", await h.seq())
+      }
+      expect((await h.room()).phase).toBe(GAME_OVER)
+      await stopGame(h.deps, "MLT01", "s3cret")
+      await h.store.update("MLT01", room => JSON.parse(JSON.stringify(room)) as Room)
+    }
+    expect(seen.size).toBe(14)
+  })
+
+  it("remembers a shown question even when the host stops a game early", async () => {
+    const h = await harness()
+    await startGame(h.deps, "MLT01", "s3cret")
+    const first = (await h.room()).gameState.questionId
+    await stopGame(h.deps, "MLT01", "s3cret")
+    await startGame(h.deps, "MLT01", "s3cret")
+    expect((await h.room()).gameState.questionId).not.toBe(first)
+    expect((await h.room()).gameState.bankQuestionsPlayed).toBe(1)
+  })
+
+  it("refills an exhausted bank without immediate repeats or unbounded history", () => {
+    let room = mkRoom()
+    let lastId: unknown
+    const firstDeck = new Set<string>()
+    for (let index = 0; index < MOST_LIKELY_TO_QUESTIONS.length * 2; index++) {
+      const transition = mostLikelyToEngine.start(room, () => 0)
+      const id = transition.state.questionId as string
+      expect(id).not.toBe(lastId)
+      if (index < MOST_LIKELY_TO_QUESTIONS.length) {
+        expect(firstDeck.has(id)).toBe(false)
+        firstDeck.add(id)
+      }
+      expect((transition.state.asked as string[]).length).toBeLessThanOrEqual(MOST_LIKELY_TO_QUESTIONS.length)
+      room = { ...room, gameState: transition.state }
+      room.gameState = mostLikelyToEngine.idleState!(room)
+      lastId = id
+    }
+  })
+
   it("locks the round when the clock runs out, missing votes and all", async () => {
     const h = await harness()
     const seq = await atVoting(h)
@@ -163,7 +214,7 @@ describe("a round", () => {
     expect((await h.viewFor("p2") as MostLikelyToResult).totalVotes).toBe(1)
   })
 
-  it("opens the votes early once every phone has answered", async () => {
+  it("keeps the full voting clock after everyone votes so choices can still change", async () => {
     const h = await harness()
     const seq = await atVoting(h)
     await submitAction(h.deps, "MLT01", "p1", seq, { type: "vote", target: "p2" })
@@ -171,7 +222,13 @@ describe("a round", () => {
     await submitAction(h.deps, "MLT01", "p3", seq, { type: "vote", target: "p2" })
 
     await vi.advanceTimersByTimeAsync(1_200)
+    expect((await h.room()).phase).toBe(VOTING)
+    await submitAction(h.deps, "MLT01", "p1", seq, { type: "vote", target: "p3" })
+    await vi.advanceTimersByTimeAsync(VOTING_MS - 1_201)
+    expect((await h.room()).phase).toBe(VOTING)
+    await vi.advanceTimersByTimeAsync(1)
     expect((await h.room()).phase).toBe(ROUND_RESULT)
+    expect(await h.viewFor("p1")).toMatchObject({ totalVotes: 3, winnerPlayerIds: ["p3"] })
   })
 
   it("hands the next round to the host, not to a clock", async () => {
@@ -211,18 +268,36 @@ describe("what a vote is refused for", () => {
     expect((await h.room()).gameState).toMatchObject({ votes: [] })
   })
 
-  it("refuses a second vote in the same round", async () => {
+  it("replaces a player's vote without increasing the voter count or revealing the choice", async () => {
     const h = await harness()
     const seq = await atVoting(h)
     await submitAction(h.deps, "MLT01", "p1", seq, { type: "vote", target: "p2" })
 
-    await expect(
-      submitAction(h.deps, "MLT01", "p1", seq, { type: "vote", target: "p3" })
-    ).rejects.toThrow("INVALID_INPUT")
+    await submitAction(h.deps, "MLT01", "p1", seq, { type: "vote", target: "p3" })
+    // Repeating the same choice is harmless, too.
+    await submitAction(h.deps, "MLT01", "p1", seq, { type: "vote", target: "p3" })
 
     const votes = (await h.room()).gameState as { votes: Array<{ targetId: string }> }
     expect(votes.votes).toHaveLength(1)
-    expect(votes.votes[0]!.targetId).toBe("p2")
+    expect(votes.votes[0]!.targetId).toBe("p3")
+    expect(await h.viewFor("p1")).toMatchObject({ myVote: "p3", votedCount: 1 })
+    expect(await h.viewFor("p2")).toMatchObject({ myVote: null, votedCount: 1 })
+    expect(mostLikelyToEngine.pending(await h.room())).toEqual(["p2", "p3"])
+    await vi.advanceTimersByTimeAsync(VOTING_MS)
+    expect(await h.viewFor("p1")).toMatchObject({ totalVotes: 1, winnerPlayerIds: ["p3"] })
+    await expect(submitAction(h.deps, "MLT01", "p1", seq, { type: "vote", target: "p2" }))
+      .rejects.toThrow("PHASE_STALE")
+  })
+
+  it("preserves the previous vote when a replacement is invalid", async () => {
+    const h = await harness()
+    const seq = await atVoting(h)
+    await submitAction(h.deps, "MLT01", "p1", seq, { type: "vote", target: "p2" })
+    for (const target of ["p1", "ghost", ""]) {
+      await expect(submitAction(h.deps, "MLT01", "p1", seq, { type: "vote", target }))
+        .rejects.toThrow("INVALID_INPUT")
+    }
+    expect(await h.viewFor("p1")).toMatchObject({ myVote: "p2", votedCount: 1 })
   })
 
   it("refuses a vote while the question is still being read", async () => {
@@ -370,7 +445,7 @@ describe("names stay sealed until the reveal", () => {
 })
 
 describe("a phone that goes dark", () => {
-  it("is not waited on once the rest of the room has voted", async () => {
+  it("keeps the voting clock after the last pending phone disconnects", async () => {
     const h = await harness()
     const seq = await atVoting(h)
     await submitAction(h.deps, "MLT01", "p1", seq, { type: "vote", target: "p2" })
@@ -381,6 +456,12 @@ describe("a phone that goes dark", () => {
       ...r, players: r.players.map(p => p.id === "p3" ? { ...p, connected: false } : p)
     }))
     expect(mostLikelyToEngine.pending(await h.room())).toEqual([])
+    await onPlayerLeft(h.deps, "MLT01")
+    await vi.advanceTimersByTimeAsync(1_200)
+    expect((await h.room()).phase).toBe(VOTING)
+    await submitAction(h.deps, "MLT01", "p1", seq, { type: "vote", target: "p3" })
+    await vi.advanceTimersByTimeAsync(VOTING_MS - 1_200)
+    expect((await h.room()).phase).toBe(ROUND_RESULT)
   })
 
   it("does not cut the reading clock short when a phone drops before anyone votes", async () => {
@@ -446,10 +527,15 @@ describe("the custom question prompt", () => {
     expect(room.round).toBe(1)
   })
 
-  it("is skipped on the game's last round — there is no next question to write", async () => {
+  it("offers extra player questions after the final bank question and ends if everyone passes", async () => {
     const h = await harness(customRoom({ settings: { votingSeconds: 20, roundCount: 1, customQuestionsEnabled: true } }))
     const seq = await atRoundResult(h)
     await hostAdvance(h.deps, "MLT01", "s3cret", seq)
+    expect((await h.room()).phase).toBe(CUSTOM_QUESTION_PROMPT)
+    for (const id of ["p1", "p2", "p3"]) {
+      await submitAction(h.deps, "MLT01", id, await h.seq(), { type: "pass" })
+    }
+    await vi.advanceTimersByTimeAsync(1_200)
     expect((await h.room()).phase).toBe(GAME_OVER)
   })
 
@@ -480,13 +566,18 @@ describe("the custom question prompt", () => {
     expect((await h.room()).phase).toBe(QUESTION_DISPLAY)
   })
 
-  it("opens the next round on whoever submits first, in every language", async () => {
+  it("waits for everyone to submit or pass before opening a custom question in every language", async () => {
     const h = await harness(customRoom())
     const seq = await atRoundResult(h)
     await hostAdvance(h.deps, "MLT01", "s3cret", seq)
     const promptSeq = await h.seq()
 
     await submitAction(h.deps, "MLT01", "p2", promptSeq, { type: "submit", text: "Kim en tembel?" })
+    await vi.advanceTimersByTimeAsync(1_200)
+    expect((await h.room()).phase).toBe(CUSTOM_QUESTION_PROMPT)
+    expect(mostLikelyToEngine.pending(await h.room())).toEqual(["p1", "p3"])
+    await submitAction(h.deps, "MLT01", "p1", promptSeq, { type: "pass" })
+    await submitAction(h.deps, "MLT01", "p3", promptSeq, { type: "pass" })
     await vi.advanceTimersByTimeAsync(1_200)
 
     const room = await h.room()
@@ -499,7 +590,114 @@ describe("the custom question prompt", () => {
     expect(shown.category).toBeUndefined()
   })
 
-  it("refuses a second submission — the first one already won the round", async () => {
+  it("plays every player's question in player order in addition to the bank-question limit", async () => {
+    const h = await harness(customRoom({
+      settings: { votingSeconds: 20, roundCount: 1, customQuestionsEnabled: true, customQuestionShowAuthor: true }
+    }))
+    await atRoundResult(h)
+    await hostAdvance(h.deps, "MLT01", "s3cret", await h.seq())
+    const promptSeq = await h.seq()
+
+    // Submit in reverse order: speed must not set the playing order.
+    for (const id of ["p3", "p2", "p1"]) {
+      await submitAction(h.deps, "MLT01", id, promptSeq, { type: "submit", text: `Question by ${id}` })
+    }
+    await vi.advanceTimersByTimeAsync(1_200)
+
+    for (const [index, id] of ["p1", "p2", "p3"].entries()) {
+      expect((await h.room()).phase).toBe(QUESTION_DISPLAY)
+      expect(await h.viewFor("p1")).toMatchObject({
+        kind: "question", roundNumber: index + 2,
+        question: { en: `Question by ${id}` },
+        customQuestionAuthor: ["Ali", "Mahmud", "Morinji"][index]
+      })
+      expect((await h.room()).gameState).toMatchObject({ votes: [] })
+      await vi.advanceTimersByTimeAsync(READ_MS + VOTING_MS)
+      await hostAdvance(h.deps, "MLT01", "s3cret", await h.seq())
+    }
+    expect((await h.room()).phase).toBe(GAME_OVER)
+    expect(h.overs).toHaveLength(1)
+  })
+
+  it("plays all questions collected at the deadline and rejects a late submission", async () => {
+    const h = await harness(customRoom())
+    await atRoundResult(h)
+    await hostAdvance(h.deps, "MLT01", "s3cret", await h.seq())
+    const promptSeq = await h.seq()
+    await submitAction(h.deps, "MLT01", "p3", promptSeq, { type: "submit", text: "Third player's question" })
+    await vi.advanceTimersByTimeAsync(CUSTOM_QUESTION_MS - 1)
+    expect((await h.room()).phase).toBe(CUSTOM_QUESTION_PROMPT)
+    await submitAction(h.deps, "MLT01", "p2", promptSeq, { type: "submit", text: "Second player's question" })
+    await vi.advanceTimersByTimeAsync(1)
+
+    await expect(submitAction(h.deps, "MLT01", "p1", promptSeq, { type: "submit", text: "Too late" }))
+      .rejects.toThrow("PHASE_STALE")
+    for (const question of ["Second player's question", "Third player's question"]) {
+      expect(await h.viewFor("p1")).toMatchObject({ kind: "question", question: { en: question } })
+      expect(await h.viewFor("p1")).not.toHaveProperty("customQuestionAuthor")
+      await vi.advanceTimersByTimeAsync(READ_MS + VOTING_MS)
+      await hostAdvance(h.deps, "MLT01", "s3cret", await h.seq())
+    }
+    // The next bank question still plays after the batch, then writing reopens.
+    expect((await h.room()).phase).toBe(QUESTION_DISPLAY)
+    expect((await h.room()).gameState).toMatchObject({ bankQuestionsPlayed: 2 })
+    expect((await h.room()).gameState.questionId).not.toBe("__custom__")
+    await vi.advanceTimersByTimeAsync(READ_MS + VOTING_MS)
+    await hostAdvance(h.deps, "MLT01", "s3cret", await h.seq())
+    expect((await h.room()).phase).toBe(CUSTOM_QUESTION_PROMPT)
+    expect(await h.viewFor("p2")).toMatchObject({ myStatus: "idle" })
+    expect((await h.room()).gameState).toMatchObject({ customQuestionQueue: [], passedPlayerIds: [] })
+  })
+
+  it("plays exactly seven bank questions plus all twenty-one submitted questions", async () => {
+    const h = await harness(customRoom({ settings: { votingSeconds: 20, roundCount: 7, customQuestionsEnabled: true } }))
+    await startGame(h.deps, "MLT01", "s3cret")
+    const bankIds = new Set<string>()
+    for (let bank = 1; bank <= 7; bank++) {
+      expect((await h.room()).phase).toBe(QUESTION_DISPLAY)
+      const id = (await h.room()).gameState.questionId as string
+      expect(id).not.toBe("__custom__")
+      expect(bankIds.has(id)).toBe(false)
+      bankIds.add(id)
+      await vi.advanceTimersByTimeAsync(READ_MS + VOTING_MS)
+      await hostAdvance(h.deps, "MLT01", "s3cret", await h.seq())
+      expect((await h.room()).phase).toBe(CUSTOM_QUESTION_PROMPT)
+      for (const player of ["p1", "p2", "p3"]) {
+        await submitAction(h.deps, "MLT01", player, await h.seq(), { type: "submit", text: `${bank} by ${player}` })
+      }
+      await vi.advanceTimersByTimeAsync(1_200)
+      for (const player of ["p1", "p2", "p3"]) {
+        expect(await h.viewFor(player)).toMatchObject({ kind: "question", question: { en: `${bank} by ${player}` } })
+        expect((await h.room()).gameState.bankQuestionsPlayed).toBe(bank)
+        await vi.advanceTimersByTimeAsync(READ_MS + VOTING_MS)
+        await hostAdvance(h.deps, "MLT01", "s3cret", await h.seq())
+      }
+    }
+    expect((await h.room()).phase).toBe(GAME_OVER)
+    expect((await h.room()).round).toBe(28)
+    expect(bankIds.size).toBe(7)
+  })
+
+  it("retains queued questions through serialization and a writer leaving", async () => {
+    const h = await harness(customRoom())
+    await atRoundResult(h)
+    await hostAdvance(h.deps, "MLT01", "s3cret", await h.seq())
+    const seq = await h.seq()
+    await submitAction(h.deps, "MLT01", "p1", seq, { type: "submit", text: "First question" })
+    await submitAction(h.deps, "MLT01", "p2", seq, { type: "submit", text: "Keep my question" })
+    await h.store.update("MLT01", r => ({
+      ...r, gameState: JSON.parse(JSON.stringify(r.gameState)),
+      players: r.players.map(p => p.id !== "p1" ? { ...p, connected: false } : p)
+    }))
+    await onPlayerLeft(h.deps, "MLT01")
+    await vi.advanceTimersByTimeAsync(1_200)
+    expect(await h.viewFor("p1")).toMatchObject({ kind: "question", question: { en: "First question" } })
+    await vi.advanceTimersByTimeAsync(READ_MS + VOTING_MS)
+    await hostAdvance(h.deps, "MLT01", "s3cret", await h.seq())
+    expect(await h.viewFor("p1")).toMatchObject({ kind: "question", question: { en: "Keep my question" } })
+  })
+
+  it("refuses a second submission or a pass after submitting from the same player", async () => {
     const h = await harness(customRoom())
     const seq = await atRoundResult(h)
     await hostAdvance(h.deps, "MLT01", "s3cret", seq)
@@ -507,8 +705,9 @@ describe("the custom question prompt", () => {
 
     await submitAction(h.deps, "MLT01", "p2", promptSeq, { type: "submit", text: "İlk soru" })
     await expect(
-      submitAction(h.deps, "MLT01", "p3", promptSeq, { type: "submit", text: "İkinci soru" })
+      submitAction(h.deps, "MLT01", "p2", promptSeq, { type: "submit", text: "İkinci soru" })
     ).rejects.toThrow("INVALID_INPUT")
+    await expect(submitAction(h.deps, "MLT01", "p2", promptSeq, { type: "pass" })).rejects.toThrow("INVALID_INPUT")
   })
 
   it("refuses an empty submission and one over the length limit", async () => {
@@ -536,6 +735,9 @@ describe("the custom question prompt", () => {
     await submitAction(h.deps, "MLT01", "p1", promptSeq, { type: "pass" })
     await expect(
       submitAction(h.deps, "MLT01", "p1", promptSeq, { type: "pass" })
+    ).rejects.toThrow("INVALID_INPUT")
+    await expect(
+      submitAction(h.deps, "MLT01", "p1", promptSeq, { type: "submit", text: "After passing" })
     ).rejects.toThrow("INVALID_INPUT")
   })
 

@@ -587,10 +587,10 @@ export const GAME_CATALOG: readonly Game[] = [
         // Long evenings run past the question bank; it reopens once used up.
         max: 100,
         label: {
-          ku: "ژمارەی خولەکان",
-          ar: "عدد الجولات",
-          en: "Rounds",
-          tr: "Tur Sayısı"
+          ku: "ژمارەی پرسیارە ئامادەکان",
+          ar: "عدد الأسئلة الجاهزة",
+          en: "Ready-made Question Count",
+          tr: "Hazır Soru Sayısı"
         }
       },
       {
@@ -609,7 +609,7 @@ export const GAME_CATALOG: readonly Game[] = [
       {
         // Off is the whole bank picking every question, exactly as before.
         // On opens a short window after each result where anyone can write
-        // the next one — first one in wins, nobody is told who tried.
+        // a question — everyone can submit or pass, then the queue is played.
         type: "boolean",
         key: "customQuestionsEnabled",
         label: {

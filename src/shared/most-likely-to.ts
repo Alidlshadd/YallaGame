@@ -90,8 +90,9 @@ export type MostLikelyToRevealView = {
 
 /**
  * The interstitial between a round's reveal and the next question, open only
- * in a room whose host turned "players can write a question" on. Whoever
- * submits first wins the next round; everyone else's screen looks the same
+ * in a room whose host turned "players can write a question" on. Everyone can
+ * submit one question or pass; all questions are then played in player order.
+ * Everyone else's screen looks the same
  * whether they passed or are still deciding — nothing here ever says who is
  * writing, so it never reads like a vote.
  */

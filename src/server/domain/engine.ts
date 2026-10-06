@@ -35,8 +35,10 @@ export interface GameEngine {
   act(room: Room, playerId: string, action: unknown): GameState
   /** This phase is over: the clock ran out, everyone acted, or the host said so. */
   next(room: Room, rng: () => number): Transition
-  /** Connected players who still owe a move. Empty means the phase can close early. */
+  /** Connected players who still owe a move. Empty allows closing early unless opted out. */
   pending(room: Room): string[]
+  /** Return false for phases that must keep their full clock, even after everyone acts. */
+  canCloseEarly?(room: Room): boolean
   /** Everything this one player is allowed to see right now, and nothing else. */
   view(room: Room, playerId: string): unknown
   /**
@@ -300,6 +302,7 @@ function closeEarlyIfDone(deps: EngineDeps, room: Room): void {
   if (room.phaseEndsAt === null) return
   const engine = deps.resolveEngine(room.gameId)
   if (engine === undefined) return
+  if (engine.canCloseEarly?.(room) === false) return
   if (engine.pending(room).length > 0) return
 
   // Shorten the wait, never lengthen it: near the end of a phase the grace

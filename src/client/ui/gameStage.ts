@@ -200,7 +200,7 @@ export function mountGameStage(opts: GameStageOptions): () => void {
   }
 
   function buildVoting(view: Extract<MostLikelyToView, { kind: "voting" }>): HTMLElement[] {
-    const locked = view.myVote !== null
+    const voted = view.myVote !== null
     const grid = el("div", { class: "mlt-targets" })
 
     for (const person of view.roster) {
@@ -215,14 +215,14 @@ export function mountGameStage(opts: GameStageOptions): () => void {
         avatarOf(person, person.name, 52),
         el("span", { class: "mlt-target-name" }, [person.name])
       ]) as HTMLButtonElement
-      button.disabled = locked
+      button.disabled = chosen
       button.addEventListener("click", () => void castVote(person.id))
       grid.appendChild(button)
     }
 
     return [
       grid,
-      el("p", { class: "mlt-hint" }, [locked ? t("mltVoteLocked") : t("mltVoteHint")]),
+      el("p", { class: "mlt-hint" }, [voted ? t("mltVoteChangeHint") : t("mltVoteHint")]),
       el("p", { class: "mlt-counter" }, [`${view.votedCount} / ${view.totalPlayers} ${t("mltVoted")}`])
     ]
   }
@@ -396,7 +396,9 @@ export function mountGameStage(opts: GameStageOptions): () => void {
     })
     const submitBtn = el("button", { class: "btn btn-primary", type: "button" }, [t("mltCustomSubmit")])
     submitBtn.addEventListener("click", () => void submitCustomQuestion(input.value))
-    form.append(el("div", { class: "bluff-lie-row" }, [input, counter, submitBtn]))
+    const formPassBtn = el("button", { class: "btn btn-ghost", type: "button" }, [t("mltCustomPass")])
+    formPassBtn.addEventListener("click", () => void castCustomPass())
+    form.append(el("div", { class: "bluff-lie-row" }, [input, counter, submitBtn]), formPassBtn)
 
     writeBtn.addEventListener("click", () => {
       choices.hidden = true
@@ -876,6 +878,7 @@ export function mountGameStage(opts: GameStageOptions): () => void {
     const input = !moved ? stage.querySelector<HTMLTextAreaElement>(".bluff-lie-input:not(:disabled)") : null
     const draft = input ? {
       text: input.value, focused: document.activeElement === input,
+      customFormOpen: stage.querySelector<HTMLElement>(".mlt-custom-form")?.hidden === false,
       start: input.selectionStart, end: input.selectionEnd, direction: input.selectionDirection
     } : null
     phase = payload
@@ -891,6 +894,11 @@ export function mountGameStage(opts: GameStageOptions): () => void {
       if (nextInput && draft) {
         nextInput.value = draft.text
         nextInput.dispatchEvent(new Event("input"))
+        if (draft.customFormOpen) {
+          const form = stage.querySelector<HTMLElement>(".mlt-custom-form")
+          const choices = stage.querySelector<HTMLElement>(".mlt-custom-choices")
+          if (form && choices) { form.hidden = false; choices.hidden = true }
+        }
         if (draft.focused) {
           nextInput.focus({ preventScroll: true })
           nextInput.setSelectionRange(draft.start, draft.end, draft.direction)

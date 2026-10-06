@@ -15,17 +15,17 @@ import { MOST_LIKELY_TO_QUESTIONS, resolveQuestion, type Question } from "./ques
  *
  *   QUESTION_DISPLAY      the question, on a short clock so nobody votes on a
  *                         sentence they have not finished reading
- *   VOTING                one secret vote each, on the room's clock; closes
- *                         early the moment every connected phone has answered
+ *   VOTING                one secret vote each, changeable until the room's
+ *                         voting clock expires
  *   ROUND_RESULT          every vote at once. No clock: the host decides when
  *                         the table has finished arguing
  *   CUSTOM_QUESTION_PROMPT  only in a room with `customQuestionsEnabled` —
  *                         between a result and the next question, anyone can
- *                         write the next one. First submission wins; closes
- *                         early once everyone has either passed or one
- *                         question has come in.
+ *                         write one question or pass. Closes once everyone
+ *                         has answered or time expires, then plays all queued
+ *                         questions in player order before asking for more.
  *
- * The room lands on GAME_OVER once the configured number of rounds is played.
+ * The room ends after the configured bank questions plus player-written questions.
  */
 
 export const MOST_LIKELY_TO_ID = "most-likely-to"
@@ -72,16 +72,19 @@ export interface Vote {
 
 export interface MostLikelyToState extends GameState {
   questionId: string
-  /** Ids already used this game, so a round never repeats a question. */
+  /** Bank questions already used in this room's current deck, across games. */
   asked: string[]
+  /** Bank questions played in this game; custom questions do not consume this limit. */
+  bankQuestionsPlayed: number
   /** The round being played, and only that one. */
   votes: Vote[]
   /**
-   * Set once somebody's submission has won the CUSTOM_QUESTION_PROMPT race,
-   * and carried into the round it opens so `view`/`tally` can read it back.
+   * The custom question currently being played, for `view`/`tally`.
    * Null everywhere else — a round from the bank has no text of its own here.
    */
   customQuestionText: string | null
+  /** Accepted questions waiting to be played, persisted with the room. */
+  customQuestionQueue: Array<{ text: string; writerId: string }>
   /** Whichever connected player already chose "pass" this prompt. */
   passedPlayerIds: string[]
   /**
@@ -98,8 +101,11 @@ function stateOf(room: Room): MostLikelyToState {
   return {
     questionId: typeof raw.questionId === "string" ? raw.questionId : "",
     asked: Array.isArray(raw.asked) ? raw.asked : [],
+    bankQuestionsPlayed: typeof raw.bankQuestionsPlayed === "number" ? raw.bankQuestionsPlayed
+      : Array.isArray(raw.asked) ? raw.asked.length : 0,
     votes: Array.isArray(raw.votes) ? raw.votes : [],
     customQuestionText: typeof raw.customQuestionText === "string" ? raw.customQuestionText : null,
+    customQuestionQueue: Array.isArray(raw.customQuestionQueue) ? raw.customQuestionQueue : [],
     passedPlayerIds: Array.isArray(raw.passedPlayerIds) ? raw.passedPlayerIds : [],
     customQuestionWriterId: typeof raw.customQuestionWriterId === "string" ? raw.customQuestionWriterId : null
   }
@@ -141,34 +147,40 @@ function pickQuestion(asked: readonly string[], rng: () => number): Question {
   return pool[index]!
 }
 
-function openRound(asked: readonly string[], rng: () => number): MostLikelyToState {
-  const question = pickQuestion(asked, rng)
+function openRound(asked: readonly string[], rng: () => number, bankQuestionsPlayed = 0): MostLikelyToState {
+  // Refill only after the entire bank has been played. Keep the last question
+  // out of the new deck's first draw, and keep persisted history bounded.
+  const history = MOST_LIKELY_TO_QUESTIONS.every(q => asked.includes(q.id)) ? asked.slice(-1) : asked
+  const question = pickQuestion(history, rng)
   return {
-    questionId: question.id, asked: [...asked, question.id], votes: [],
-    customQuestionText: null, passedPlayerIds: [], customQuestionWriterId: null
+    questionId: question.id, asked: [...history, question.id], votes: [],
+    bankQuestionsPlayed: bankQuestionsPlayed + 1,
+    customQuestionText: null, customQuestionQueue: [], passedPlayerIds: [], customQuestionWriterId: null
   }
 }
 
 /** Clears the previous round's leftovers and opens the floor for a submission. */
 function openCustomPrompt(state: MostLikelyToState): MostLikelyToState {
-  return { ...state, customQuestionText: null, passedPlayerIds: [], customQuestionWriterId: null }
+  return { ...state, customQuestionText: null, customQuestionQueue: [], passedPlayerIds: [], customQuestionWriterId: null }
 }
 
 /**
- * What the prompt phase decided. A submission that won the race opens the
- * round; nothing submitted — everyone passed, or the clock ran out first —
- * falls back to the bank exactly as a room with the setting off would.
+ * Play one queued question, retaining the rest for subsequent rounds.
+ * If nobody submitted, fall back to the bank.
  */
 function resolveCustomOrRandom(state: MostLikelyToState, rng: () => number): MostLikelyToState {
-  if (state.customQuestionText !== null && state.customQuestionText !== "") {
+  const [question, ...remaining] = state.customQuestionQueue
+  if (question !== undefined) {
     // The writer is kept with the round so a host who asked for it can name
     // them; `authorOf` decides whether that ever leaves the server.
     return {
       questionId: CUSTOM_QUESTION_ID, asked: state.asked, votes: [],
-      customQuestionText: state.customQuestionText, passedPlayerIds: [], customQuestionWriterId: state.customQuestionWriterId
+      bankQuestionsPlayed: state.bankQuestionsPlayed,
+      customQuestionText: question.text, customQuestionQueue: remaining,
+      passedPlayerIds: [], customQuestionWriterId: question.writerId
     }
   }
-  return openRound(state.asked, rng)
+  return openRound(state.asked, rng, state.bankQuestionsPlayed)
 }
 
 /** The question this round is actually asking, whichever source it came from. */
@@ -256,26 +268,29 @@ function roster(room: Room): MostLikelyToPlayer[] {
 export const mostLikelyToEngine: GameEngine = {
   gameId: MOST_LIKELY_TO_ID,
 
-  start(_room, rng): Transition {
-    return { phase: QUESTION_DISPLAY, state: openRound([], rng), ms: READ_MS, scores: {} }
+  start(room, rng): Transition {
+    return { phase: QUESTION_DISPLAY, state: openRound(stateOf(room).asked, rng), ms: READ_MS, scores: {} }
+  },
+
+  idleState(room): GameState {
+    return { asked: stateOf(room).asked }
   },
 
   act(room, playerId, action): GameState {
     if (room.phase === CUSTOM_QUESTION_PROMPT) {
       const state = stateOf(room)
       const move = action as { type?: unknown; text?: unknown }
+      if (state.passedPlayerIds.includes(playerId) || state.customQuestionQueue.some(q => q.writerId === playerId)) {
+        throw new Error("INVALID_INPUT")
+      }
 
       if (move.type === "pass") {
-        if (state.passedPlayerIds.includes(playerId)) throw new Error("INVALID_INPUT")
         return { ...state, passedPlayerIds: [...state.passedPlayerIds, playerId] }
       }
       if (move.type === "submit") {
-        // First one in wins the round; a second submission is a loser of that
-        // race, not a retry — refusing it is what makes "first wins" true.
-        if (state.customQuestionText !== null) throw new Error("INVALID_INPUT")
         const text = typeof move.text === "string" ? move.text.trim() : ""
         if (text === "" || text.length > customQuestionMaxLength(room)) throw new Error("INVALID_INPUT")
-        return { ...state, customQuestionText: text, customQuestionWriterId: playerId }
+        return { ...state, customQuestionQueue: [...state.customQuestionQueue, { text, writerId: playerId }] }
       }
       throw new Error("INVALID_INPUT")
     }
@@ -293,12 +308,9 @@ export const mostLikelyToEngine: GameEngine = {
     if (!room.players.some(p => p.id === target)) throw new Error("INVALID_INPUT")
 
     const state = stateOf(room)
-    // One vote each. A vote that could be changed would let the count shown
-    // during voting go down, and the phase close and then reopen.
-    if (state.votes.some(v => v.voterId === playerId)) throw new Error("INVALID_INPUT")
-
+    // A changed choice replaces the previous vote; it never adds another voter.
     const vote: Vote = { round: room.round, voterId: playerId, targetId: target, createdAt: Date.now() }
-    return { ...state, votes: [...state.votes, vote] }
+    return { ...state, votes: [...state.votes.filter(v => v.voterId !== playerId), vote] }
   },
 
   next(room, rng): Transition {
@@ -312,18 +324,35 @@ export const mostLikelyToEngine: GameEngine = {
       return { phase: ROUND_RESULT, state, ms: null }
     }
     if (room.phase === ROUND_RESULT) {
-      if (room.round >= totalRounds(room)) {
-        return { phase: GAME_OVER, state, ms: null, winner: null }
+      // Custom questions are extra: finish the batch without consuming the
+      // host's bank-question count, then return to the next bank question.
+      if (state.customQuestionQueue.length > 0) {
+        return { phase: QUESTION_DISPLAY, state: resolveCustomOrRandom(state, rng), ms: READ_MS, nextRound: true }
       }
-      if (customQuestionsEnabled(room)) {
+      if (customQuestionsEnabled(room) && state.questionId !== CUSTOM_QUESTION_ID) {
         return { phase: CUSTOM_QUESTION_PROMPT, state: openCustomPrompt(state), ms: customQuestionMs(room) }
       }
-      return { phase: QUESTION_DISPLAY, state: openRound(state.asked, rng), ms: READ_MS, nextRound: true }
+      if (state.bankQuestionsPlayed >= totalRounds(room)) {
+        return { phase: GAME_OVER, state, ms: null, winner: null }
+      }
+      return { phase: QUESTION_DISPLAY, state: openRound(state.asked, rng, state.bankQuestionsPlayed), ms: READ_MS, nextRound: true }
     }
     if (room.phase === CUSTOM_QUESTION_PROMPT) {
-      return { phase: QUESTION_DISPLAY, state: resolveCustomOrRandom(state, rng), ms: READ_MS, nextRound: true }
+      if (state.customQuestionQueue.length === 0 && state.bankQuestionsPlayed >= totalRounds(room)) {
+        return { phase: GAME_OVER, state, ms: null, winner: null }
+      }
+      // Submission speed never decides priority. Departed writers keep their
+      // accepted questions, after the players still in the room.
+      const playerOrder = new Map(room.players.map((p, index) => [p.id, index]))
+      const customQuestionQueue = [...state.customQuestionQueue].sort((a, b) =>
+        (playerOrder.get(a.writerId) ?? room.players.length) - (playerOrder.get(b.writerId) ?? room.players.length))
+      return { phase: QUESTION_DISPLAY, state: resolveCustomOrRandom({ ...state, customQuestionQueue }, rng), ms: READ_MS, nextRound: true }
     }
     return { phase: GAME_OVER, state, ms: null, winner: null }
+  },
+
+  canCloseEarly(room): boolean {
+    return room.phase !== VOTING
   },
 
   pending(room): string[] {
@@ -335,10 +364,8 @@ export const mostLikelyToEngine: GameEngine = {
     }
     if (room.phase === CUSTOM_QUESTION_PROMPT) {
       const state = stateOf(room)
-      // A submission already came in — the race is decided, nothing more to
-      // wait on, whether or not everyone else has chosen yet.
-      if (state.customQuestionText !== null) return []
-      return room.players.filter(p => p.connected && !state.passedPlayerIds.includes(p.id)).map(p => p.id)
+      return room.players.filter(p => p.connected && !state.passedPlayerIds.includes(p.id)
+        && !state.customQuestionQueue.some(q => q.writerId === p.id)).map(p => p.id)
     }
     // QUESTION_DISPLAY has nothing to act on — it is a reading clock, not a
     // wait for moves — so it must never report "done" just because a phone
@@ -355,7 +382,7 @@ export const mostLikelyToEngine: GameEngine = {
 
     if (room.phase === CUSTOM_QUESTION_PROMPT) {
       const myStatus =
-        state.customQuestionWriterId === playerId ? "submitted"
+        state.customQuestionQueue.some(q => q.writerId === playerId) ? "submitted"
         : state.passedPlayerIds.includes(playerId) ? "passed"
         : "idle"
       return {

@@ -12,7 +12,121 @@ import { createRoom, joinAs } from "./helpers.js"
 interface Phone { ctx: BrowserContext; page: Page; name: string }
 
 /** The reading clock is 5s and voting is 20s; give the phases room to land. */
-const PHASE_TIMEOUT = 15_000
+const PHASE_TIMEOUT = 30_000
+
+test.setTimeout(60_000)
+
+test("most likely to: the host chooses the bank-question count and replay keeps question history", async ({ browser }) => {
+  test.setTimeout(100_000)
+  const contexts = await Promise.all([browser.newContext(), browser.newContext()])
+  try {
+    const [host, player] = await Promise.all(contexts.map(ctx => ctx.newPage())) as [Page, Page]
+    const code = await createRoom(host, { theme: "most-likely-to", hostName: "Host", hostCharacter: "ace" })
+    await joinAs(player, code, "Ada", "ruby")
+    const seen = new Set<string>()
+    for (const count of [1, 2]) {
+      await expect(host.locator("#setting-roundCount")).toBeVisible()
+      await host.locator("#setting-roundCount").fill(String(count))
+      await host.locator("#setting-votingSeconds").fill("10")
+      // Start applies the host's selection without a separate Save click.
+      await host.locator("#startGameBtn").click()
+      for (let round = 1; round <= count; round++) {
+        await expect(host.locator(".mlt-round")).toContainText(String(round))
+        await expect(host.locator(".mlt-question")).toBeVisible()
+        const question = await host.locator(".mlt-question").innerText()
+        expect(seen.has(question)).toBe(false)
+        seen.add(question)
+        for (const page of [host, player]) {
+          await expect(page.locator(".mlt-question")).toHaveText(question)
+          await expect(page.locator(".mlt-target").first()).toBeVisible({ timeout: PHASE_TIMEOUT })
+          await page.locator(".mlt-target").first().click()
+        }
+        await expect(host.locator(".mlt-bars")).toBeVisible({ timeout: PHASE_TIMEOUT })
+        await host.locator(".mlt-advance").click()
+      }
+      await expect(host.locator(".mlt-target")).toHaveCount(0)
+      await expect(host.locator(".mlt-bars")).toBeVisible()
+      await expect(host.locator(".mlt-advance")).toHaveText("Back to the Room")
+      // Feedback appears once per game type on each browser, including reloads.
+      if (count === 1) {
+        for (const page of [host, player]) {
+          await expect(page.locator("#gameFeedbackOverlay")).toBeVisible()
+          await page.locator(".feedback-close").click()
+        }
+      }
+      await host.locator(".mlt-advance").click()
+      await expect(host.locator("#gameStage")).toBeHidden()
+      await host.reload()
+      await expect(host.locator("#setting-roundCount")).toHaveValue(String(count))
+    }
+    expect(seen.size).toBe(3)
+  } finally {
+    await Promise.all(contexts.map(ctx => ctx.close()))
+  }
+})
+
+test("most likely to: everyone can write or pass and questions play in player order", async ({ browser }) => {
+  test.setTimeout(120_000)
+  const contexts = await Promise.all([browser.newContext(), browser.newContext(), browser.newContext()])
+  try {
+    const [host, ada, bea] = await Promise.all(contexts.map(ctx => ctx.newPage())) as [Page, Page, Page]
+    const everyone = [host, ada, bea]
+    const code = await createRoom(host, { theme: "most-likely-to", hostName: "Host", hostCharacter: "ace" })
+    await joinAs(ada, code, "Ada", "ruby")
+    await joinAs(bea, code, "Bea", "pebble")
+    await host.locator("#setting-customQuestionsEnabled").setChecked(true)
+    await host.locator("#setting-customQuestionSeconds").fill("60")
+    await host.locator("#setting-votingSeconds").fill("10")
+    await host.click("#saveSettingsBtn")
+    await host.click("#startGameBtn")
+
+    const finishVoting = async (): Promise<void> => {
+      for (const page of everyone) {
+        await expect(page.locator(".mlt-target").first()).toBeVisible({ timeout: PHASE_TIMEOUT })
+        await page.locator(".mlt-target").first().click()
+      }
+      for (const page of everyone) await expect(page.locator(".mlt-bars")).toBeVisible({ timeout: PHASE_TIMEOUT })
+      await host.locator(".mlt-advance").click()
+    }
+
+    await finishVoting()
+    for (const page of everyone) {
+      await expect(page.locator(".mlt-custom-choices")).toBeVisible()
+      await page.locator(".mlt-custom-choices .btn-primary").click()
+    }
+
+    await host.locator(".mlt-custom-form textarea").fill("Host question, written slowly")
+    await ada.locator(".mlt-custom-form textarea").fill("Ada question, sent first")
+    await ada.locator(".mlt-custom-form .btn-primary").click()
+    await expect(ada.locator(".mlt-custom-form")).toHaveCount(0)
+    await ada.reload()
+    await expect(ada.locator("#gameStage .mlt-hint")).toBeVisible()
+    await expect(ada.locator(".mlt-custom-choices")).toHaveCount(0)
+
+    // Another player's submission and reconnect must preserve the open draft.
+    await expect(host.locator(".mlt-custom-form textarea")).toBeVisible()
+    await expect(host.locator(".mlt-custom-form textarea")).toHaveValue("Host question, written slowly")
+    // A player may still pass after opening the writing form.
+    await bea.locator(".mlt-custom-form .btn-ghost").click()
+    await expect(bea.locator(".mlt-custom-form")).toHaveCount(0)
+    await host.locator(".mlt-custom-form .btn-primary").click()
+
+    for (const question of ["Host question, written slowly", "Ada question, sent first"]) {
+      for (const page of everyone) {
+        await expect(page.locator(".mlt-question")).toHaveText(question, { timeout: PHASE_TIMEOUT })
+      }
+      await finishVoting()
+    }
+    // Custom questions are extra: the second bank question still has to play.
+    for (const page of everyone) await expect(page.locator(".mlt-question")).not.toHaveText("Ada question, sent first")
+    await finishVoting()
+    // The next writing window opens after that bank question.
+    for (const page of everyone) await expect(page.locator(".mlt-custom-choices")).toBeVisible()
+    await host.locator(".mlt-end").click()
+  } finally {
+    await Promise.all(contexts.map(ctx => ctx.close()))
+  }
+})
 
 test("most likely to: a round of secret votes opens together", async ({ browser }) => {
   const hostCtx = await browser.newContext()
@@ -52,21 +166,28 @@ test("most likely to: a round of secret votes opens together", async ({ browser 
   }
   await expect(phones[0]!.page.locator(".mlt-target", { hasText: "Ada" })).toHaveCount(0)
 
-  // Two of the three point at Ada, the host points at Bea.
+  // Everyone votes; the host can still change their choice afterwards.
   await hostPage.locator(".mlt-target", { hasText: "Bea" }).click()
   await phones[0]!.page.locator(".mlt-target", { hasText: "Bea" }).click()
   await phones[1]!.page.locator(".mlt-target", { hasText: "Ada" }).click()
 
-  // A cast vote locks the round for that phone.
+  // Changing a vote moves the highlight and keeps the count at three voters.
   await expect(hostPage.locator(".mlt-target.chosen")).toHaveCount(1)
-  await expect(hostPage.locator(".mlt-target").first()).toBeDisabled()
+  await expect(hostPage.locator(".mlt-target", { hasText: "Ada" })).toBeEnabled()
+  await hostPage.locator(".mlt-target", { hasText: "Ada" }).click()
+  await expect(hostPage.locator(".mlt-target.chosen")).toHaveText("Ada")
+  await expect(hostPage.locator(".mlt-target", { hasText: "Bea" })).toBeEnabled()
+  await expect(hostPage.locator(".mlt-counter")).toContainText("3 / 3")
+  await hostPage.reload()
+  await expect(hostPage.locator(".mlt-target.chosen")).toHaveText("Ada")
+  await expect(hostPage.locator(".mlt-target", { hasText: "Bea" })).toBeEnabled()
 
   // ROUND_RESULT — the votes open for everybody at once.
   for (const page of everyone) {
     await expect(page.locator(".mlt-bars")).toBeVisible({ timeout: PHASE_TIMEOUT })
     await expect(page.locator(".mlt-bar")).toHaveCount(3)
-    // Bea took two of the three votes; the bars are ordered by count.
-    await expect(page.locator(".mlt-bar").first()).toContainText("Bea")
+    // The host's replacement gives Ada two votes; the old vote is gone.
+    await expect(page.locator(".mlt-bar").first()).toContainText("Ada")
     await expect(page.locator(".mlt-bar.winner")).toHaveCount(1)
   }
 
