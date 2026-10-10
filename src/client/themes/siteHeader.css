@@ -186,6 +186,11 @@
 body[data-header-layout="browse"] .hero-slide {
   padding-block-start: max(124px, calc(108px + env(safe-area-inset-top)));
 }
+/* The shelf starts with a small eyebrow, not a padded hero, so it needs its
+   own clearance under the fixed header on wide screens too. */
+body[data-header-layout="browse"] .worlds-page {
+  padding-block-start: 72px;
+}
 
 @media (max-width: 1180px) {
   .site-header[data-layout="browse"] {
@@ -213,6 +218,9 @@ body[data-header-layout="browse"] .hero-slide {
   /* These pages share the header, so their first title must clear its second row. */
   body[data-header-layout="browse"] :is(.worlds-page, .how-page, .features-page, .about-page) {
     padding-block-start: 100px;
+  }
+  body[data-header-layout="browse"] .worlds-page {
+    padding-block-start: 124px;
   }
 }
 @media (max-width: 600px) {

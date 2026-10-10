@@ -1,5 +1,5 @@
 import { $, el, clear } from "../ui/dom.js"
-import { getLang, t } from "../services/i18n.js"
+import { getLang, t, upper } from "../services/i18n.js"
 import { setView } from "../router.js"
 import { clearTheme } from "../themes/loader.js"
 import { buildBookCover } from "../ui/bookCover.js"
@@ -11,7 +11,7 @@ function buildShelfSlide(lang: ReturnType<typeof getLang>): HTMLElement {
   const header = el("header", { class: "shelf-header" }, [
     el("p", { class: "shelf-eyebrow" }, [
       el("span", { class: "shelf-ornament" }, ["❖"]),
-      el("span", {}, [t("exploreEyebrow").toUpperCase()]),
+      el("span", {}, [upper(t("exploreEyebrow"))]),
       el("span", { class: "shelf-ornament" }, ["❖"])
     ]),
     el("h2", { class: "shelf-title" }, [t("exploreWorlds")]),

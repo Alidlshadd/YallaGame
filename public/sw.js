@@ -23,7 +23,7 @@
  * shows the old cover until the visit after next. Changing the version drops
  * both caches on activate, which is the only thing that fixes it that visit.
  */
-const VERSION = "v4"
+const VERSION = "v5"
 const SHELL_CACHE = `yalla-shell-${VERSION}`
 const ASSET_CACHE = `yalla-assets-${VERSION}`
 const SHELL_URL = "/"

@@ -1,6 +1,6 @@
 import type { Game } from "@shared/types.js"
 import { $, el, clear } from "../ui/dom.js"
-import { getLang, t } from "../services/i18n.js"
+import { getLang, t, upper } from "../services/i18n.js"
 import { setView } from "../router.js"
 import { dismissLayer, pushLayer, type LayerHandle } from "../services/navigation.js"
 import { showToast } from "../ui/toast.js"
@@ -198,7 +198,7 @@ function buildFeaturedSlide(lang: ReturnType<typeof getLang>): HTMLElement {
   const header = el("header", { class: "how-header" }, [
     el("p", { class: "how-eyebrow" }, [
       el("span", { class: "how-ornament", "aria-hidden": "true" }, ["◆"]),
-      el("span", {}, [t("featuredEyebrow").toUpperCase()]),
+      el("span", {}, [upper(t("featuredEyebrow"))]),
       el("span", { class: "how-ornament", "aria-hidden": "true" }, ["◆"])
     ]),
     el("h2", { class: "how-title" }, [t("featuredTitle")]),

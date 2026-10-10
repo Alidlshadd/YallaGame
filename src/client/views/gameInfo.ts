@@ -1,7 +1,7 @@
 import type { Game, Role } from "@shared/types.js"
 import { $, el, clear } from "../ui/dom.js"
 import { buildThemeFx } from "../ui/character.js"
-import { getLang, t } from "../services/i18n.js"
+import { getLang, t, upper } from "../services/i18n.js"
 import { goBack, setView } from "../router.js"
 import { dismissLayer, pushLayer, type LayerHandle } from "../services/navigation.js"
 import { emit } from "../services/socket.js"
@@ -132,7 +132,7 @@ function buildHero(
   // Text direction is independent of the poster/copy placement.
   const titleRow = el("div", { class: "gi-title-row" }, [
     buildThemeIcon(game.theme),
-    el("p", { class: "gi-eyebrow" }, [t("worldLabel").toUpperCase()])
+    el("p", { class: "gi-eyebrow" }, [upper(t("worldLabel"))])
   ])
   const title = el("h1", { class: "gi-title" }, [game.title[lang]])
   // Slogans are English poster lines. Wrap with <bdi dir="ltr"> so adjacent
@@ -240,7 +240,7 @@ function buildAbout(
   leftChildren.push(
     el("p", { class: "gi-section-eyebrow" }, [
       el("span", { class: "gi-ornament" }, ["❖"]),
-      el("span", {}, [t("aboutTitle").toUpperCase()]),
+      el("span", {}, [upper(t("aboutTitle"))]),
       el("span", { class: "gi-ornament" }, ["❖"])
     ]),
     el("h2", { class: "gi-section-title" }, [t("aboutTitle")]),
@@ -298,7 +298,7 @@ function buildHowToPlay(game: Game, lang: ReturnType<typeof getLang>): HTMLEleme
     el("header", { class: "gi-section-header" }, [
       el("p", { class: "gi-section-eyebrow" }, [
         el("span", { class: "gi-ornament" }, ["❖"]),
-        el("span", {}, [t("howToPlayTitle").toUpperCase()]),
+        el("span", {}, [upper(t("howToPlayTitle"))]),
         el("span", { class: "gi-ornament" }, ["❖"])
       ]),
       el("h2", { class: "gi-section-title" }, [t("howToPlayTitle")])
@@ -355,7 +355,7 @@ function buildRoles(
     el("header", { class: "gi-section-header" }, [
       el("p", { class: "gi-section-eyebrow" }, [
         el("span", { class: "gi-ornament" }, ["❖"]),
-        el("span", {}, [t("rolesInGameTitle").toUpperCase()]),
+        el("span", {}, [upper(t("rolesInGameTitle"))]),
         el("span", { class: "gi-ornament" }, ["❖"])
       ]),
       el("h2", { class: "gi-section-title" }, [t("rolesInGameTitle")])
@@ -438,7 +438,7 @@ function buildCategories(
     el("header", { class: "gi-section-header" }, [
       el("p", { class: "gi-section-eyebrow" }, [
         el("span", { class: "gi-ornament" }, ["❖"]),
-        el("span", {}, [t("categoriesTitle").toUpperCase()]),
+        el("span", {}, [upper(t("categoriesTitle"))]),
         el("span", { class: "gi-ornament" }, ["❖"])
       ]),
       el("h2", { class: "gi-section-title" }, [t("categoriesTitle")])
@@ -540,7 +540,7 @@ function openCategorySetup(
     el("header", { class: "gi-setup-header" }, [
       el("p", { class: "gi-section-eyebrow" }, [
         el("span", { class: "gi-ornament" }, ["❖"]),
-        el("span", {}, [t("categorySetupTitle").toUpperCase()]),
+        el("span", {}, [upper(t("categorySetupTitle"))]),
         el("span", { class: "gi-ornament" }, ["❖"])
       ]),
       el("h2", { id: "gi-setup-title", class: "gi-section-title" }, [t("categorySetupTitle")])

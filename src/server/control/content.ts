@@ -103,10 +103,23 @@ export function brandedHtml(html: string, branding: Record<string, string>, orig
       /<link rel="icon"[^>]*>/,
       () => `<link rel="icon" type="image/webp" href="${escape(branding.favicon!)}">`
     )
-  const tags = [`<meta property="og:title" content="${escape(branding.siteName ?? "Yalla Game")}">`]
+  // Rewrite the shell's own social tags in place: appending a second copy left
+  // crawlers with duplicates, and they need absolute image URLs.
+  const content = (pattern: RegExp, value: string) => {
+    html = html.replace(pattern, (_tag, start: string) => `${start}${escape(value)}" />`)
+  }
+  if (branding.siteName) content(/(<meta (?:property="og|name="twitter):title" content=")[^"]*"\s*\/?\s*>/g, branding.siteName)
   if (branding.description)
-    tags.push(`<meta property="og:description" content="${escape(branding.description)}">`)
-  if (branding.ogImage) tags.push(`<meta property="og:image" content="${escape(origin + branding.ogImage)}">`)
+    content(/(<meta (?:property="og|name="twitter):description" content=")[^"]*"\s*\/?\s*>/g, branding.description)
+  html = html.replace(
+    /(<meta (?:property="og|name="twitter):image" content=")([^"]*)"\s*\/?\s*>/g,
+    (_tag, start: string, shellImage: string) => `${start}${escape(origin + (branding.ogImage ?? shellImage))}" />`
+  )
+  if (!origin) return html
+  const tags = [
+    `<link rel="canonical" href="${escape(origin)}/" />`,
+    `<meta property="og:url" content="${escape(origin)}/" />`
+  ]
   return html.replace("</head>", () => tags.join("\n") + "\n</head>")
 }
 export function publicConfiguration(db: Database.Database) {

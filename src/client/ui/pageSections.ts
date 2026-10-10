@@ -1,4 +1,5 @@
 import { el } from "./dom.js"
+import { upper } from "../services/i18n.js"
 
 /** Shared "eyebrow + title (+ description)" header, reused by How to Play,
  * Features and About for every section — same markup/classes the site
@@ -10,7 +11,7 @@ export function sectionHeading(opts: { eyebrow?: string; title: string; descript
     header.append(
       el("p", { class: "how-eyebrow" }, [
         el("span", { class: "how-ornament", "aria-hidden": "true" }, ["◆"]),
-        el("span", {}, [opts.eyebrow.toUpperCase()]),
+        el("span", {}, [upper(opts.eyebrow)]),
         el("span", { class: "how-ornament", "aria-hidden": "true" }, ["◆"])
       ])
     )

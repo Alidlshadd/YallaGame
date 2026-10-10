@@ -16,6 +16,10 @@ export function t(key: keyof Translations): string {
 
 export function getLang(): LangCode { return current }
 
+/** Uppercase for display in the active language: a plain toUpperCase() turns
+ * Turkish "i" into "I" instead of "İ". */
+export function upper(text: string): string { return text.toLocaleUpperCase(current) }
+
 export function setLang(lang: LangCode): void {
   current = lang
   localStorage.setItem(STORAGE_KEY, lang)

@@ -537,7 +537,7 @@ describe("Control center security and persistence", () => {
   })
   it("escapes branding in server-rendered metadata and preserves defaults", () => {
     const shell =
-      '<head><title>Yalla Game</title><meta name="description" content="Original"><link rel="icon" href="/default.png"></head>'
+      '<head><title>Yalla Game</title><meta name="description" content="Original"><link rel="icon" href="/default.png"><meta property="og:image" content="/assets/logo/og.png" /></head>'
     expect(brandedHtml(shell, {})).toContain("<title>Yalla Game</title>")
     const result = brandedHtml(
       shell,
@@ -547,6 +547,18 @@ describe("Control center security and persistence", () => {
     expect(result).not.toContain("<script>")
     expect(result).toContain("&lt;script&gt;")
     expect(result).toContain("https://example.test/uploads/safe.webp")
+  })
+  it("rewrites the shell's social tags in place with absolute URLs", () => {
+    const shell =
+      '<head><title>Yalla Game</title><meta property="og:title" content="Yalla Game" />' +
+      '<meta property="og:image" content="/assets/logo/og.png" /><meta name="twitter:image" content="/assets/logo/og.png" /></head>'
+    const result = brandedHtml(shell, { siteName: "Party" }, "https://example.test")
+    expect(result.match(/og:title/g)).toHaveLength(1)
+    expect(result).toContain('<meta property="og:title" content="Party" />')
+    expect(result).toContain('<meta property="og:image" content="https://example.test/assets/logo/og.png" />')
+    expect(result).toContain('<meta name="twitter:image" content="https://example.test/assets/logo/og.png" />')
+    expect(result).toContain('<link rel="canonical" href="https://example.test/" />')
+    expect(brandedHtml(shell, {})).toBe(shell)
   })
   it("retention removes expired analytics and preserves current records", () => {
     analytics.pageView("old-visitor", "homeView")

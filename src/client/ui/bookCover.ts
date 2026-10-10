@@ -1,6 +1,6 @@
 import type { Game, LangCode } from "@shared/types.js"
 import { el } from "./dom.js"
-import { t } from "../services/i18n.js"
+import { t, upper } from "../services/i18n.js"
 import { worldCoverPath } from "../data/assets.js"
 
 /* Short, dramatic taglines shown on each book cover (poster-style). Shared by
@@ -33,7 +33,7 @@ export function buildBookCover(game: Game, lang: LangCode, idx: number, onSelect
   // TOP ornament header
   const top = el("div", { class: "book-top" }, [
     el("span", { class: "book-ornament" }, ["❖"]),
-    el("span", { class: "book-kicker" }, [t("worldLabel").toUpperCase()]),
+    el("span", { class: "book-kicker" }, [upper(t("worldLabel"))]),
     el("span", { class: "book-ornament" }, ["❖"])
   ])
 

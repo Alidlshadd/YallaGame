@@ -104,6 +104,10 @@ export function mountControl(
       .object({
         view: z.enum([
           "homeView",
+          "worldsView",
+          "howToPlayView",
+          "featuresView",
+          "aboutView",
           "gameInfoView",
           "joinView",
           "joinSetupView",

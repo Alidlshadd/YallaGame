@@ -1,6 +1,7 @@
 import express from "express"
 import compression from "compression"
 import http from "node:http"
+import { randomInt } from "node:crypto"
 import { Server } from "socket.io"
 import { publicApiLimit, safeHttpError, securityHeaders } from "./security/http.js"
 import path from "node:path"
@@ -77,6 +78,16 @@ async function main() {
   app.get("/api/games", (_req, res) => { res.set("Cache-Control","no-store").json(effectiveCatalog(controlDb)) })
 
   app.get("/control.html", (_req,res) => { res.redirect(303,"/admin") })
+  // Crawlers and browsers ask for these by convention; without them every
+  // request fell through to an HTML 404.
+  app.get("/robots.txt", (_req,res) => {
+    const sitemap = config.ALLOWED_ORIGIN ? `\nSitemap: ${config.ALLOWED_ORIGIN}/sitemap.xml` : ""
+    res.set("Cache-Control","public, max-age=3600").type("text/plain").send(`User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\nDisallow: /uploads/${sitemap}\n`)
+  })
+  if (config.ALLOWED_ORIGIN) app.get("/sitemap.xml", (_req,res) => {
+    res.set("Cache-Control","public, max-age=3600").type("application/xml").send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${config.ALLOWED_ORIGIN}/</loc></url></urlset>\n`)
+  })
+  app.get("/favicon.ico", (_req,res) => { res.redirect(302,"/assets/logo/favicon-velocity.png") })
   if (existsSync(path.join(staticDir,"index.html"))) {
     const publicShell = readFileSync(path.join(staticDir,"index.html"),"utf8")
     app.get(["/","/index.html"],(_req,res) => {
@@ -140,7 +151,7 @@ async function main() {
   })
 
   registerHandlers(io, {
-    io, store, resolveGame, resolveEngine, config, rng: Math.random,
+    io, store, resolveGame, resolveEngine, config, rng: () => randomInt(0x100000000) / 0x100000000,
     canCreateGame: id => (controlDb.prepare("SELECT enabled FROM game_asset_overrides WHERE game_id=?").get(id) as {enabled:number} | undefined)?.enabled !== 0,
     isValidCharacter: id => isSelectableCharacterId(controlDb, id),
     selectableCharacters: () => effectiveAvatarCatalog(controlDb).map(a => a.id)
@@ -148,11 +159,14 @@ async function main() {
 
   setInterval(() => {
     void store.deleteOlderThan(Date.now() - config.ROOM_TTL_HOURS * 60 * 60 * 1000)
+      .catch((err: unknown) => logger.error({ err }, "room cleanup failed"))
   }, 20 * 60 * 1000).unref()
   const retentionDays = Number(process.env.ANALYTICS_RETENTION_DAYS ?? 365)
   if (!Number.isInteger(retentionDays) || retentionDays < 1 || retentionDays > 3650) throw new Error("Invalid ANALYTICS_RETENTION_DAYS")
   analytics.retain(retentionDays)
-  setInterval(() => analytics.retain(retentionDays), 3600_000).unref()
+  setInterval(() => {
+    try { analytics.retain(retentionDays) } catch (err) { logger.error({ err }, "analytics retention failed") }
+  }, 3600_000).unref()
 
   server.listen(config.PORT, () => {
     logger.info({ port: config.PORT, env: config.NODE_ENV }, "server ready")
@@ -168,5 +182,8 @@ async function main() {
   process.on("SIGINT",  () => void shutdown())
   process.on("SIGTERM", () => void shutdown())
 }
+
+// A stray rejection in one room's handler must not take every other room down.
+process.on("unhandledRejection", err => { logger.error({ err }, "unhandled rejection") })
 
 main().catch(err => { logger.fatal({ err }, "startup failed"); process.exit(1) })
